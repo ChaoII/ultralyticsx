@@ -1,10 +1,11 @@
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy, QPushButton, QGroupBox, QGridLayout,
-                               QLineEdit, QTextEdit, QProgressBar, QComboBox, QCheckBox)
+                               QLineEdit, QTextEdit, QProgressBar, QComboBox, QCheckBox, QFileDialog)
 from options import *
 from PySide6.QtCore import Slot, Signal, Qt, QThread, QCoreApplication
 from loguru import logger
 import threading
 from trainer import ModelTrainThread, log_format_info, log_format_error, log_format_warning
+from pathlib import Path
 
 
 class ModelTrainWidget(QWidget):
@@ -49,10 +50,19 @@ class ModelTrainWidget(QWidget):
         vly_val_obj_num.addWidget(self.le_workers)
         gb_workers.setLayout(vly_val_obj_num)
 
+        gb_data = QGroupBox("训练数据配置文件路径")
+        hly_train_data_config = QHBoxLayout()
+        self.le_train_data_config = QLineEdit()
+        self.btn_select_data_config = QPushButton("数据集配置文件路径")
+        hly_train_data_config.addWidget(self.le_train_data_config)
+        hly_train_data_config.addWidget(self.btn_select_data_config)
+        gb_data.setLayout(hly_train_data_config)
+
         gly.addWidget(gb_epoch, 0, 0)
         gly.addWidget(gb_batch_size, 0, 1)
         gly.addWidget(gb_learning_rate, 0, 2)
         gly.addWidget(gb_workers, 0, 3)
+        gly.addWidget(gb_data, 1, 0, 1, 4)
 
         gly_btn = QGridLayout()
         self.btn_start_train = QPushButton("开始训练")
@@ -89,6 +99,7 @@ class ModelTrainWidget(QWidget):
 
         self.btn_start_train.clicked.connect(self.start_train)
         self.btn_stop_train.clicked.connect(self.stop_train)
+        self.btn_select_data_config.clicked.connect(self.select_data_config)
 
         # define
         self.model_thread = None
@@ -153,6 +164,7 @@ class ModelTrainWidget(QWidget):
         self.le_batch.setEnabled(not self.le_batch.isEnabled())
         self.le_learning_rate.setEnabled(not self.le_learning_rate.isEnabled())
         self.le_workers.setEnabled(not self.le_workers.isEnabled())
+        self.le_train_data_config.setEnabled(not self.le_train_data_config.isEnabled())
 
         self.btn_start_train.setEnabled(not self.btn_start_train.isEnabled())
         self.btn_stop_train.setEnabled(not self.btn_stop_train.isEnabled())
@@ -169,7 +181,7 @@ class ModelTrainWidget(QWidget):
             self._resume = False
 
         self._initial_model(current_model_name, self.use_pretrain,
-                            "C:/Users/AC/.gradio/projects/20240723175626306516/coco_cpy.yaml",
+                            self.le_train_data_config.text(),
                             int(self.le_epoch.text()), int(self.le_batch.text()),
                             float(self.le_learning_rate.text()),
                             int(self.le_workers.text()), self._resume)
@@ -192,7 +204,7 @@ class ModelTrainWidget(QWidget):
         self._turn_widget_enable_status()
         # 立即刷新界面
         QCoreApplication.processEvents()
-        self.ted_train_log.append(log_format_info("执行手动停止训练指令，等待训练结束"))
+        self.ted_train_log.append(log_format_info("用户手动停止，训练结束，点击开始训练可以继续执行训练"))
 
     @Slot(str)
     def on_handle_epoch_start(self, split: str):
@@ -214,7 +226,13 @@ class ModelTrainWidget(QWidget):
     @Slot(int)
     def on_handle_train_end(self, cur_epoch: int):
         self._turn_widget_enable_status()
+        self._train_finished = True
         if cur_epoch == int(self.le_epoch.text()):
-            self._train_finished = True
-            self.ted_train_log.append(log_format_info("训练完成"))
-        self.ted_train_log.append(log_format_info(f"训练被手动终止没当前已训练轮次，{cur_epoch}"))
+            self.ted_train_log.append(log_format_info(f"训练完成epoch = {cur_epoch}"))
+        else:
+            self.ted_train_log.append(log_format_info(f"训练提前完成，当前epoch = {cur_epoch}"))
+
+    @Slot()
+    def select_data_config(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "打开数据集配置文件", "", "All Files (*);;yaml (yaml,yml)")
+        self.le_train_data_config.setText(Path(file_name).resolve().as_posix())
