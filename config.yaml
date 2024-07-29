@@ -1,0 +1,3 @@
+Base:
+  with_tensorboard: false
+  workspace_dir: C:\Users\AC\PycharmProjects\ultraly_ui
