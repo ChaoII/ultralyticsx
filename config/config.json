@@ -1,0 +1,18 @@
+{
+    "Folders": {
+        "Download": "D:/PyQt-Fluent-Widgets/examples/window/settings/download",
+        "LocalMusic": []
+    },
+    "MainWindow": {
+        "DpiScale": 1.25,
+        "EnableAcrylicBackground": true,
+        "Language": "zh_CN",
+        "MinimizeToTray": true,
+        "PlayBarColor": "#ff225c7f",
+        "RecentPlayNumbers": 300
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ffaa9825",
+        "ThemeMode": "Dark"
+    }
+}

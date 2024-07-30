@@ -2,13 +2,16 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
 
+
 class HeaderWidget(QFrame):
     def __init__(self):
         super(HeaderWidget, self).__init__()
-        self.setFixedHeight(40)
+        self.setFixedHeight(50)
+        # 不设置样式不起作用
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         h_layout = QHBoxLayout()
-        h_layout.setContentsMargins(1, 1, 1, 1)
+        h_layout.setContentsMargins(8, 8, 8, 8)
         self.lbl_logo = QLabel()
         self.lbl_logo.setFixedWidth(200)
         self.lbl_logo.setScaledContents(True)
