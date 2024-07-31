@@ -27,22 +27,31 @@ class SettingInterface(ScrollArea):
         # setting label
         self.settingLabel = BodyLabel(self.tr("Settings"), self)
 
-        # music folders
-        self.musicInThisPCGroup = SettingCardGroup(
-            self.tr("Music on this PC"), self.scrollWidget)
-        self.musicFolderCard = FolderListSettingCard(
-            cfg.musicFolders,
-            self.tr("Local music library"),
-            directory=QStandardPaths.writableLocation(QStandardPaths.StandardLocation.MusicLocation),
-            parent=self.musicInThisPCGroup
-        )
+        # model
+        self.model_config_group = SettingCardGroup(
+            self.tr("model settings"), self.scrollWidget)
+
         self.downloadFolderCard = PushSettingCard(
-            self.tr('Choose folder'),
-            FIF.DOWNLOAD,
-            self.tr("Download directory"),
-            cfg.get(cfg.downloadFolder),
-            self.musicInThisPCGroup
+            text=self.tr('choose folder'),
+            icon=FIF.DOWNLOAD,
+            title=self.tr("workspace folder"),
+            content=cfg.get(cfg.workspace_folder),
+            parent=self.model_config_group
         )
+
+        # self.musicFolderCard = FolderListSettingCard(
+        #     cfg.workspace_folder,
+        #     self.tr("Local music library"),
+        #     directory=QStandardPaths.writableLocation(QStandardPaths.StandardLocation.MusicLocation),
+        #     parent=self.model_config_group
+        # )
+        # self.downloadFolderCard = PushSettingCard(
+        #     self.tr('Choose folder'),
+        #     FIF.DOWNLOAD,
+        #     self.tr("Download directory"),
+        #     cfg.get(cfg.downloadFolder),
+        #     self.model_config_group
+        # )
 
         # personalization
         self.personalGroup = SettingCardGroup(self.tr('Personalization'), self.scrollWidget)

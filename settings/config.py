@@ -1,11 +1,9 @@
-# coding:utf-8
 from enum import Enum
 
-from PySide6.QtCore import Qt, QLocale
-from PySide6.QtGui import QGuiApplication, QFont
+from PySide6.QtCore import QLocale
 from qfluentwidgets import (qconfig, QConfig, ConfigItem, OptionsConfigItem, BoolValidator,
                             ColorConfigItem, OptionsValidator, RangeConfigItem, RangeValidator,
-                            FolderListValidator, EnumSerializer, FolderValidator, ConfigSerializer, __version__)
+                            FolderListValidator, FolderValidator, ConfigSerializer)
 
 
 class Language(Enum):
@@ -30,11 +28,11 @@ class LanguageSerializer(ConfigSerializer):
 class Config(QConfig):
     """ Config of application """
 
-    # folders
-    musicFolders = ConfigItem(
-        "Folders", "LocalMusic", [], FolderListValidator())
-    downloadFolder = ConfigItem(
-        "Folders", "Download", "download", FolderValidator())
+    # model
+    workspace_folder = ConfigItem(
+        "model", "workspace_dir", "./", FolderValidator())
+    enable_tensorboard = ConfigItem(
+        "model", "enable_tensorboard", False, BoolValidator())
 
     # main window
     enableAcrylicBackground = ConfigItem(
@@ -48,7 +46,6 @@ class Config(QConfig):
         "MainWindow", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
     language = OptionsConfigItem(
         "MainWindow", "Language", Language.AUTO, OptionsValidator(Language), LanguageSerializer(), restart=True)
-
 
 
 cfg = Config()
