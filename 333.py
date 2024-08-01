@@ -1,6 +1,8 @@
 # coding:utf-8
 import sys
+import os
 
+from utils import show_center
 from PySide6.QtCore import Qt, QUrl, QTranslator
 from PySide6.QtGui import QIcon, QDesktopServices
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
@@ -11,6 +13,7 @@ from qfluentwidgets import (NavigationItemPosition, MessageBox, setTheme, Theme,
 from qfluentwidgets import FluentIcon as FIcon
 
 from settings import SettingInterface, cfg
+from model_train import ModelTrainWidget
 
 
 class Widget(QFrame):
@@ -30,45 +33,39 @@ class Window(FluentWindow):
         super().__init__()
 
         # create sub interface
-        self.homeInterface = Widget('Search Interface', self)
-        self.musicInterface = Widget('Music Interface', self)
-        self.videoInterface = Widget('Video Interface', self)
-        self.folderInterface = Widget('Folder Interface', self)
+        self.home_interface = Widget('Search Interface', self)
+        self.dataset_interface = Widget('Music Interface', self)
+        self.train_interface = ModelTrainWidget(self)
+        self.val_interface = Widget('Val Interface', self)
+        self.export_interface = Widget('Export Interface', self)
+        self.test_interface = Widget('Test Interface', self)
         self.settingInterface = SettingInterface(self)
-        self.settingInterface.setObjectName("frde")
-        self.albumInterface = Widget('Album Interface', self)
-        self.albumInterface1 = Widget('Album Interface 1', self)
-        self.albumInterface2 = Widget('Album Interface 2', self)
-        self.albumInterface1_1 = Widget('Album Interface 1-1', self)
-
         self.initNavigation()
         self.initWindow()
 
     def initNavigation(self):
-        self.addSubInterface(self.homeInterface, FIcon.HOME, 'Home')
-        self.addSubInterface(self.musicInterface, FIcon.MUSIC, 'Music library')
-        self.addSubInterface(self.videoInterface, FIcon.VIDEO, 'Video library')
+        self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
+        self.navigationInterface.addSeparator()
+        self.addSubInterface(self.dataset_interface, FIcon.PHOTO, self.tr('dataset'))
+        self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('model train'))
+        self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('model valid'))
+        self.addSubInterface(self.export_interface, FIcon.UP, self.tr('model export'))
+        self.addSubInterface(self.test_interface, FIcon.TILES, self.tr('model test'))
 
         self.navigationInterface.addSeparator()
-
-        self.addSubInterface(self.albumInterface, FIcon.ALBUM, 'Albums', NavigationItemPosition.SCROLL)
-        self.addSubInterface(self.albumInterface1, FIcon.ALBUM, 'Album 1', parent=self.albumInterface)
-        self.addSubInterface(self.albumInterface1_1, FIcon.ALBUM, 'Album 1.1', parent=self.albumInterface1)
-        self.addSubInterface(self.albumInterface2, FIcon.ALBUM, 'Album 2', parent=self.albumInterface)
-        self.addSubInterface(self.folderInterface, FIcon.FOLDER, 'Folder library', NavigationItemPosition.SCROLL)
 
         # add custom widget to bottom
         self.navigationInterface.addWidget(
             routeKey='avatar',
             widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'),
-            onClick=self.showMessageBox,
+            onClick=lambda: print("------"),
             position=NavigationItemPosition.BOTTOM,
         )
 
         self.addSubInterface(self.settingInterface, FIcon.SETTING, 'Settings', NavigationItemPosition.BOTTOM)
 
         # add badge to navigation item
-        item = self.navigationInterface.widget(self.videoInterface.objectName())
+        item = self.navigationInterface.widget(self.export_interface.objectName())
         InfoBadge.attension(
             text=9,
             parent=item.parent(),
@@ -83,32 +80,22 @@ class Window(FluentWindow):
 
     def initWindow(self):
         self.resize(900, 700)
-        self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
-        self.setWindowTitle('PyQt-Fluent-Widgets')
-
-        desktop = QApplication.primaryScreen().availableGeometry()
-        w, h = desktop.width(), desktop.height()
-        self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
+        self.setWindowIcon(QIcon('./resource/images/ux.png'))
+        self.setWindowTitle('UltralyticsX')
 
         # set the minimum window width that allows the navigation panel to be expanded
         # self.navigationInterface.setMinimumExpandWidth(900)
         # self.navigationInterface.expand(useAni=False)
 
-    def showMessageBox(self):
-        w = MessageBox(
-            '支持作者🥰',
-            '个人开发不易，如果这个项目帮助到了您，可以考虑请作者喝一瓶快乐水🥤。您的支持就是作者开发和维护项目的动力🚀',
-            self
-        )
-        w.yesButton.setText('来啦老弟')
-        w.cancelButton.setText('下次一定')
-
-        if w.exec():
-            QDesktopServices.openUrl(QUrl("https://afdian.net/a/zhiyiYo"))
-
 
 if __name__ == '__main__':
-    QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+
+    if cfg.get(cfg.dpi_scale) == "auto":
+        QApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    else:
+        os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
+
     app = QApplication(sys.argv)
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
     # internationalization
@@ -122,6 +109,5 @@ if __name__ == '__main__':
 
     # create main window
     w = Window()
-    w.show()
-
+    show_center(w)
     app.exec()

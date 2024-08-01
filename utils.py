@@ -8,10 +8,18 @@ import yaml
 from loguru import logger
 from pycocotools.coco import COCO
 from tqdm import tqdm
+from PySide6.QtWidgets import QWidget, QApplication
 
 ROOT_DIR = os.path.join(os.path.expanduser("~"), ".gradio")
 RUNS_DIR = os.path.join(ROOT_DIR, "runs")
 settings.update({"runs_dir": RUNS_DIR})
+
+
+def show_center(widget: QWidget):
+    desktop = QApplication.primaryScreen().availableGeometry()
+    w, h = desktop.width(), desktop.height()
+    widget.move(w // 2 - widget.width() // 2, h // 2 - widget.height() // 2)
+    widget.show()
 
 
 class LoadDatasetInfo:

@@ -1,10 +1,10 @@
 import sys
 from PySide6.QtWidgets import (QApplication,
-                               QPushButton, QVBoxLayout, QWidget,
-                               QLabel, QLineEdit, QFileDialog, QTabWidget)
+                               QVBoxLayout, QWidget,
+                               QFileDialog, QTabWidget)
 from PySide6.QtCore import Slot
 from data_convert import DataConvertWidget
-from model_train import ModelTrainWidget
+from model_train.model_train import ModelTrainWidget
 from config_widget import ConfigWidget
 
 

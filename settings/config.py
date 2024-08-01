@@ -35,17 +35,14 @@ class Config(QConfig):
         "model", "enable_tensorboard", False, BoolValidator())
 
     # main window
-    enableAcrylicBackground = ConfigItem(
-        "MainWindow", "EnableAcrylicBackground", False, BoolValidator())
-    minimizeToTray = ConfigItem(
-        "MainWindow", "MinimizeToTray", True, BoolValidator())
-    playBarColor = ColorConfigItem("MainWindow", "PlayBarColor", "#225C7F")
-    recentPlaysNumber = RangeConfigItem(
-        "MainWindow", "RecentPlayNumbers", 300, RangeValidator(10, 300))
-    dpiScale = OptionsConfigItem(
-        "MainWindow", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
+    enable_acrylic_background = ConfigItem(
+        "personalization", "enable_acrylic_background", False, BoolValidator())
+    minimize_to_tray = ConfigItem(
+        "personalization", "minimize_to_tray", True, BoolValidator())
+    dpi_scale = OptionsConfigItem(
+        "personalization", "dpi_scale", "auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "auto"]), restart=True)
     language = OptionsConfigItem(
-        "MainWindow", "Language", Language.AUTO, OptionsValidator(Language), LanguageSerializer(), restart=True)
+        "personalization", "language", Language.AUTO, OptionsValidator(Language), LanguageSerializer(), restart=True)
 
 
 cfg = Config()

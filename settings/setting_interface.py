@@ -5,9 +5,9 @@ from qfluentwidgets import (SettingCardGroup, SwitchSettingCard, FolderListSetti
                             ColorSettingCard, HyperlinkCard, PrimaryPushSettingCard, ScrollArea,
                             ComboBoxSettingCard, ExpandLayout, Theme, InfoBar, CustomColorSettingCard,
                             setTheme, setThemeColor, isDarkTheme)
-from qfluentwidgets import FluentIcon as FIF
+from qfluentwidgets import FluentIcon as FIco
 from PySide6.QtCore import Qt, Signal, QUrl, QStandardPaths
-from PySide6.QtWidgets import QWidget, QLabel, QFontDialog, QFileDialog
+from PySide6.QtWidgets import QFrame, QLabel, QFontDialog, QFileDialog
 
 
 class SettingInterface(ScrollArea):
@@ -21,143 +21,134 @@ class SettingInterface(ScrollArea):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.scrollWidget = QWidget()
-        self.expandLayout = ExpandLayout(self.scrollWidget)
 
-        # setting label
-        self.settingLabel = BodyLabel(self.tr("Settings"), self)
+        self.setObjectName("setting_interface")
+        self.scrollWidget = QFrame()
+        self.expandLayout = ExpandLayout(self.scrollWidget)
 
         # model
         self.model_config_group = SettingCardGroup(
             self.tr("model settings"), self.scrollWidget)
 
-        self.downloadFolderCard = PushSettingCard(
+        self.workspace_folder_card = PushSettingCard(
             text=self.tr('choose folder'),
-            icon=FIF.DOWNLOAD,
+            icon=FIco.FOLDER,
             title=self.tr("workspace folder"),
             content=cfg.get(cfg.workspace_folder),
             parent=self.model_config_group
         )
 
-        # self.musicFolderCard = FolderListSettingCard(
-        #     cfg.workspace_folder,
-        #     self.tr("Local music library"),
-        #     directory=QStandardPaths.writableLocation(QStandardPaths.StandardLocation.MusicLocation),
-        #     parent=self.model_config_group
-        # )
-        # self.downloadFolderCard = PushSettingCard(
-        #     self.tr('Choose folder'),
-        #     FIF.DOWNLOAD,
-        #     self.tr("Download directory"),
-        #     cfg.get(cfg.downloadFolder),
-        #     self.model_config_group
-        # )
+        self.enable_tensorboard_card = SwitchSettingCard(
+            FIco.MARKET,
+            self.tr("enable tensorboard"),
+            self.tr("use tensorboard to monitor training step"),
+            configItem=cfg.enable_tensorboard,
+            parent=self.model_config_group
+        )
 
         # personalization
-        self.personalGroup = SettingCardGroup(self.tr('Personalization'), self.scrollWidget)
-        self.enableAcrylicCard = SwitchSettingCard(
-            FIF.TRANSPARENT,
+        self.personal_group = SettingCardGroup(self.tr('personalization'), self.scrollWidget)
+        self.enable_acrylic_ard = SwitchSettingCard(
+            FIco.TRANSPARENT,
             self.tr("Use Acrylic effect"),
             self.tr("Acrylic effect has better visual experience, but it may cause the window to become stuck"),
-            configItem=cfg.enableAcrylicBackground,
-            parent=self.personalGroup
+            configItem=cfg.enable_acrylic_background,
+            parent=self.personal_group
         )
-        self.themeCard = OptionsSettingCard(
+        self.theme_card = OptionsSettingCard(
             cfg.themeMode,
-            FIF.BRUSH,
+            FIco.BRUSH,
             self.tr('Application theme'),
             self.tr("Change the appearance of your application"),
             texts=[
                 self.tr('Light'), self.tr('Dark'),
                 self.tr('Use system setting')
             ],
-            parent=self.personalGroup
+            parent=self.personal_group
         )
-        self.themeColorCard = CustomColorSettingCard(
+        self.theme_color_card = CustomColorSettingCard(
             cfg.themeColor,
-            FIF.PALETTE,
+            FIco.PALETTE,
             self.tr('Theme color'),
             self.tr('Change the theme color of you application'),
-            self.personalGroup
+            self.personal_group
         )
-        self.zoomCard = OptionsSettingCard(
-            cfg.dpiScale,
-            FIF.ZOOM,
+        self.zoom_card = OptionsSettingCard(
+            cfg.dpi_scale,
+            FIco.ZOOM,
             self.tr("Interface zoom"),
             self.tr("Change the size of widgets and fonts"),
             texts=[
                 "100%", "125%", "150%", "175%", "200%",
                 self.tr("Use system setting")
             ],
-            parent=self.personalGroup
+            parent=self.personal_group
         )
-        self.languageCard = ComboBoxSettingCard(
+        self.language_card = ComboBoxSettingCard(
             cfg.language,
-            FIF.LANGUAGE,
+            FIco.LANGUAGE,
             self.tr('Language'),
             self.tr('Set your preferred language for UI'),
             texts=['简体中文', '繁體中文', 'English', self.tr('Use system setting')],
-            parent=self.personalGroup
+            parent=self.personal_group
         )
 
         # main panel
-        self.mainPanelGroup = SettingCardGroup(self.tr('Main Panel'), self.scrollWidget)
-        self.minimizeToTrayCard = SwitchSettingCard(
-            FIF.MINIMIZE,
+        self.main_panel_group = SettingCardGroup(self.tr('Main Panel'), self.scrollWidget)
+        self.minimize_to_tray_card = SwitchSettingCard(
+            FIco.MINIMIZE,
             self.tr('Minimize to tray after closing'),
             self.tr('PyQt-Fluent-Widgets will continue to run in the background'),
-            configItem=cfg.minimizeToTray,
-            parent=self.mainPanelGroup
+            configItem=cfg.minimize_to_tray,
+            parent=self.main_panel_group
         )
 
-        self.__initWidget()
+        self._init_widget()
 
-    def __initWidget(self):
+    def _init_widget(self):
         self.resize(1000, 800)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setViewportMargins(0, 120, 0, 20)
+        self.setViewportMargins(0, 20, 0, 20)
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
 
         # initialize style sheet
-        self.__setQss()
+        self._set_qss()
 
         # initialize layout
-        self.__initLayout()
-        self.__connectSignalToSlot()
+        self._init_layout()
+        self._connect_signal_to_slot()
 
-    def __initLayout(self):
-        self.settingLabel.move(60, 63)
+    def _init_layout(self):
+        # self.settingLabel.move(60, 63)
 
         # add cards to group
-        self.musicInThisPCGroup.addSettingCard(self.musicFolderCard)
-        self.musicInThisPCGroup.addSettingCard(self.downloadFolderCard)
+        self.model_config_group.addSettingCard(self.workspace_folder_card)
+        self.model_config_group.addSettingCard(self.enable_tensorboard_card)
 
-        self.personalGroup.addSettingCard(self.enableAcrylicCard)
-        self.personalGroup.addSettingCard(self.themeCard)
-        self.personalGroup.addSettingCard(self.themeColorCard)
-        self.personalGroup.addSettingCard(self.zoomCard)
-        self.personalGroup.addSettingCard(self.languageCard)
+        self.personal_group.addSettingCard(self.enable_acrylic_ard)
+        self.personal_group.addSettingCard(self.theme_card)
+        self.personal_group.addSettingCard(self.theme_color_card)
+        self.personal_group.addSettingCard(self.zoom_card)
+        self.personal_group.addSettingCard(self.language_card)
 
-        self.mainPanelGroup.addSettingCard(self.minimizeToTrayCard)
+        self.main_panel_group.addSettingCard(self.minimize_to_tray_card)
 
         # add setting card group to layout
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(60, 10, 60, 0)
-        self.expandLayout.addWidget(self.musicInThisPCGroup)
-        self.expandLayout.addWidget(self.personalGroup)
-        self.expandLayout.addWidget(self.mainPanelGroup)
+        self.expandLayout.addWidget(self.model_config_group)
+        self.expandLayout.addWidget(self.personal_group)
+        self.expandLayout.addWidget(self.main_panel_group)
 
-    def __setQss(self):
+    def _set_qss(self):
         """ set style sheet """
         self.scrollWidget.setObjectName('scrollWidget')
-        self.settingLabel.setObjectName('settingLabel')
-
         theme = 'dark' if isDarkTheme() else 'light'
         with open(f'resource/qss/{theme}/setting_interface.qss', encoding='utf-8') as f:
             self.setStyleSheet(f.read())
 
-    def __showRestartTooltip(self):
+    def _show_restart_tooltip(self):
         """ show restart tooltip """
         InfoBar.warning(
             '',
@@ -167,45 +158,46 @@ class SettingInterface(ScrollArea):
 
     def __onDeskLyricFontCardClicked(self):
         """ desktop lyric font button clicked slot """
-        font, isOk = QFontDialog.getFont(
+        font, is_ok = QFontDialog.getFont(
             cfg.desktopLyricFont, self.window(), self.tr("Choose font"))
-        if isOk:
+        if is_ok:
             cfg.desktopLyricFont = font
 
-    def __onDownloadFolderCardClicked(self):
+    def _on_workspace_folder_card_clicked(self):
         """ download folder card clicked slot """
         folder = QFileDialog.getExistingDirectory(
             self, self.tr("Choose folder"), "./")
-        if not folder or cfg.get(cfg.downloadFolder) == folder:
+        if not folder or cfg.get(cfg.workspace_folder) == folder:
             return
 
-        cfg.set(cfg.downloadFolder, folder)
-        self.downloadFolderCard.setContent(folder)
+        cfg.set(cfg.workspace_folder, folder)
+        self.workspace_folder_card.setContent(folder)
 
-    def __onThemeChanged(self, theme: Theme):
+    def _on_Theme_changed(self, theme: Theme):
         """ theme changed slot """
         # change the theme of qfluentwidgets
         setTheme(theme)
 
         # chang the theme of setting interface
-        self.__setQss()
+        self._set_qss()
 
-    def __connectSignalToSlot(self):
+    def _connect_signal_to_slot(self):
         """ connect signal to slot """
-        cfg.appRestartSig.connect(self.__showRestartTooltip)
-        cfg.themeChanged.connect(self.__onThemeChanged)
+        cfg.appRestartSig.connect(self._show_restart_tooltip)
+        cfg.themeChanged.connect(self._on_Theme_changed)
 
-        # music in the pc
-        self.musicFolderCard.folderChanged.connect(
-            self.musicFoldersChanged)
-        self.downloadFolderCard.clicked.connect(
-            self.__onDownloadFolderCardClicked)
+        # model
+        self.workspace_folder_card.clicked.connect(
+            self._on_workspace_folder_card_clicked)
+
+        self.enable_tensorboard_card.checkedChanged.connect(
+            self.acrylicEnableChanged)
 
         # personalization
-        self.enableAcrylicCard.checkedChanged.connect(
+        self.enable_acrylic_ard.checkedChanged.connect(
             self.acrylicEnableChanged)
-        self.themeColorCard.colorChanged.connect(setThemeColor)
+        self.theme_color_card.colorChanged.connect(setThemeColor)
 
         # main panel
-        self.minimizeToTrayCard.checkedChanged.connect(
+        self.minimize_to_tray_card.checkedChanged.connect(
             self.minimizeToTrayChanged)

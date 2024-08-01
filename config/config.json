@@ -1,15 +1,13 @@
 {
-    "Folders": {
-        "Download": "D:/PyQt-Fluent-Widgets/examples/window/settings/download",
-        "LocalMusic": []
+    "personalization": {
+        "dpi_scale": "auto",
+        "enable_acrylic_background": false,
+        "language": "Auto",
+        "minimize_to_tray": true
     },
-    "MainWindow": {
-        "DpiScale": 1.25,
-        "EnableAcrylicBackground": true,
-        "Language": "zh_CN",
-        "MinimizeToTray": true,
-        "PlayBarColor": "#ff225c7f",
-        "RecentPlayNumbers": 300
+    "model": {
+        "enable_tensorboard": false,
+        "workspace_dir": "C:/Users/AC/PycharmProjects/ultraly_ui/header"
     },
     "QFluentWidgets": {
         "ThemeColor": "#ff009faa",
