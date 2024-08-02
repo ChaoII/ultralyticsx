@@ -13,6 +13,29 @@ from .model_info_card import ModelInfoCard
 from .model_train_parameter_card import ModelTrainParamCard, TrainParameter
 
 
+class CustomProcessBar(QWidget):
+    def __init__(self, parent=None):
+        super(CustomProcessBar, self).__init__(parent=parent)
+        self.value = 0
+        self.max_value = 0
+
+        self.psb_hly = QHBoxLayout(self)
+        self.psb_train = ProgressBar()
+        self.lbl_train_process = BodyLabel(f"{self.value:>3} / {self.max_value:<3}", self)
+        self.psb_hly.addWidget(self.psb_train)
+        self.psb_hly.addWidget(self.lbl_train_process)
+
+    def set_value(self, value):
+        self.value = value
+        self.psb_train.setValue(value)
+        self.lbl_train_process.setText(f"{self.value:>3} / {self.max_value:<3}")
+
+    def set_max_value(self, max_value):
+        self.max_value = max_value
+        self.psb_train.setMaximum(max_value)
+        self.lbl_train_process.setText(f"{self.value:>3} / {self.max_value:<3}")
+
+
 class ModelTrainWidget(QWidget):
     start_train_model_signal = Signal(str, int, int, float, int)
     stop_train_model_signal = Signal()
@@ -25,22 +48,18 @@ class ModelTrainWidget(QWidget):
         self.model_train_param_card = ModelTrainParamCard()
 
         gly_btn = QGridLayout()
+        # gly_btn.setContentsMargins(20, 10, 20, 10)
         self.btn_start_train = PrimaryPushButton(FluentIcon.PLAY, self.tr("start train"))
         self.btn_stop_train = PushButton(FluentIcon.PAUSE, self.tr("stop train"))
 
-        self.psb_hly = QHBoxLayout()
-        self.psb_train = ProgressBar()
-        self.lbl_train_process = BodyLabel(f"{'0':>3} / {'0':<3}", self)
-        self.psb_hly.addWidget(self.psb_train)
-        self.psb_hly.addWidget(self.lbl_train_process)
+        self.psb_train = CustomProcessBar()
+        self.psb_train.set_max_value(self.model_train_param_card.get_epochs())
 
         gly_btn.addWidget(self.btn_start_train, 0, 0)
         gly_btn.addWidget(self.btn_stop_train, 0, 1)
-        gly_btn.addLayout(self.psb_hly, 0, 2)
+        gly_btn.addWidget(self.psb_train, 0, 2)
 
-        self.psb_train.setValue(0)
-        # self.psb_train.setMaximum(int(self.le_epoch.text()))
-
+        self.psb_train.set_value(0)
         self.ted_train_log = TextEdit()
 
         vly_train_log = QVBoxLayout()
@@ -53,8 +72,8 @@ class ModelTrainWidget(QWidget):
         v_layout.addLayout(vly_train_log)
 
         self.btn_stop_train.setEnabled(False)
-
         self._train_param = TrainParameter()
+        self._connect_signals_and_slot()
 
     def _connect_signals_and_slot(self):
         self.model_train_param_card.train_param_changed.connect(self._on_train_param_changed)
@@ -62,6 +81,7 @@ class ModelTrainWidget(QWidget):
     @Slot(TrainParameter)
     def _on_train_param_changed(self, train_param: TrainParameter):
         self._train_param = train_param
+        self.psb_train.set_max_value(int(self._train_param.epoch))
 
 # self.le_epoch.textChanged.connect(lambda x: self.psb_train.setMaximum(int(x)))
 

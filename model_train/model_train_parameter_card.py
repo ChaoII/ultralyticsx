@@ -1,5 +1,5 @@
 from qfluentwidgets import HeaderCardWidget, BodyLabel, ComboBox, CheckBox, LineEdit, PrimaryPushButton, FluentIcon, \
-    LineEditButton
+    LineEditButton, CompactSpinBox, CompactDoubleSpinBox
 from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QVBoxLayout
 from PySide6.QtCore import Slot, Signal, Qt
 from .options import *
@@ -21,95 +21,102 @@ class ModelTrainParamCard(HeaderCardWidget):
         super().__init__(parent)
         self.setTitle(self.tr("model training parameter"))
 
-        self.dataset_lbl = BodyLabel(self.tr('dataset config file path: '), self)
-        self.dataset_config_led = LineEdit()
-        self.dataset_config_led.setPlaceholderText(self.tr("please select a dataset config file"))
-        self.load_dataset_config_btn = PrimaryPushButton(FluentIcon.UPDATE,
+        self.lbl_dataset = BodyLabel(self.tr('dataset config file path: '), self)
+        self.led_dataset_config = LineEdit()
+        self.led_dataset_config.setPlaceholderText(self.tr("please select a dataset config file"))
+        self.btn_load_dataset_config = PrimaryPushButton(FluentIcon.UPDATE,
                                                          self.tr('select folder'))
 
-        self.dataset_hly = QHBoxLayout()
-        self.dataset_hly.addWidget(self.dataset_config_led)
-        self.dataset_hly.addWidget(self.load_dataset_config_btn)
+        self.hly_dataset = QHBoxLayout()
+        self.hly_dataset.addWidget(self.led_dataset_config)
+        self.hly_dataset.addWidget(self.btn_load_dataset_config)
 
-        self.dataset_vly = QVBoxLayout()
-        self.dataset_vly.addWidget(self.dataset_lbl)
-        self.dataset_vly.addLayout(self.dataset_hly)
+        self.vly_dataset = QVBoxLayout()
+        self.vly_dataset.addWidget(self.lbl_dataset)
+        self.vly_dataset.addLayout(self.hly_dataset)
 
         # epoch
-        self.epoch_lbl = BodyLabel(self.tr('epoch: '), self)
-        self.epoch_led = LineEdit()
-        self.epoch_led.setText("10")
+        self.lbl_epoch = BodyLabel(self.tr('epoch: '), self)
+        self.sp_epoch = CompactSpinBox()
+        self.sp_epoch.setRange(1, 500)
+        self.sp_epoch.setValue(10)
 
         # batch size
-        self.batch_size_lbl = BodyLabel(self.tr('batch size: '), self)
-        self.batch_size_led = LineEdit()
-        self.batch_size_led.setText("16")
+        self.lbl_batch_size = BodyLabel(self.tr('batch size: '), self)
+        self.sp_batch_size = CompactSpinBox()
+        self.sp_batch_size.setRange(1, 32)
+        self.sp_batch_size.setValue(16)
 
         # learning rate
-        self.learning_rate_lbl = BodyLabel(self.tr('learning rate: '), self)
-        self.learning_rate_led = LineEdit()
-        self.learning_rate_led.setText("0.0025")
+        self.lbl_learning_rate = BodyLabel(self.tr('learning rate: '), self)
+        self.dsp_learning_rate = CompactDoubleSpinBox()
+        self.dsp_learning_rate.setRange(0, 0.5)
+        self.dsp_learning_rate.setValue(0.0025)
 
         # workers
-        self.workers_lbl = BodyLabel(self.tr('workers: '), self)
-        self.workers_led = LineEdit()
-        self.workers_led.setText("0")
+        self.lbl_workers = BodyLabel(self.tr('workers: '), self)
+        self.sp_workers = CompactSpinBox()
+        self.sp_workers.setRange(0, 8)
+        self.sp_workers.setValue(0)
 
-        self.epoch_vly = QVBoxLayout()
-        self.batch_size_vly = QVBoxLayout()
-        self.learning_rate_vly = QVBoxLayout()
-        self.workers_vly = QVBoxLayout()
+        self.vly_epoch = QVBoxLayout()
+        self.vly_batch_size = QVBoxLayout()
+        self.vly_learning_rate = QVBoxLayout()
+        self.vly_workers = QVBoxLayout()
 
-        self.epoch_vly.addWidget(self.epoch_lbl)
-        self.epoch_vly.addWidget(self.epoch_led)
+        self.vly_epoch.addWidget(self.lbl_epoch)
+        self.vly_epoch.addWidget(self.sp_epoch)
 
-        self.batch_size_vly.addWidget(self.batch_size_lbl)
-        self.batch_size_vly.addWidget(self.batch_size_led)
+        self.vly_batch_size.addWidget(self.lbl_batch_size)
+        self.vly_batch_size.addWidget(self.sp_batch_size)
 
-        self.learning_rate_vly.addWidget(self.learning_rate_lbl)
-        self.learning_rate_vly.addWidget(self.learning_rate_led)
+        self.vly_learning_rate.addWidget(self.lbl_learning_rate)
+        self.vly_learning_rate.addWidget(self.dsp_learning_rate)
 
-        self.workers_vly.addWidget(self.workers_lbl)
-        self.workers_vly.addWidget(self.workers_led)
+        self.vly_workers.addWidget(self.lbl_workers)
+        self.vly_workers.addWidget(self.sp_workers)
 
         self.hly = QHBoxLayout()
         self.hly.setSpacing(10)
         self.hly.setContentsMargins(0, 0, 0, 0)
-        self.hly.addLayout(self.epoch_vly)
-        self.hly.addLayout(self.batch_size_vly)
-        self.hly.addLayout(self.learning_rate_vly)
-        self.hly.addLayout(self.workers_vly)
+        self.hly.addLayout(self.vly_epoch)
+        self.hly.addLayout(self.vly_batch_size)
+        self.hly.addLayout(self.vly_learning_rate)
+        self.hly.addLayout(self.vly_workers)
 
         self.vly = QVBoxLayout()
-        self.vly.addLayout(self.dataset_vly)
+        self.vly.addLayout(self.vly_dataset)
         self.vly.addLayout(self.hly)
         self.viewLayout.addLayout(self.vly)
         self._connect_signals_and_slots()
 
         self.train_param = TrainParameter()
 
+    def get_epochs(self) -> int:
+        return self.sp_epoch.value()
+
     def _connect_signals_and_slots(self):
-        self.epoch_led.textChanged.connect(self._on_epoch_changed)
-        self.batch_size_led.textChanged.connect(self._on_batch_size_changed)
-        self.learning_rate_led.textChanged.connect(self._on_learning_rate_changed)
-        self.workers_led.textChanged.connect(self._on_workers_changed)
+        self.sp_epoch.valueChanged.connect(self._on_epoch_changed)
+        self.sp_batch_size.valueChanged.connect(self._on_batch_size_changed)
+        self.dsp_learning_rate.valueChanged.connect(self._on_learning_rate_changed)
+        self.sp_workers.valueChanged.connect(self._on_workers_changed)
 
     @Slot(int)
     def _on_epoch_changed(self, epoch: int):
-        self.train_param.epoch = int(epoch)
+        self.train_param.epoch = epoch
         self.train_param_changed.emit(self.train_param)
 
     @Slot(int)
     def _on_batch_size_changed(self, batch_size: int):
-        self.train_param.batch_size = int(batch_size)
+        self.train_param.batch_size = batch_size
         self.train_param_changed.emit(self.train_param)
 
     @Slot(float)
     def _on_learning_rate_changed(self, learning_rate: float):
-        self.train_param.learning_rate = float(learning_rate)
+        self.train_param.learning_rate = learning_rate
         self.train_param_changed.emit(self.train_param)
 
     @Slot(int)
     def _on_workers_changed(self, workers: int):
-        self.train_param.workers = int(workers)
+        self.train_param.workers = workers
         self.train_param_changed.emit(self.train_param)
