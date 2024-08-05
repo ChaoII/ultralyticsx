@@ -1,27 +1,7 @@
 from ultralytics import YOLO
 from PySide6.QtCore import Slot, Signal, QThread
-from loguru import logger
-from datetime import datetime
 
-NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-
-
-def log_format_info(message: str) -> str:
-    format_str = f"{NOW} | {'INFO':<8} | {message}"
-    return format_str
-
-
-def log_format_warning(message: str) -> str:
-    format_str = f"{NOW} | {'WARNING':<8} | {message}"
-    return format_str
-
-
-def log_format_error(message: str) -> str:
-    format_str = f"{NOW} | {'ERROR':<8} | {message}"
-    return format_str
-
-
-TIME = datetime.now().strftime("")
+from utils.utils import log_info
 
 
 class ModelTrainThread(QThread):
@@ -47,7 +27,6 @@ class ModelTrainThread(QThread):
         else:
             self.model = YOLO(f'{model_name}.yaml')
 
-        logger.info(f"current model name is {model_name}")
         self.model.add_callback("on_train_batch_start", self._on_train_batch_start)
         self.model.add_callback("on_train_batch_end", self._on_train_batch_end)
         self.model.add_callback("on_train_epoch_start", self._on_train_epoch_start)
@@ -65,7 +44,7 @@ class ModelTrainThread(QThread):
 
     def _on_train_epoch_start(self, trainer):
         loss_names = trainer.loss_names
-        info = f"{log_format_info(f' Epoch = {str(trainer.epoch + 1)}')}\n" \
+        info = f"{log_info(f' Epoch = {str(trainer.epoch + 1)}')}\n" \
                f"Epoch\t{loss_names[0]}\t{loss_names[1]}\t{loss_names[2]}\tloss\n" \
                f"{'=' * 75}"
         self.train_epoch_start_signal.emit(info)
@@ -77,7 +56,8 @@ class ModelTrainThread(QThread):
     def _on_fit_epoch_end(self, trainer):
         metrics = trainer.metrics
         if metrics.get("val/box_loss", -100) != -100:
-            formatted_metrics = f"Epoch\tprecision(B)\trecall(B)\tmAP50(B)\tmAP50-95(B)\tbox_loss\tcls_loss\tdfl_loss\n" \
+            formatted_metrics = f"{self.tr('val result: ')} \n" \
+                                f"Epoch\tprecision(B)\trecall(B)\tmAP50(B)\tmAP50-95(B)\tbox_loss\tcls_loss\tdfl_loss\n" \
                                 f"{trainer.epoch + 1}/{trainer.epochs}\t{metrics['metrics/precision(B)']:.4f}\t" \
                                 f"{metrics['metrics/recall(B)']:.4f}\t{metrics['metrics/mAP50(B)']:.4f}\t" \
                                 f"{metrics['metrics/mAP50-95(B)']:.4f}\t{metrics.get('val/box_loss', 0.0):.4f}\t" \
@@ -111,6 +91,8 @@ class ModelTrainThread(QThread):
     def run(self):
         self.model.train(data=self.dataset_config_path, epochs=self.epoch, batch=self.batch_size,
                          lr0=self.learning_rate, workers=self.workers, verbose=False, resume=self.resume)
+
+        self.model.val()
 
     @Slot()
     def stop_train(self):

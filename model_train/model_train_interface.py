@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy, QPushButton, QGroupBox, QGridLayout,
-                               QLineEdit, QTextEdit, QProgressBar, QComboBox, QCheckBox, QFileDialog, QFormLayout)
-from .options import *
+                               QLineEdit, QTextEdit, QProgressBar, QComboBox, QCheckBox, QFileDialog, QFormLayout,
+                               QSplitter)
+
 from PySide6.QtCore import Slot, Signal, Qt, QThread, QCoreApplication
-from loguru import logger
-import threading
-from .trainer import ModelTrainThread, log_format_info, log_format_error, log_format_warning
+from utils.utils import log_info, log_error, log_warning, format_log
+from .trainer import ModelTrainThread
 from qfluentwidgets import HeaderCardWidget, BodyLabel, ComboBox, CheckBox, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressRing, ProgressBar, TextEdit
+    ProgressRing, ProgressBar, TextEdit, InfoBar, InfoBarPosition
 from pathlib import Path
 
 from .model_info_card import ModelInfoCard
@@ -43,6 +43,11 @@ class ModelTrainWidget(QWidget):
     def __init__(self, parent=None):
         super(ModelTrainWidget, self).__init__(parent=parent)
         self.setObjectName("model_train_widget")
+        self.vly = QVBoxLayout(self)
+
+        self.spliter = QSplitter(Qt.Orientation.Vertical, self)
+        self.vly.addWidget(self.spliter)
+        self.widget_top = QWidget()
 
         self.model_info_card = ModelInfoCard()
         self.model_train_param_card = ModelTrainParamCard()
@@ -62,169 +67,144 @@ class ModelTrainWidget(QWidget):
         self.psb_train.set_value(0)
         self.ted_train_log = TextEdit()
 
-        vly_train_log = QVBoxLayout()
+        self.widget_bottom = QWidget()
+        vly_train_log = QVBoxLayout(self.widget_bottom)
         vly_train_log.addWidget(self.ted_train_log)
 
-        v_layout = QVBoxLayout(self)
+        v_layout = QVBoxLayout(self.widget_top)
         v_layout.addWidget(self.model_info_card)
         v_layout.addWidget(self.model_train_param_card)
         v_layout.addLayout(gly_btn)
-        v_layout.addLayout(vly_train_log)
+
+        self.spliter.addWidget(self.widget_top)
+        self.spliter.addWidget(self.widget_bottom)
+        self.spliter.setStretchFactor(1, 1)
+        self.spliter.setHandleWidth(1)
 
         self.btn_stop_train.setEnabled(False)
         self._train_param = TrainParameter()
         self._connect_signals_and_slot()
 
+        self._current_model_name = ""
+        self._use_pretrain = False
+        self.model_thread = None
+        self._train_finished = True
+        self._resume = False
+        self._last_model = ""
+
     def _connect_signals_and_slot(self):
         self.model_train_param_card.train_param_changed.connect(self._on_train_param_changed)
+        self.model_info_card.model_status_changed.connect(self._on_model_status_changed)
+        self.btn_start_train.clicked.connect(self.start_train)
+        self.btn_stop_train.clicked.connect(self.stop_train)
 
     @Slot(TrainParameter)
     def _on_train_param_changed(self, train_param: TrainParameter):
         self._train_param = train_param
         self.psb_train.set_max_value(int(self._train_param.epoch))
 
-# self.le_epoch.textChanged.connect(lambda x: self.psb_train.setMaximum(int(x)))
+    def _on_model_status_changed(self, model_name, use_pretrain):
+        self._current_model_name = model_name
+        self._use_pretrain = use_pretrain
 
-#     self.btn_start_train.clicked.connect(self.start_train)
-#     self.btn_stop_train.clicked.connect(self.stop_train)
-#     self.btn_select_data_config.clicked.connect(self.select_data_config)
-#
-#     # define
-#     self.model_thread = None
-#     self.current_model_name = ""
-#     self.use_pretrain = False
-#     self._train_finished = True
-#     self._resume = False
-#     self._last_model = ""
-#     self._init_model_type_and_name_cmb()
-#
-# def _init_model_type_and_name_cmb(self):
-#     # 初始化模型类型列表
-#     for model_type in model_type_option:
-#         pass
-#         # self.cmb_model_type.addItem(model_type)
-#     # 初始化模型名称
-#     model_names = type_model_mapping.get(model_type_option[0], [])
-#     for model_name in model_names:
-#         pass
-#         # self.cmb_model_name.addItem(model_name)
-#     # 初始化模型
-#     # self.current_model_name = self.cmb_model_name.currentText()
-#
-# def _initial_model(self,
-#                    current_model_name: str,
-#                    use_pretrain: bool,
-#                    data_config: str,
-#                    epochs: int,
-#                    batch_size: int,
-#                    learning_rate: float,
-#                    workers: int,
-#                    resume: bool):
-#     logger.info(f"main thread, thread id is: {threading.get_ident()}")
-#     self.model_thread = ModelTrainThread(current_model_name,
-#                                          use_pretrain,
-#                                          data_config,
-#                                          epochs,
-#                                          batch_size,
-#                                          learning_rate,
-#                                          workers,
-#                                          resume)
-#     self._train_finished = False
-#     self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
-#     self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
-#     self.model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
-#     self.model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
-#     self.model_thread.train_end_signal.connect(self.on_handle_train_end)
-#
-#     self.stop_train_model_signal.connect(self.model_thread.stop_train)
-#
-# @Slot(str)
-# def _set_model_name(self, model_type: str):
-#     # self.cmb_model_name.clear()
-#     model_names = type_model_mapping.get(model_type, [])
-#     for model_name in model_names:
-#         pass
-#         # self.cmb_model_name.addItem(model_name)
-#     pass
-#
-# def _turn_widget_enable_status(self):
-#     # self.cmb_model_type.setEnabled(not self.cmb_model_type.isEnabled())
-#     # self.cmb_model_name.setEnabled(not self.cmb_model_name.isEnabled())
-#     self.ckb_use_pretrain.setEnabled(not self.ckb_use_pretrain.isEnabled())
-#
-#     self.le_epoch.setEnabled(not self.le_epoch.isEnabled())
-#     self.le_batch.setEnabled(not self.le_batch.isEnabled())
-#     self.le_learning_rate.setEnabled(not self.le_learning_rate.isEnabled())
-#     self.le_workers.setEnabled(not self.le_workers.isEnabled())
-#     self.le_train_data_config.setEnabled(not self.le_train_data_config.isEnabled())
-#
-#     self.btn_start_train.setEnabled(not self.btn_start_train.isEnabled())
-#     self.btn_stop_train.setEnabled(not self.btn_stop_train.isEnabled())
-#
-# @Slot()
-# def start_train(self):
-#     self.ted_train_log.append(log_format_info(f"模型{self.current_model_name}开始训练"))
-#     if not self._train_finished:
-#         self._resume = True
-#     if self._last_model:
-#         current_model_name = self._last_model
-#     else:
-#         current_model_name = self.current_model_name
-#         self._resume = False
-#
-#     self._initial_model(current_model_name, self.use_pretrain,
-#                         self.le_train_data_config.text(),
-#                         int(self.le_epoch.text()), int(self.le_batch.text()),
-#                         float(self.le_learning_rate.text()),
-#                         int(self.le_workers.text()), self._resume)
-#     self._turn_widget_enable_status()
-#     self.model_thread.start()
-#
-# @Slot(str)
-# def on_model_name_changed(self, model_name: str):
-#     self.current_model_name = model_name
-#
-# @Slot(Qt.CheckState)
-# def on_use_pretrain_model_status_changed(self, status: Qt.CheckState):
-#     self.use_pretrain = Qt.CheckState.Checked == status
-#
-# @Slot()
-# def stop_train(self):
-#     self.stop_train_model_signal.emit()
-#     self.model_thread.quit()
-#     self.model_thread.wait()
-#     self._turn_widget_enable_status()
-#     # 立即刷新界面
-#     QCoreApplication.processEvents()
-#     self.ted_train_log.append(log_format_info("用户手动停止，训练结束，点击开始训练可以继续执行训练"))
-#
-# @Slot(str)
-# def on_handle_epoch_start(self, split: str):
-#     self.ted_train_log.append(split)
-#
-# @Slot(str)
-# def on_handle_batch_end(self, metrics: str):
-#     self.ted_train_log.append(metrics)
-#
-# @Slot(int, str)
-# def on_handle_epoch_end(self, epoch: int, last_model: str):
-#     self._last_model = last_model
-#     self.psb_train.setValue(epoch)
-#
-# @Slot(str)
-# def on_handle_fit_epoch_end(self, format_metrics: str):
-#     self.ted_train_log.append(format_metrics)
-#
-# @Slot(int)
-# def on_handle_train_end(self, cur_epoch: int):
-#     self._turn_widget_enable_status()
-#     self._train_finished = True
-#     if cur_epoch == int(self.le_epoch.text()):
-#         self.ted_train_log.append(log_format_info(f"训练完成epoch = {cur_epoch}"))
-#     else:
-#         self.ted_train_log.append(log_format_info(f"训练提前完成，当前epoch = {cur_epoch}"))
-#
-# @Slot()
-# def select_data_config(self):
-#     file_name, _ = QFileDialog.getOpenFileName(self, "打开数据集配置文件", "", "All Files (*);;yaml (yaml,yml)")
-#     self.le_train_data_config.setText(Path(file_name).resolve().as_posix())
+    def _initial_model(self):
+        self.model_thread = ModelTrainThread(self._current_model_name,
+                                             self._use_pretrain,
+                                             self._train_param.dataset_config,
+                                             self._train_param.epoch,
+                                             self._train_param.batch_size,
+                                             self._train_param.learning_rate,
+                                             self._train_param.workers,
+                                             self._resume)
+        self._train_finished = False
+        self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
+        self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
+        self.model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
+        self.model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
+        self.model_thread.train_end_signal.connect(self.on_handle_train_end)
+
+        self.stop_train_model_signal.connect(self.model_thread.stop_train)
+
+    def _turn_widget_enable_status(self):
+        # model info card
+        self.model_info_card.cmb_model_type.setEnabled(not self.model_info_card.cmb_model_type.isEnabled())
+        self.model_info_card.cmb_model_name.setEnabled(not self.model_info_card.cmb_model_name.isEnabled())
+        self.model_info_card.ckb_use_pretrain_model.setEnabled(
+            not self.model_info_card.ckb_use_pretrain_model.isEnabled())
+
+        # model train parameter card
+        self.model_train_param_card.btn_load_dataset_config.setEnabled(
+            not self.model_train_param_card.btn_load_dataset_config.isEnabled())
+        self.model_train_param_card.sp_epoch.setEnabled(not self.model_train_param_card.sp_epoch.isEnabled())
+        self.model_train_param_card.sp_batch_size.setEnabled(not self.model_train_param_card.sp_batch_size.isEnabled())
+        self.model_train_param_card.dsp_learning_rate.setEnabled(
+            not self.model_train_param_card.dsp_learning_rate.isEnabled())
+        self.model_train_param_card.sp_workers.setEnabled(not self.model_train_param_card.sp_workers.isEnabled())
+        self.model_train_param_card.led_dataset_config.setEnabled(
+            not self.model_train_param_card.led_dataset_config.isEnabled())
+
+        # train interface
+        self.btn_start_train.setEnabled(not self.btn_start_train.isEnabled())
+        self.btn_stop_train.setEnabled(not self.btn_stop_train.isEnabled())
+
+    @Slot()
+    def start_train(self):
+        self.ted_train_log.append(
+            log_info(f"{self.tr('model')}{self._current_model_name}{self.tr('start training')}"))
+        if not self._train_finished:
+            self._resume = True
+        if self._last_model:
+            self._current_model_name = self._last_model
+            log_warning(f"{self.tr('model will resume to train, last model is: ')}{self._last_model}")
+        else:
+            self._resume = False
+
+        self._initial_model()
+        self._turn_widget_enable_status()
+        self.model_thread.start()
+
+    @Slot()
+    def stop_train(self):
+        self.stop_train_model_signal.emit()
+        self.model_thread.quit()
+        self.model_thread.wait()
+        self._turn_widget_enable_status()
+        # 立即刷新界面
+        QCoreApplication.processEvents()
+        self.ted_train_log.append(
+            log_warning(f"model training stopped by user, click start training to resume training process"))
+
+    @Slot(str)
+    def on_handle_epoch_start(self, split: str):
+        self.ted_train_log.append(format_log(split, color="#0b80e0"))
+
+    @Slot(str)
+    def on_handle_batch_end(self, metrics: str):
+        self.ted_train_log.append(format_log(metrics, color="#0b80e0"))
+
+    @Slot(int, str)
+    def on_handle_epoch_end(self, epoch: int, last_model: str):
+        self._last_model = last_model
+        self.psb_train.set_value(epoch)
+
+    @Slot(str)
+    def on_handle_fit_epoch_end(self, format_metrics: str):
+        self.ted_train_log.append(format_log(format_metrics, color="#0b80e0"))
+
+    @Slot(int)
+    def on_handle_train_end(self, cur_epoch: int):
+        self._turn_widget_enable_status()
+        self._train_finished = True
+        if cur_epoch == int(self._train_param.epoch):
+            self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
+        else:
+            self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
+        InfoBar.success(
+            title=f"{self.tr('Info')}",
+            content=f"{self.tr('train finished')} epoch = {cur_epoch}",
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self
+        )

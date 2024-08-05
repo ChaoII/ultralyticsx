@@ -1,15 +1,18 @@
+from pathlib import Path
+
 from qfluentwidgets import HeaderCardWidget, BodyLabel, ComboBox, CheckBox, LineEdit, PrimaryPushButton, FluentIcon, \
     LineEditButton, CompactSpinBox, CompactDoubleSpinBox
-from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QVBoxLayout, QFileDialog
 from PySide6.QtCore import Slot, Signal, Qt
 from .options import *
 
 
 class TrainParameter:
+    dataset_config: str
     epoch: int = 0
     batch_size: int = 0
     learning_rate: float = 0.0
-    works: int = 0
+    workers: int = 0
 
 
 class ModelTrainParamCard(HeaderCardWidget):
@@ -19,6 +22,9 @@ class ModelTrainParamCard(HeaderCardWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.train_param = TrainParameter()
+
         self.setTitle(self.tr("model training parameter"))
 
         self.lbl_dataset = BodyLabel(self.tr('dataset config file path: '), self)
@@ -40,24 +46,29 @@ class ModelTrainParamCard(HeaderCardWidget):
         self.sp_epoch = CompactSpinBox()
         self.sp_epoch.setRange(1, 500)
         self.sp_epoch.setValue(10)
+        self.train_param.epoch = 10
 
         # batch size
         self.lbl_batch_size = BodyLabel(self.tr('batch size: '), self)
         self.sp_batch_size = CompactSpinBox()
         self.sp_batch_size.setRange(1, 32)
         self.sp_batch_size.setValue(16)
+        self.train_param.batch_size = 16
 
         # learning rate
         self.lbl_learning_rate = BodyLabel(self.tr('learning rate: '), self)
         self.dsp_learning_rate = CompactDoubleSpinBox()
+        self.dsp_learning_rate.setDecimals(6)
         self.dsp_learning_rate.setRange(0, 0.5)
         self.dsp_learning_rate.setValue(0.0025)
+        self.train_param.learning_rate = 0.0025
 
         # workers
         self.lbl_workers = BodyLabel(self.tr('workers: '), self)
         self.sp_workers = CompactSpinBox()
         self.sp_workers.setRange(0, 8)
         self.sp_workers.setValue(0)
+        self.train_param.workers = 0
 
         self.vly_epoch = QVBoxLayout()
         self.vly_batch_size = QVBoxLayout()
@@ -90,8 +101,6 @@ class ModelTrainParamCard(HeaderCardWidget):
         self.viewLayout.addLayout(self.vly)
         self._connect_signals_and_slots()
 
-        self.train_param = TrainParameter()
-
     def get_epochs(self) -> int:
         return self.sp_epoch.value()
 
@@ -100,6 +109,7 @@ class ModelTrainParamCard(HeaderCardWidget):
         self.sp_batch_size.valueChanged.connect(self._on_batch_size_changed)
         self.dsp_learning_rate.valueChanged.connect(self._on_learning_rate_changed)
         self.sp_workers.valueChanged.connect(self._on_workers_changed)
+        self.btn_load_dataset_config.clicked.connect(self._on_clicked_load_dataset_config)
 
     @Slot(int)
     def _on_epoch_changed(self, epoch: int):
@@ -119,4 +129,14 @@ class ModelTrainParamCard(HeaderCardWidget):
     @Slot(int)
     def _on_workers_changed(self, workers: int):
         self.train_param.workers = workers
+        self.train_param_changed.emit(self.train_param)
+
+    @Slot()
+    def _on_clicked_load_dataset_config(self):
+        #     self.le_train_data_config.setText(Path(file_name).resolve().as_posix())
+        filename, _ = QFileDialog.getOpenFileName(self, self.tr("info"), self.tr("select a dataset config file"), "",
+                                                  "All Files (*);;yaml (yaml,yml)")
+        filename_normal = Path(filename).resolve().as_posix()
+        self.led_dataset_config.setText(filename_normal)
+        self.train_param.dataset_config = filename_normal
         self.train_param_changed.emit(self.train_param)

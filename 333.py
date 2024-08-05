@@ -2,18 +2,19 @@
 import sys
 import os
 
-from utils import show_center
-from PySide6.QtCore import Qt, QUrl, QTranslator
-from PySide6.QtGui import QIcon, QDesktopServices
+from utils.utils import show_center
+from PySide6.QtCore import Qt, QTranslator
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
-from qfluentwidgets import (NavigationItemPosition, MessageBox, setTheme, Theme, FluentWindow,
-                            NavigationAvatarWidget, isDarkTheme, qrouter, FluentTranslator, SubtitleLabel, setFont,
+from qfluentwidgets import (NavigationItemPosition, FluentWindow,
+                            NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
                             InfoBadge,
-                            InfoBadgePosition, FluentBackgroundTheme)
+                            InfoBadgePosition)
 from qfluentwidgets import FluentIcon as FIcon
 
 from settings import SettingInterface, cfg
 from model_train import ModelTrainWidget
+from dataset_config import DataConvertWidget
 
 
 class Widget(QFrame):
@@ -34,7 +35,7 @@ class Window(FluentWindow):
 
         # create sub interface
         self.home_interface = Widget('Search Interface', self)
-        self.dataset_interface = Widget('Music Interface', self)
+        self.dataset_interface = DataConvertWidget(self)
         self.train_interface = ModelTrainWidget(self)
         self.val_interface = Widget('Val Interface', self)
         self.export_interface = Widget('Export Interface', self)
