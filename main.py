@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QApplication,
                                QFileDialog, QTabWidget)
 from PySide6.QtCore import Slot
 from dataset_config.data_convert import DataConvertWidget
-from model_train.model_train import ModelTrainWidget
+from model_train import ModelTrainWidget
 from config_widget import ConfigWidget
 
 

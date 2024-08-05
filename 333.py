@@ -8,8 +8,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
-                            InfoBadge,
-                            InfoBadgePosition)
+                            InfoBadge, InfoBadgePosition)
 from qfluentwidgets import FluentIcon as FIcon
 
 from settings import SettingInterface, cfg
