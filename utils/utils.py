@@ -1,6 +1,8 @@
 from loguru import logger
 from datetime import datetime
 from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtGui import QColor
+from random import randint
 
 NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
@@ -36,3 +38,31 @@ def show_center(widget: QWidget):
     w, h = desktop.width(), desktop.height()
     widget.move(w // 2 - widget.width() // 2, h // 2 - widget.height() // 2)
     widget.show()
+
+
+def generate_color_map(classes: int):
+    colors = []
+    for _ in range(classes):
+        r = randint(0, 155)
+        g = randint(0, 155)
+        b = randint(0, 155)
+        colors.append(QColor(r, g, b))
+    return colors
+
+
+def invert_color(color):
+    # 获取原始颜色的RGB值
+    red = color.red()
+    green = color.green()
+    blue = color.blue()
+
+    # 对RGB值取反
+    inverted_red = 255 - red
+    inverted_green = 255 - green
+    inverted_blue = 255 - blue
+
+    # 创建一个新的QColor对象，包含取反后的RGB值
+    inverted_color = QColor(inverted_red, inverted_green, inverted_blue)
+
+    # 返回取反后的颜色
+    return inverted_color
