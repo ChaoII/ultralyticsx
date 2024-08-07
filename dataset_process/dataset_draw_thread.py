@@ -1,9 +1,10 @@
 import os
 from pathlib import Path
 
+import numpy as np
 from PySide6.QtCore import QSize, Signal, QRect, QThread
 from PySide6.QtGui import QPixmap, QPainter, QPen, QFont, QBrush, QFontMetrics
-
+from .utils import plot_labels
 from utils.utils import *
 
 SMALL = QSize(60, 60)
@@ -20,7 +21,7 @@ class DatasetDrawThread(QThread):
     def __init__(self, labels_map: dict | None = None):
         super().__init__()
         self.max_draw_num = 50
-        self.image_dir = None
+        self.image_dir: Path | None = None
         self.annotation_dir = None
         self.draw_labels = False
         self.labels_map = labels_map
@@ -41,9 +42,11 @@ class DatasetDrawThread(QThread):
         self.max_draw_num = max_draw_num
 
     def run(self):
+        cls = []
+        boxes = []
         for index, filename in enumerate(os.listdir(self.image_dir.resolve().as_posix())):
             if index >= self.max_draw_num:
-                return
+                break
             file_path = self.image_dir / filename
             pix = QPixmap(file_path.resolve().as_posix())
             if self.draw_labels:
@@ -84,4 +87,7 @@ class DatasetDrawThread(QThread):
                         painter.drawText(new_rect, label)
                         painter.end()
 
+                        cls.append(category_id)
+                        boxes.append([x_center, y_center, width, height])
             self.draw_labels_finished.emit(filename, pix)
+        plot_labels(np.array(boxes), np.array(cls), self.labels_map, self.image_dir.parent.parent)

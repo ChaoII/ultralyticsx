@@ -1,7 +1,7 @@
 from pathlib import Path
 import warnings
 import matplotlib.pyplot as plt
-import ops
+from .ops import xywh2xyxy
 from PIL import Image, ImageDraw
 import numpy as np
 
@@ -85,24 +85,14 @@ class Colors:
 colors = Colors()  # create instance for 'from utils.plots import colors'
 
 
-def plot_labels(boxes, cls, names=(), save_dir=Path(""), on_plot=None):
+def plot_labels(boxes: np.ndarray, cls, names=(), save_dir=Path("")):
     """Plot training labels including class histograms and box statistics."""
     import pandas  # scope for faster 'import ultralytics'
     import seaborn  # scope for faster 'import ultralytics'
 
-    # Filter matplotlib>=3.7.2 warning and Seaborn use_inf and is_categorical FutureWarnings
-    warnings.filterwarnings("ignore", category=UserWarning, message="The figure layout has changed to tight")
-    warnings.filterwarnings("ignore", category=FutureWarning)
-
     nc = int(cls.max() + 1)  # number of classes
     boxes = boxes[:1000000]  # limit to 1M boxes
     x = pandas.DataFrame(boxes, columns=["x", "y", "width", "height"])
-
-    # Seaborn correlogram
-    seaborn.pairplot(x, corner=True, diag_kind="auto", kind="hist", diag_kws=dict(bins=50), plot_kws=dict(pmax=0.9))
-    plt.savefig(save_dir / "labels_correlogram.jpg", dpi=200)
-    plt.close()
-
     # Matplotlib labels
     ax = plt.subplots(2, 2, figsize=(8, 8), tight_layout=True)[1].ravel()
     y = ax[0].hist(cls, bins=np.linspace(0, nc, nc + 1) - 0.5, rwidth=0.8)
@@ -119,7 +109,8 @@ def plot_labels(boxes, cls, names=(), save_dir=Path(""), on_plot=None):
 
     # Rectangles
     boxes[:, 0:2] = 0.5  # center
-    boxes = ops.xywh2xyxy(boxes) * 1000
+    boxes = (xywh2xyxy(boxes) * 1000).astype(np.int32)
+
     img = Image.fromarray(np.ones((1000, 1000, 3), dtype=np.uint8) * 255)
     for cls, box in zip(cls[:500], boxes[:500]):
         ImageDraw.Draw(img).rectangle(box, width=1, outline=colors(cls))  # plot
@@ -133,5 +124,3 @@ def plot_labels(boxes, cls, names=(), save_dir=Path(""), on_plot=None):
     fname = save_dir / "labels.jpg"
     plt.savefig(fname, dpi=200)
     plt.close()
-    if on_plot:
-        on_plot(fname)
