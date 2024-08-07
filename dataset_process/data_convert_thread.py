@@ -8,7 +8,6 @@ import yaml
 from loguru import logger
 from pycocotools.coco import COCO
 from tqdm import tqdm
-from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtCore import QThread, Signal
 
 ROOT_DIR = os.path.join(os.path.expanduser("~"), ".gradio")

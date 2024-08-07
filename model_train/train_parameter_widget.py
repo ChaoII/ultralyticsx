@@ -1,10 +1,9 @@
 from pathlib import Path
 
-from qfluentwidgets import HeaderCardWidget, BodyLabel, ComboBox, CheckBox, LineEdit, PrimaryPushButton, FluentIcon, \
-    LineEditButton, CompactSpinBox, CompactDoubleSpinBox
-from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QVBoxLayout, QFileDialog
-from PySide6.QtCore import Slot, Signal, Qt
-from .options import *
+from PySide6.QtCore import Slot, Signal
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QFileDialog
+from qfluentwidgets import HeaderCardWidget, BodyLabel, LineEdit, PrimaryPushButton, FluentIcon, \
+    CompactSpinBox, CompactDoubleSpinBox
 
 
 class TrainParameter:
@@ -110,6 +109,12 @@ class ModelTrainParamCard(HeaderCardWidget):
         self.dsp_learning_rate.valueChanged.connect(self._on_learning_rate_changed)
         self.sp_workers.valueChanged.connect(self._on_workers_changed)
         self.btn_load_dataset_config.clicked.connect(self._on_clicked_load_dataset_config)
+        self.led_dataset_config.textChanged.connect(self._on_data_config_text_changed)
+
+    @Slot(str)
+    def _on_data_config_text_changed(self, file_path):
+        self.train_param.dataset_config = file_path
+        self.train_param_changed.emit(self.train_param)
 
     @Slot(int)
     def _on_epoch_changed(self, epoch: int):
@@ -133,10 +138,7 @@ class ModelTrainParamCard(HeaderCardWidget):
 
     @Slot()
     def _on_clicked_load_dataset_config(self):
-        #     self.le_train_data_config.setText(Path(file_name).resolve().as_posix())
         filename, _ = QFileDialog.getOpenFileName(self, self.tr("info"), self.tr("select a dataset config file"), "",
                                                   "All Files (*);;yaml (yaml,yml)")
         filename_normal = Path(filename).resolve().as_posix()
         self.led_dataset_config.setText(filename_normal)
-        self.train_param.dataset_config = filename_normal
-        self.train_param_changed.emit(self.train_param)

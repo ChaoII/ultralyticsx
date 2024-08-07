@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (QApplication,
                                QVBoxLayout, QWidget,
                                QFileDialog, QTabWidget)
 from PySide6.QtCore import Slot
-from dataset_config.data_convert import DataConvertWidget
+from dataset_process.data_convert import DataConvertWidget
 from model_train import ModelTrainWidget
 from config_widget import ConfigWidget
 
@@ -24,6 +24,8 @@ class MainWindow(QWidget):
         tab_widget.addTab(self.config_widget, "参数配置")
 
         layout.addWidget(tab_widget)
+
+
 
     @Slot()
     def load_data(self):

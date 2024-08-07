@@ -13,7 +13,7 @@ from qfluentwidgets import FluentIcon as FIcon
 
 from settings import SettingInterface, cfg
 from model_train import ModelTrainWidget
-from dataset_config import DataConvertWidget
+from dataset_process import DataProcessWidget
 
 
 class Widget(QFrame):
@@ -34,7 +34,7 @@ class Window(FluentWindow):
 
         # create sub interface
         self.home_interface = Widget('Search Interface', self)
-        self.dataset_interface = DataConvertWidget(self)
+        self.dataset_interface = DataProcessWidget(self)
         self.train_interface = ModelTrainWidget(self)
         self.val_interface = Widget('Val Interface', self)
         self.export_interface = Widget('Export Interface', self)

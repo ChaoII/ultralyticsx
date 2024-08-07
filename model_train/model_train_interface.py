@@ -1,16 +1,13 @@
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy, QPushButton, QGroupBox, QGridLayout,
-                               QLineEdit, QTextEdit, QProgressBar, QComboBox, QCheckBox, QFileDialog, QFormLayout,
+from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication
+from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
                                QSplitter)
+from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
+    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip
 
-from PySide6.QtCore import Slot, Signal, Qt, QThread, QCoreApplication
-from utils.utils import log_info, log_error, log_warning, format_log
+from utils.utils import log_info, log_warning, format_log
+from .model_info_widget import ModelInfoCard
+from .train_parameter_widget import ModelTrainParamCard, TrainParameter
 from .trainer import ModelTrainThread
-from qfluentwidgets import HeaderCardWidget, BodyLabel, ComboBox, CheckBox, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressRing, ProgressBar, TextEdit, InfoBar, InfoBarPosition
-from pathlib import Path
-
-from .model_info_card import ModelInfoCard
-from .model_train_parameter_card import ModelTrainParamCard, TrainParameter
 
 
 class CustomProcessBar(QWidget):
@@ -82,6 +79,8 @@ class ModelTrainWidget(QWidget):
         self.spliter.setHandleWidth(1)
 
         self.btn_stop_train.setEnabled(False)
+        self.state_tool_tip = None
+
         self._train_param = TrainParameter()
         self._connect_signals_and_slot()
 
@@ -95,8 +94,8 @@ class ModelTrainWidget(QWidget):
     def _connect_signals_and_slot(self):
         self.model_train_param_card.train_param_changed.connect(self._on_train_param_changed)
         self.model_info_card.model_status_changed.connect(self._on_model_status_changed)
-        self.btn_start_train.clicked.connect(self.start_train)
-        self.btn_stop_train.clicked.connect(self.stop_train)
+        self.btn_start_train.clicked.connect(self._on_start_train_clicked)
+        self.btn_stop_train.clicked.connect(self._on_stop_train_clicked)
 
     @Slot(TrainParameter)
     def _on_train_param_changed(self, train_param: TrainParameter):
@@ -148,23 +147,29 @@ class ModelTrainWidget(QWidget):
         self.btn_stop_train.setEnabled(not self.btn_stop_train.isEnabled())
 
     @Slot()
-    def start_train(self):
+    def _on_start_train_clicked(self):
         self.ted_train_log.append(
-            log_info(f"{self.tr('model')}{self._current_model_name}{self.tr('start training')}"))
+            log_info(f"{self.tr('model ')}{self._current_model_name}{self.tr(' start training')}"))
         if not self._train_finished:
             self._resume = True
-        if self._last_model:
+        if self._resume and self._last_model:
             self._current_model_name = self._last_model
             log_warning(f"{self.tr('model will resume to train, last model is: ')}{self._last_model}")
         else:
             self._resume = False
-
         self._initial_model()
         self._turn_widget_enable_status()
+
+        # 设置状态工具栏并显示
+        self.state_tool_tip = StateToolTip(
+            self.tr('The model is currently being trained '), self.tr('Please wait patiently'), self.window())
+        self.state_tool_tip.move(self.state_tool_tip.getSuitablePos())
+        self.state_tool_tip.show()
+
         self.model_thread.start()
 
     @Slot()
-    def stop_train(self):
+    def _on_stop_train_clicked(self):
         self.stop_train_model_signal.emit()
         self.model_thread.quit()
         self.model_thread.wait()
@@ -199,12 +204,8 @@ class ModelTrainWidget(QWidget):
             self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
         else:
             self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
-        InfoBar.success(
-            title=f"{self.tr('Info')}",
-            content=f"{self.tr('train finished')} epoch = {cur_epoch}",
-            orient=Qt.Orientation.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=2000,
-            parent=self
-        )
+        # 数据转换完成，显示状态信息
+        self.state_tool_tip.setContent(
+            self.tr('Model training is completed!') + ' 😆')
+        self.state_tool_tip.setState(True)
+        self.state_tool_tip = None
