@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 from PySide6.QtCore import QSize, Signal, QRect, QThread
 from PySide6.QtGui import QPixmap, QPainter, QPen, QFont, QBrush, QFontMetrics
-from .utils import plot_labels
 from utils.utils import *
 
 SMALL = QSize(60, 60)
@@ -17,6 +16,7 @@ DATASET_TYPES = ["train", "val", "test"]
 
 class DatasetDrawThread(QThread):
     draw_labels_finished = Signal(str, QPixmap)
+    draw_labels_info_finished = Signal(np.ndarray, np.ndarray, dict)
 
     def __init__(self, labels_map: dict | None = None):
         super().__init__()
@@ -42,8 +42,6 @@ class DatasetDrawThread(QThread):
         self.max_draw_num = max_draw_num
 
     def run(self):
-        cls = []
-        boxes = []
         for index, filename in enumerate(os.listdir(self.image_dir.resolve().as_posix())):
             if index >= self.max_draw_num:
                 break
@@ -86,8 +84,5 @@ class DatasetDrawThread(QThread):
                         painter.setPen(QPen(inv_color))
                         painter.drawText(new_rect, label)
                         painter.end()
-
-                        cls.append(category_id)
-                        boxes.append([x_center, y_center, width, height])
             self.draw_labels_finished.emit(filename, pix)
-        plot_labels(np.array(boxes), np.array(cls), self.labels_map, self.image_dir.parent.parent)
+

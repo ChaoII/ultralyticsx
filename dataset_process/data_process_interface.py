@@ -1,10 +1,16 @@
+from collections import Counter
 from pathlib import Path
 
+import numpy as np
+import pyqtgraph as pg
 from PySide6.QtCore import Slot, Qt, QSize, Signal
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QSizePolicy, QFileDialog, QFormLayout, QSplitter)
+from pyqtgraph import PlotItem, ViewBox
 from qfluentwidgets import HeaderCardWidget, BodyLabel, LineEdit, PrimaryPushButton, FluentIcon, TextEdit, \
-    StateToolTip
+    StateToolTip, Theme, isDarkTheme
 
+from core.event_manager import EventManager
+from settings import cfg
 from utils.utils import *
 from .data_convert_thread import DataConvertThread, LoadDatasetInfo
 from .dataset_show_widget import DatasetDrawWidget
@@ -12,7 +18,6 @@ from .dataset_show_widget import DatasetDrawWidget
 SMALL = QSize(60, 60)
 MEDIUM = QSize(120, 120)
 LARGE = QSize(200, 200)
-
 RESOLUTIONS = [SMALL, MEDIUM, LARGE]
 DATASET_TYPES = ["train", "val", "test"]
 
@@ -52,6 +57,8 @@ class SelectDatasetCard(HeaderCardWidget):
 
 
 class DataProcessWidget(QWidget):
+    dataset_process_finished = Signal(str)
+
     def __init__(self, parent=None):
         super(DataProcessWidget, self).__init__(parent=parent)
         self.setObjectName("dataset_process")
@@ -64,7 +71,7 @@ class DataProcessWidget(QWidget):
         self.dataset_info_widget = QWidget()
         self.plot_dataset_info_widget = QWidget()
 
-        vly_dataset_info = QVBoxLayout()
+        self.vly_dataset_info = QVBoxLayout()
         hly_dataset_info = QHBoxLayout()
         fly_dataset_info1 = QFormLayout()
         fly_dataset_info2 = QFormLayout()
@@ -72,6 +79,10 @@ class DataProcessWidget(QWidget):
         fly_dataset_info1.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         fly_dataset_info2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         fly_dataset_info3.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+
+        self.pg_widget = pg.GraphicsLayoutWidget(show=False)
+        self.pg_widget.setBackground((33, 39, 54))
+
         self.lbl_train_image_num = BodyLabel("training images: ", self)
         self.le_train_image_num = LineEdit()
 
@@ -107,10 +118,11 @@ class DataProcessWidget(QWidget):
 
         hly_dataset_info.addLayout(fly_dataset_info1)
         hly_dataset_info.addLayout(fly_dataset_info2)
-        vly_dataset_info.addLayout(hly_dataset_info)
-        vly_dataset_info.addLayout(fly_dataset_info3)
+        self.vly_dataset_info.addWidget(self.pg_widget)
+        self.vly_dataset_info.addLayout(hly_dataset_info)
+        self.vly_dataset_info.addLayout(fly_dataset_info3)
 
-        self.dataset_info_widget.setLayout(vly_dataset_info)
+        self.dataset_info_widget.setLayout(self.vly_dataset_info)
         self.dataset_draw_widget = DatasetDrawWidget()
         self.splitter.addWidget(self.dataset_info_widget)
         self.splitter.addWidget(self.dataset_draw_widget)
@@ -123,13 +135,18 @@ class DataProcessWidget(QWidget):
 
         self.state_tool_tip = None
 
+        self.dataset_info = None
+
         self.data_convert_thread = DataConvertThread()
         self._connect_signals_and_slot()
+        self._set_chart_style()
 
     def _connect_signals_and_slot(self):
+        cfg.themeChanged.connect(self._on_theme_changed)
         self.btn_data_valid.clicked.connect(self.data_valid)
         self.select_card.dataset_file_changed.connect(self._on_update_dataset)
         self.data_convert_thread.dataset_resolve_finished.connect(self._on_dataset_resolve_finished)
+        self.dataset_process_finished.connect(EventManager.get_instance().on_dataset_process_finished)
 
     @Slot(str)
     def _on_update_dataset(self, dataset_path: str):
@@ -137,22 +154,58 @@ class DataProcessWidget(QWidget):
 
     @Slot(LoadDatasetInfo)
     def _on_dataset_resolve_finished(self, dataset_info: LoadDatasetInfo):
-        self.le_train_image_num.setText(str(dataset_info.train_image_num))
-        self.le_train_obj_num.setText(str(dataset_info.train_obj_num))
-        self.le_val_image_num.setText(str(dataset_info.val_image_num))
-        self.le_val_obj_num.setText(str(dataset_info.val_obj_num))
-        self.le_test_image_num.setText(str(dataset_info.test_image_num))
-        self.le_test_obj_num.setText(str(dataset_info.test_obj_num))
+        self.dataset_info = dataset_info
+        self.le_train_image_num.setText(str(len(dataset_info.train_images)))
+        self.le_train_obj_num.setText(str(len(dataset_info.train_boxes)))
+        self.le_val_image_num.setText(str(len(dataset_info.val_images)))
+        self.le_val_obj_num.setText(str(len(dataset_info.val_boxes)))
+        self.le_test_image_num.setText(str(len(dataset_info.test_images)))
+        self.le_test_obj_num.setText(str(len(dataset_info.test_boxes)))
         self.le_dataset_config_path.setText(dataset_info.dst_yaml_path)
         self.ted_dataset_labels.append("\n".join(f"{k}: {v}" for k, v in dataset_info.labels.items()))
-
+        self.draw_dataset_chart(dataset_info)
         self.dataset_draw_widget.draw_images(dataset_info)
+        self.dataset_process_finished.emit(dataset_info.dst_yaml_path)
 
         # 数据转换完成，显示状态信息
         self.state_tool_tip.setContent(
             self.tr('data converting is completed!') + ' 😆')
         self.state_tool_tip.setState(True)
         self.state_tool_tip = None
+
+    def draw_dataset_chart(self, dataset_info: LoadDatasetInfo):
+        cls = []
+        boxes = []
+        cls.extend(dataset_info.train_cls)
+        cls.extend(dataset_info.val_cls)
+        cls.extend(dataset_info.test_cls)
+        boxes.extend(dataset_info.train_boxes)
+        boxes.extend(dataset_info.val_boxes)
+        boxes.extend(dataset_info.test_boxes)
+        cls = np.array(cls, np.float32)
+
+        # set custom axis tick
+        axis = pg.AxisItem(orientation="bottom")
+        tuple_list = [(key, value) for key, value in dataset_info.labels.items()]
+        axis.setTicks([tuple_list])
+        plt: PlotItem = self.pg_widget.addPlot(axisItems={"bottom": axis})
+        plt.showGrid(x=False, y=False)
+        # set custom legend
+        legend = pg.LegendItem(offset=(-1, 1))
+        legend.setParentItem(plt)
+        for element, count in Counter(cls).items():
+            color = generate_random_color()
+            bg1 = pg.BarGraphItem(x=element, height=count, width=0.3, pen=invert_color(color), brush=color)
+            plt.addItem(bg1)
+            legend.addItem(bg1, dataset_info.labels[element])
+        # set custom axis label
+        plt.setLabel("left", self.tr("count of label"))
+        plt.setLabel("bottom", self.tr("labels"))
+
+        image_item = pg.ImageItem()
+        image_item.setImage(np.ones((500, 500, 4), dtype=np.uint8) * 100)
+        plt2: ViewBox = self.pg_widget.addViewBox()
+        plt2.addItem(image_item)
 
     @Slot()
     def data_valid(self):
@@ -174,3 +227,14 @@ class DataProcessWidget(QWidget):
         self.le_test_obj_num.clear()
         self.le_dataset_config_path.clear()
         self.ted_dataset_labels.clear()
+
+    @Slot(Theme)
+    def _on_theme_changed(self, theme):
+        self._set_chart_style()
+
+    def _set_chart_style(self):
+        """ set style sheet """
+        if isDarkTheme():
+            self.pg_widget.setBackground((33, 39, 54))
+        else:
+            self.pg_widget.setBackground((249, 249, 249))

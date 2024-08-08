@@ -43,11 +43,18 @@ def show_center(widget: QWidget):
 def generate_color_map(classes: int):
     colors = []
     for _ in range(classes):
-        r = randint(0, 155)
-        g = randint(0, 155)
-        b = randint(0, 155)
+        r = randint(0, 255)
+        g = randint(0, 255)
+        b = randint(0, 255)
         colors.append(QColor(r, g, b))
     return colors
+
+
+def generate_random_color() -> QColor:
+    r = randint(0, 255)
+    g = randint(0, 255)
+    b = randint(0, 255)
+    return QColor(r, g, b)
 
 
 def invert_color(color):

@@ -17,12 +17,15 @@ settings.update({"runs_dir": RUNS_DIR})
 
 class LoadDatasetInfo:
     dataset_dir: str
-    train_image_num: int = 0
-    train_obj_num: int = 0
-    val_image_num: int = 0
-    val_obj_num: int = 0
-    test_image_num: int = 0
-    test_obj_num: int = 0
+    train_images: list = []
+    train_cls: list = []
+    train_boxes: list = []
+    val_images: list = []
+    val_cls: list = []
+    val_boxes: list = []
+    test_images: list = []
+    test_cls: list = []
+    test_boxes: list = []
     labels: dict
     dst_yaml_path: str
 
@@ -103,8 +106,8 @@ class DataConvertThread(QThread):
         # 读取图片信息
         image_ids = coco.getImgIds()
         images = coco.loadImgs(image_ids)
-
-        object_num = 0
+        cls = []
+        boxes = []
         # 转换每一张图片的标注
         for image in tqdm(images):
             image_id = image['id']
@@ -135,7 +138,8 @@ class DataConvertThread(QThread):
                 category_index = category_id_to_index[category_id]
                 # 添加标注
                 yolo_annotations.append(f"{category_index} {x_center} {y_center} {bbox_width} {bbox_height}")
-            object_num += len(yolo_annotations)
+                cls.append(category_id)
+                boxes.append([x_center, y_center, bbox_width, bbox_height])
             # 写入标注文件
             label_file_path = labels_dir / f"{Path(file_name).stem}.txt"
             with open(label_file_path, 'w') as label_file:
@@ -143,7 +147,7 @@ class DataConvertThread(QThread):
             # 复制图像文件到目标目录
             shutil.copy(Path(coco_annotation_file).parent.parent / "images" / image["file_name"], images_dir)
         logger.info(f"数据集[{Path(coco_annotation_file).stem}]转换完成")
-        return len(images), object_num
+        return images, cls, boxes
 
     @staticmethod
     def rebuild_data_yaml(project_dir, dataset_dir, labels: dict):
@@ -179,21 +183,24 @@ class DataConvertThread(QThread):
         self.dataset_info.labels = labels
         for file_name in os.listdir(annotations_dir):
             if file_name.__contains__("train"):
-                images_num, object_num = self.convert_coco_to_yolo(os.path.join(annotations_dir, file_name),
-                                                                   dataset_dir, "train")
-                self.dataset_info.train_image_num = images_num
-                self.dataset_info.train_obj_num = object_num
+                images, cls, boxes = self.convert_coco_to_yolo(os.path.join(annotations_dir, file_name),
+                                                               dataset_dir, "train")
+                self.dataset_info.train_images = images
+                self.dataset_info.train_cls = cls
+                self.dataset_info.train_boxes = boxes
 
             elif file_name.__contains__("val"):
-                images_num, object_num = self.convert_coco_to_yolo(os.path.join(annotations_dir, file_name),
-                                                                   dataset_dir, "val")
-                self.dataset_info.val_image_num = images_num
-                self.dataset_info.val_obj_num = object_num
+                images, cls, boxes = self.convert_coco_to_yolo(os.path.join(annotations_dir, file_name),
+                                                               dataset_dir, "val")
+                self.dataset_info.val_images = images
+                self.dataset_info.val_cls = cls
+                self.dataset_info.val_boxes = boxes
             elif file_name.__contains__("test"):
-                images_num, object_num = self.convert_coco_to_yolo(os.path.join(annotations_dir, file_name),
-                                                                   dataset_dir, "test")
-                self.dataset_info.test_image_num = images_num
-                self.dataset_info.test_obj_num = object_num
+                images, cls, boxes = self.convert_coco_to_yolo(os.path.join(annotations_dir, file_name),
+                                                               dataset_dir, "test")
+                self.dataset_info.test_images = images
+                self.dataset_info.test_cls = cls
+                self.dataset_info.test_boxes = boxes
             else:
                 logger.error("annotation file must contain train val or test")
 
@@ -202,7 +209,6 @@ class DataConvertThread(QThread):
 
 
 if __name__ == '__main__':
-    t = DataConvertThread(
-        r"C:\Users\AC\Desktop\det_coco_examples.zip")
+    t = DataConvertThread(r"C:\Users\AC\Desktop\det_coco_examples.zip")
     t.start()
     t.wait()
