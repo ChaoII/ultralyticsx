@@ -191,21 +191,41 @@ class DataProcessWidget(QWidget):
         plt: PlotItem = self.pg_widget.addPlot(axisItems={"bottom": axis})
         plt.showGrid(x=False, y=False)
         # set custom legend
-        legend = pg.LegendItem(offset=(-1, 1))
-        legend.setParentItem(plt)
+        # legend = pg.LegendItem(offset=(-1, 1))
+        # legend.setParentItem(plt)
         for element, count in Counter(cls).items():
             color = generate_random_color()
-            bg1 = pg.BarGraphItem(x=element, height=count, width=0.3, pen=invert_color(color), brush=color)
+            bg1 = pg.BarGraphItem(x=element, height=count, width=0.4, pen=invert_color(color), brush=color)
+
+            # 计算标签位置（这里简单地将标签放在柱子上方中央，你可能需要根据实际情况调整）
+            bg1.setToolTip(str(count))
             plt.addItem(bg1)
-            legend.addItem(bg1, dataset_info.labels[element])
+            # 创建TextItem并添加到绘图窗口中
+            text_item = pg.TextItem(f'{count:.2f}', anchor=(0.5, 1.2), color=color)  # anchor=(0.5, 0)表示文本中心在指定位置
+            print(text_item.pixelHeight())
+            text_item.setPos(element, count)  # 设置文本位置
+            plt.addItem(text_item)
+
+            # disable legend
+            # legend.addItem(bg1, dataset_info.labels[element])
         # set custom axis label
         plt.setLabel("left", self.tr("count of label"))
-        plt.setLabel("bottom", self.tr("labels"))
+        # plt.setLabel("bottom", self.tr("labels"))
 
-        image_item = pg.ImageItem()
-        image_item.setImage(np.ones((500, 500, 4), dtype=np.uint8) * 100)
-        plt2: ViewBox = self.pg_widget.addViewBox()
-        plt2.addItem(image_item)
+        # add image item
+        # image_item = pg.ImageItem()
+        # image_item.setImage(np.ones((500, 500, 4), dtype=np.uint8) * 100)
+        # plt2: ViewBox = self.pg_widget.addViewBox()
+        # plt2.setAspectLocked(True)
+        # plt2.setMouseEnabled(x=False, y=False)
+        # plt2.disableAutoRange()
+        # plt2.addItem(image_item)
+
+        plt.setMouseEnabled(x=False, y=False)
+        plt.disableAutoRange()
+        plt.hideButtons()
+        plt.showAxes(True, showValues=(True, False, False, True))
+        # plt.getAxis('bottom').setHeight(0)
 
     @Slot()
     def data_valid(self):
