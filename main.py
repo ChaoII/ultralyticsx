@@ -1,54 +1,115 @@
+# coding:utf-8
 import sys
-from PySide6.QtWidgets import (QApplication,
-                               QVBoxLayout, QWidget,
-                               QFileDialog, QTabWidget)
-from PySide6.QtCore import Slot
-from dataset_process.data_convert import DataConvertWidget
+import os
+
+from utils.utils import show_center
+from PySide6.QtCore import Qt, QTranslator
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
+from qfluentwidgets import (NavigationItemPosition, FluentWindow,
+                            NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
+                            InfoBadge, InfoBadgePosition)
+from qfluentwidgets import FluentIcon as FIcon
+
+from settings import SettingInterface, cfg
 from model_train import ModelTrainWidget
-from config_widget import ConfigWidget
+from dataset_process import DataProcessWidget
+
+from home import HomeWidget
 
 
-class MainWindow(QWidget):
+class Widget(QFrame):
+    def __init__(self, text: str, parent=None):
+        super().__init__(parent=parent)
+        self.label = SubtitleLabel(text, self)
+        self.hBoxLayout = QHBoxLayout(self)
+
+        setFont(self.label, 24)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hBoxLayout.addWidget(self.label, 1, Qt.AlignmentFlag.AlignCenter)
+        self.setObjectName(text.replace(' ', '-'))
+
+
+class Window(FluentWindow):
     def __init__(self):
         super().__init__()
 
-        self.resize(800, 600)
-        self.setWindowTitle('Model Training and Prediction')
-        self.data_convert_widget = DataConvertWidget()
-        self.model_train_widget = ModelTrainWidget()
-        self.config_widget = ConfigWidget()
-        layout = QVBoxLayout(self)
-        tab_widget = QTabWidget()
-        tab_widget.addTab(self.data_convert_widget, "数据转换")
-        tab_widget.addTab(self.model_train_widget, "模型训练")
-        tab_widget.addTab(self.config_widget, "参数配置")
+        # create sub interface
+        self.home_interface = HomeWidget(self)
+        self.dataset_interface = DataProcessWidget(self)
+        self.train_interface = ModelTrainWidget(self)
+        self.val_interface = Widget('Val Interface', self)
+        self.export_interface = Widget('Export Interface', self)
+        self.test_interface = Widget('Test Interface', self)
+        self.settingInterface = SettingInterface(self)
+        self.initNavigation()
+        self.initWindow()
 
-        layout.addWidget(tab_widget)
+    def initNavigation(self):
+        self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
+        self.navigationInterface.addSeparator()
+        self.addSubInterface(self.dataset_interface, FIcon.PHOTO, self.tr('dataset'))
+        self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('model train'))
+        self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('model valid'))
+        self.addSubInterface(self.export_interface, FIcon.UP, self.tr('model export'))
+        self.addSubInterface(self.test_interface, FIcon.TILES, self.tr('model test'))
 
+        self.navigationInterface.addSeparator()
 
+        # add custom widget to bottom
+        self.navigationInterface.addWidget(
+            routeKey='avatar',
+            widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'),
+            onClick=lambda: print("------"),
+            position=NavigationItemPosition.BOTTOM,
+        )
 
-    @Slot()
-    def load_data(self):
-        # 这里可以添加打开文件对话框来加载数据
-        print("Loading data...")
+        self.addSubInterface(self.settingInterface, FIcon.SETTING, 'Settings', NavigationItemPosition.BOTTOM)
 
-    @Slot()
-    def train_model(self):
-        # 假设数据已加载到某个地方
-        data = "dummy_data"
+        # add badge to navigation item
+        item = self.navigationInterface.widget(self.export_interface.objectName())
+        InfoBadge.attension(
+            text=9,
+            parent=item.parent(),
+            target=item,
+            position=InfoBadgePosition.NAVIGATION_ITEM
+        )
 
-    @Slot()
-    def save_model(self):
-        # 打开文件保存对话框
-        path, _ = QFileDialog.getSaveFileName(self, "Save Model", "", "Model Files (*.model)")
+        # NOTE: enable acrylic effect
+        self.navigationInterface.setAcrylicEnabled(True)
 
-    @Slot()
-    def predict(self):
-        input_data = self.input_line.text()
+        self.stackedWidget.currentChanged.connect(lambda: print(self.stackedWidget.currentWidget()))
+
+    def initWindow(self):
+        self.resize(900, 700)
+        self.setWindowIcon(QIcon('./resource/images/ux.png'))
+        self.setWindowTitle('UltralyticsX')
+
+        # set the minimum window width that allows the navigation panel to be expanded
+        # self.navigationInterface.setMinimumExpandWidth(900)
+        # self.navigationInterface.expand(useAni=False)
 
 
 if __name__ == '__main__':
+
+    if cfg.get(cfg.dpi_scale) == "auto":
+        QApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    else:
+        os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
+
     app = QApplication(sys.argv)
-    ex = MainWindow()
-    ex.show()
-    sys.exit(app.exec())
+    app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
+    # internationalization
+    locale = cfg.get(cfg.language).value
+    fluentTranslator = FluentTranslator(locale)
+    settingTranslator = QTranslator()
+    settingTranslator.load(locale, "settings", ".", "resource/i18n")
+
+    app.installTranslator(fluentTranslator)
+    app.installTranslator(settingTranslator)
+
+    # create main window
+    w = Window()
+    show_center(w)
+    app.exec()
