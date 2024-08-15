@@ -8,10 +8,10 @@ from PySide6.QtGui import QPainter, QIcon
 from pathlib import Path
 
 
-class FileSelectWidget(QWidget):
+class DirSelectWidget(QWidget):
     """ Search line edit """
 
-    searchSignal = Signal(str)
+    dir_selected = Signal(str)
     clearSignal = Signal()
 
     def __init__(self, parent=None):
@@ -31,3 +31,4 @@ class FileSelectWidget(QWidget):
         if dir_name:
             dir_name_normal = Path(dir_name).resolve().as_posix()
             self.le_dir.setText(dir_name_normal)
+            self.dir_selected.emit(dir_name_normal)

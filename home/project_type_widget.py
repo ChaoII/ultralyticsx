@@ -1,3 +1,5 @@
+import enum
+
 from qframelesswindow import FramelessWindow
 from qfluentwidgets import themeColor, theme, ThemeColor, ImageLabel, BodyLabel, PillPushButton, ElevatedCardWidget, \
     BodyLabel
@@ -8,10 +10,18 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 from utils.utils import invert_color
 
 
+class ProjectType(enum.Enum):
+    CLASSIFY = 0
+    DETECT = 1
+    SEGMENT = 2
+    OBB = 3
+    POSE = 4
+
+
 class ProjectTypeItemWidget(ElevatedCardWidget):
     item_selected = Signal()
 
-    def __init__(self, name, pic_url):
+    def __init__(self, name: str, pic_url: str, project_type: ProjectType):
         super().__init__()
         self.setFixedSize(120, 120)
         self.vly_content = QVBoxLayout(self)
@@ -22,6 +32,7 @@ class ProjectTypeItemWidget(ElevatedCardWidget):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.selected = False
         self.pic_url = pic_url
+        self.project_type = project_type
 
     def mousePressEvent(self, event):
         # 当鼠标点击时，记录点击位置
@@ -75,6 +86,8 @@ class ProjectTypeItemWidget(ElevatedCardWidget):
 
 
 class ProjectTypeGroupWidget(QWidget):
+    project_type_selected = Signal(ProjectType)
+
     def __init__(self):
         super().__init__()
         self.hly_content = QHBoxLayout(self)
@@ -82,12 +95,12 @@ class ProjectTypeGroupWidget(QWidget):
         self._init_type_item()
 
     def _init_type_item(self):
-        type_classify = ProjectTypeItemWidget(self.tr("classify"), "resource/images/classify.png")
+        type_classify = ProjectTypeItemWidget(self.tr("classify"), "resource/images/classify.png", ProjectType.CLASSIFY)
         type_classify.enable_selected()
-        type_detect = ProjectTypeItemWidget(self.tr("detect"), "resource/images/detect.png")
-        type_segment = ProjectTypeItemWidget(self.tr("segment"), "resource/images/segment.png")
-        type_obb = ProjectTypeItemWidget(self.tr("obb"), "resource/images/obb.png")
-        type_pose = ProjectTypeItemWidget(self.tr("pose"), "resource/images/pose.png")
+        type_detect = ProjectTypeItemWidget(self.tr("detect"), "resource/images/detect.png", ProjectType.DETECT)
+        type_segment = ProjectTypeItemWidget(self.tr("segment"), "resource/images/segment.png", ProjectType.SEGMENT)
+        type_obb = ProjectTypeItemWidget(self.tr("obb"), "resource/images/obb.png", ProjectType.OBB)
+        type_pose = ProjectTypeItemWidget(self.tr("pose"), "resource/images/pose.png", ProjectType.POSE)
         self.addItem(type_classify)
         self.addItem(type_detect)
         self.addItem(type_segment)
@@ -111,3 +124,4 @@ class ProjectTypeGroupWidget(QWidget):
         sender = self.sender()
         if isinstance(sender, ProjectTypeItemWidget):
             sender.enable_selected()
+            self.project_type_selected.emit(sender.project_type)

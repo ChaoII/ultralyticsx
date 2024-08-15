@@ -7,10 +7,10 @@
     },
     "model": {
         "enable_tensorboard": false,
-        "workspace_dir": "C:/Users/84945/PycharmProjects/ultralyticsx"
+        "workspace_dir": "C:/Users/AC/Desktop/1231"
     },
     "QFluentWidgets": {
         "ThemeColor": "#ff22aa27",
-        "ThemeMode": "Dark"
+        "ThemeMode": "Light"
     }
 }
