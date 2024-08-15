@@ -2,8 +2,10 @@ from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication, QEasingCurve
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
                                QSplitter)
 from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout
-
+    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
+    Theme, setTheme
+from common.cust_scrollwidget import CustomScrollWidget
+from settings import cfg
 from .project_card import ProjectCard
 from .new_project import NewProject
 
@@ -21,18 +23,17 @@ class HomeWidget(QWidget):
         self.btn_stop_train = PrimaryPushButton(FluentIcon.ADD, self.tr("Add project"))
         self.hvy_btn.addWidget(self.btn_stop_train)
         self.hvy_btn.addStretch(1)
-        # self.card_widget = QWidget()
-        # self.card_widget.resize(300, 400)
-        self.layout = FlowLayout(needAni=False)  # 启用动画
 
+        self.scroll_area = CustomScrollWidget(orient=Qt.Orientation.Vertical)
+        self.layout = FlowLayout(needAni=False)  # 启用动画
+        self.layout.setAnimation(250, QEasingCurve.Type.OutQuad)
+        self.scroll_area.setLayout(self.layout)
         for i in range(8):
             self.project_card = ProjectCard()
             self.layout.addWidget(self.project_card)
-        # 自定义动画参数
-        self.layout.setAnimation(250, QEasingCurve.Type.OutQuad)
 
         self.vly.addLayout(self.hvy_btn)
-        self.vly.addLayout(self.layout)
+        self.vly.addWidget(self.scroll_area)
 
         self._connect_signals_and_slot()
 

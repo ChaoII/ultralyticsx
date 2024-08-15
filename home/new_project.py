@@ -5,7 +5,7 @@ from qframelesswindow import FramelessDialog
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton
 from PySide6.QtCore import Qt, Signal
 from common.file_select_widget import FileSelectWidget
-from .project_type_widget import ProjectTypeWidget
+from .project_type_widget import ProjectTypeItemWidget, ProjectTypeGroupWidget
 
 
 class NewProject(FramelessDialog):
@@ -18,6 +18,7 @@ class NewProject(FramelessDialog):
 
     def _setUpUi(self, title, parent):
         self.titleLabel = QLabel(title, parent)
+        self.setFixedSize(400, 300)
 
         self.yesButton = PrimaryPushButton(text=self.tr('Create'))
         self.cancelButton = QPushButton(text=self.tr('Cancel'))
@@ -41,7 +42,7 @@ class NewProject(FramelessDialog):
         self.lbl_description = BodyLabel(text=self.tr("project description:"))
         self.ted_description = TextEdit()
         self.lbl_type = BodyLabel(text=self.tr("project type:"))
-        self.ted_type = ProjectTypeWidget()
+        self.ted_type = ProjectTypeGroupWidget()
         self.lbl_worker_dir = BodyLabel(text=self.tr("worker directory:"))
         self.file_select = FileSelectWidget()
         self.fly_content = QFormLayout()

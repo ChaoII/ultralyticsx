@@ -1,26 +1,38 @@
 from qframelesswindow import FramelessWindow
-from qfluentwidgets import themeColor
-from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QFont, QFontMetrics
-from PySide6.QtCore import Qt, QPoint, QRect
+from qfluentwidgets import themeColor, theme, ThemeColor, ImageLabel, BodyLabel, PillPushButton, ElevatedCardWidget, \
+    BodyLabel
+from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QFont, QFontMetrics, QCursor, QImage, QColor
+from PySide6.QtCore import Qt, QPoint, QRect, Signal, Slot, QLine
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 
 from utils.utils import invert_color
 
 
-class ProjectTypeWidget(FramelessWindow):
-    def __init__(self):
+class ProjectTypeItemWidget(ElevatedCardWidget):
+    item_selected = Signal()
+
+    def __init__(self, name, pic_url):
         super().__init__()
-        self.setFixedSize(100, 100)
-        self.titleBar.setVisible(False)
+        self.setFixedSize(120, 120)
+        self.vly_content = QVBoxLayout(self)
+        self.title = BodyLabel(name, self)
+        self.title.setFixedWidth(120)
+        self.vly_content.setContentsMargins(0, 0, 0, 0)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.selected = False
+        self.pic_url = pic_url
 
-    def paintEvent(self, event: QPaintEvent) -> None:
-        super(ProjectTypeWidget, self).paintEvent(event)
+    def mousePressEvent(self, event):
+        # 当鼠标点击时，记录点击位置
+        self.selected = True
+        self.item_selected.emit()
+        self.update()  # 请求重绘
 
-        painter = QPainter(self)
+    def draw_selected(self, painter: QPainter):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
         # 绘制自定义边框
-        pen = QPen(themeColor(), 1)
-        painter.setPen(pen)
+        painter.setPen(QPen(themeColor(), 2))
         painter.drawRect(self.rect().adjusted(1, 1, -1, -1))
 
         # 绘制右下角的三角形
@@ -29,23 +41,73 @@ class ProjectTypeWidget(FramelessWindow):
             QPoint(self.width() - int(self.width() / 4), self.height()),
             QPoint(self.width(), self.height() - int(self.height() / 4))
         ])
-
-        triangle_pen = QPen(themeColor(), 2)
+        triangle_pen = QPen(themeColor(), 1)
         painter.setPen(triangle_pen)
-        painter.setBrush(themeColor())
         painter.setBrush(themeColor())
         painter.drawPolygon(triangle)
 
-        # font_size = min(width_, height_) // 10  # 假设文字大小是窗口大小的10%
-        font = QFont("Microsoft YaHei UI")
-        font.setPixelSize(20)
-        fm = QFontMetrics(font)
-        label = "√"
+        # 绘制对勾
+        start = QPoint(self.width() - int(self.width() * 0.13), self.height() - int(self.height() * 0.08))
+        mid = QPoint(self.width() - int(self.width() * 0.09), self.height() - int(self.height() * 0.05))
+        end = QPoint(self.width() - int(self.width() * 0.05), self.height() - int(self.height() * 0.15))
+        lines = [QLine(start, mid), QLine(mid, end)]
+        painter.setPen(QPen(Qt.GlobalColor.white, 2))
+        painter.drawLines(lines)
 
-        # 文字填充色
-        new_rect = QRect(self.width() - 20, self.height() - fm.height(), fm.boundingRect("√").width(),
-                         fm.height())
+    def paintEvent(self, event: QPaintEvent) -> None:
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.drawImage(0, 30, QImage(self.pic_url))
+        painter.end()
 
-        painter.setFont(font)
-        painter.setPen(QPen(invert_color(themeColor())))
-        painter.drawText(new_rect, label)
+        if self.selected:
+            painter.begin(self)
+            self.draw_selected(painter)
+            painter.end()
+
+    def disable_selected(self):
+        self.selected = False
+        self.update()
+
+    def enable_selected(self):
+        self.selected = True
+        self.update()
+
+
+class ProjectTypeGroupWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.hly_content = QHBoxLayout(self)
+        self.hly_content.setContentsMargins(0, 0, 0, 0)
+        self._init_type_item()
+
+    def _init_type_item(self):
+        type_classify = ProjectTypeItemWidget(self.tr("classify"), "resource/images/classify.png")
+        type_classify.enable_selected()
+        type_detect = ProjectTypeItemWidget(self.tr("detect"), "resource/images/detect.png")
+        type_segment = ProjectTypeItemWidget(self.tr("segment"), "resource/images/segment.png")
+        type_obb = ProjectTypeItemWidget(self.tr("obb"), "resource/images/obb.png")
+        type_pose = ProjectTypeItemWidget(self.tr("pose"), "resource/images/pose.png")
+        self.addItem(type_classify)
+        self.addItem(type_detect)
+        self.addItem(type_segment)
+        self.addItem(type_obb)
+        self.addItem(type_pose)
+
+    def addItem(self, item: ProjectTypeItemWidget):
+        self.hly_content.addWidget(item)
+        item.item_selected.connect(self._on_item_selected)
+
+    def _disable_all_items_selected(self):
+        for i in range(self.hly_content.count()):
+            item = self.hly_content.itemAt(i)
+            type_item_widget = item.widget()
+            if isinstance(type_item_widget, ProjectTypeItemWidget):
+                type_item_widget.disable_selected()
+
+    @Slot()
+    def _on_item_selected(self):
+        self._disable_all_items_selected()
+        sender = self.sender()
+        if isinstance(sender, ProjectTypeItemWidget):
+            sender.enable_selected()
