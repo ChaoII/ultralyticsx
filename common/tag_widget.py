@@ -5,28 +5,11 @@ from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
                                QSplitter, QLayout)
 from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
     ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
-    Theme, setTheme, PillPushButton, PipsPager, ToolButton, FluentIconBase, Icon
-
+    Theme, setTheme, PillPushButton, PipsPager, ToolButton, FluentIconBase, Icon, PrimaryToolButton, HyperlinkButton
 from settings import cfg
 
 
 def drawIcon(icon, painter, rect, state=QIcon.State.Off, **attributes):
-    """ draw icon
-
-    Parameters
-    ----------
-    icon: str | QIcon | FluentIconBaseBase
-        the icon to be drawn
-
-    painter: QPainter
-        painter
-
-    rect: QRect | QRectF
-        the rect to render icon
-
-    **attribute:
-        the attribute of svg icon
-    """
     if isinstance(icon, FluentIconBase):
         icon.render(painter, rect, **attributes)
     elif isinstance(icon, Icon):
@@ -36,31 +19,39 @@ def drawIcon(icon, painter, rect, state=QIcon.State.Off, **attributes):
         icon.paint(painter, QRectF(rect).toRect(), Qt.AlignmentFlag.AlignCenter, state=state)
 
 
-class ScrollButton(ToolButton):
+class TagWidget(PushButton):
     """ Scroll button """
 
-    def _postInit(self):
-        self.setFixedSize(12, 12)
+    # def __init__(self, color):
+    #     super().__init__()
+    #     self.setText("21312312")
+
+    # def _postInit(self):
+    #     self.setFixedSize(24, 24)
 
     def paintEvent(self, e):
+        super().paintEvent(e)
+        if self.icon().isNull():
+            return
+
         painter = QPainter(self)
-        painter.setRenderHints(QPainter.Antialiasing)
-        painter.setPen(Qt.NoPen)
+        painter.setRenderHints(QPainter.Antialiasing |
+                               QPainter.SmoothPixmapTransform)
 
-        if isDarkTheme():
-            color = QColor(255, 255, 255)
-            painter.setOpacity(0.773 if self.isHover or self.isPressed else 0.541)
+        if not self.isEnabled():
+            painter.setOpacity(0.3628)
+        elif self.isPressed:
+            painter.setOpacity(0.786)
+
+        w, h = self.iconSize().width(), self.iconSize().height()
+        y = (self.height() - h) / 2
+        mw = self.minimumSizeHint().width()
+        if mw > 0:
+            x = 12 + (self.width() - mw) // 2
         else:
-            color = QColor(0, 0, 0)
-            painter.setOpacity(0.616 if self.isHover or self.isPressed else 0.45)
+            x = 12
 
-        if self.isPressed:
-            rect = QRectF(3, 3, 6, 6)
-        else:
-            rect = QRectF(2, 2, 8, 8)
+        if self.isRightToLeft():
+            x = self.width() - w - x
 
-        drawIcon(self._icon, painter, rect, fill=color.name())
-
-
-class CustomScrollWidget(SingleDirectionScrollArea):
-    pass
+        drawIcon(self._icon, painter, QRectF(x, y, w, h), color=QColor(255, 0, 0).name())

@@ -4,11 +4,12 @@ from PySide6.QtCore import QRect, QPoint, Signal
 from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColor, QPainterPath
 from click import style
 from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
-    isDarkTheme
+    isDarkTheme, FluentIcon
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption
 import shutil
 from home.new_project import ProjectInfo
 from settings import cfg
+from common.tag_widget import TagWidget
 
 
 class ProjectCard(ElevatedCardWidget):
@@ -21,6 +22,7 @@ class ProjectCard(ElevatedCardWidget):
 
         self.vly_1 = QVBoxLayout(self)
         self.lbl_project_name = StrongBodyLabel()
+        self.cc = TagWidget(FluentIcon.SCROLL,"asdasdas")
         self.lbl_project_id = StrongBodyLabel()
         self.lbl_project_description = BodyLabel()
         self.lbl_project_type = BodyLabel()
@@ -28,6 +30,7 @@ class ProjectCard(ElevatedCardWidget):
         self.hly_bottom = QHBoxLayout()
         self.hly_bottom.addWidget(self.lbl_project_type)
         self.hly_bottom.addWidget(self.lbl_create_time)
+        self.vly_1.addWidget(self.cc)
         self.vly_1.addWidget(self.lbl_project_name)
         self.vly_1.addWidget(self.lbl_project_id)
         self.vly_1.addWidget(self.lbl_project_description)
