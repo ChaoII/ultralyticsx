@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication, QEasingCurve
@@ -28,7 +29,9 @@ class HomeWidget(QWidget):
         self.lbl_sort = BodyLabel(self.tr("sort:"), self)
         self.cmb_sort = ComboBox()
         self.cmb_sort.setMinimumWidth(200)
-        self.cmb_sort.addItems([self.tr("time ascending"), self.tr("time descending"), self.tr("name ascending"),
+        self.cmb_sort.addItems([self.tr("time ascending"),
+                                self.tr("time descending"),
+                                self.tr("name ascending"),
                                 self.tr("name descending")])
         self.fly_sort = QFormLayout()
         self.fly_sort.addRow(self.lbl_sort, self.cmb_sort)

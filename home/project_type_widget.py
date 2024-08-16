@@ -2,7 +2,7 @@ import enum
 
 from qframelesswindow import FramelessWindow
 from qfluentwidgets import themeColor, theme, ThemeColor, ImageLabel, BodyLabel, PillPushButton, ElevatedCardWidget, \
-    BodyLabel
+    BodyLabel,SimpleCardWidget
 from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QFont, QFontMetrics, QCursor, QImage, QColor
 from PySide6.QtCore import Qt, QPoint, QRect, Signal, Slot, QLine
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
@@ -18,7 +18,7 @@ class ProjectType(enum.Enum):
     POSE = 4
 
 
-class ProjectTypeItemWidget(ElevatedCardWidget):
+class ProjectTypeItemWidget(SimpleCardWidget):
     item_selected = Signal()
 
     def __init__(self, name: str, pic_url: str, project_type: ProjectType):

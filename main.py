@@ -3,12 +3,12 @@ import sys
 import os
 
 from utils.utils import show_center
-from PySide6.QtCore import Qt, QTranslator
+from PySide6.QtCore import Qt, QTranslator, QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
-                            InfoBadge, InfoBadgePosition)
+                            InfoBadge, InfoBadgePosition, SplashScreen)
 from qfluentwidgets import FluentIcon as FIcon
 
 from settings import SettingInterface, cfg
@@ -34,6 +34,9 @@ class Window(FluentWindow):
     def __init__(self):
         super().__init__()
 
+        self.splash_screen = SplashScreen(self.windowIcon(), self)
+        self.splash_screen.setIconSize(QSize(102, 102))
+        self.show()
         # create sub interface
         self.home_interface = HomeWidget(self)
         self.dataset_interface = DataProcessWidget(self)
@@ -44,6 +47,8 @@ class Window(FluentWindow):
         self.settingInterface = SettingInterface(self)
         self.initNavigation()
         self.initWindow()
+
+        self.splash_screen.finish()
 
     def initNavigation(self):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
