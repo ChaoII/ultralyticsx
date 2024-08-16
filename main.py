@@ -2,7 +2,7 @@
 import sys
 import os
 
-from utils.utils import show_center
+from common.utils import show_center
 from PySide6.QtCore import Qt, QTranslator, QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout

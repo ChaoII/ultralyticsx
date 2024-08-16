@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 from PySide6.QtCore import Slot, Signal, QThread
 
-from utils.utils import log_info
+from common.utils import log_info
 
 
 class ModelTrainThread(QThread):

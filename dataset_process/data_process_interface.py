@@ -5,13 +5,13 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import Slot, Qt, QSize, Signal
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QSizePolicy, QFileDialog, QFormLayout, QSplitter)
-from pyqtgraph import PlotItem, ViewBox
+from pyqtgraph import PlotItem
 from qfluentwidgets import HeaderCardWidget, BodyLabel, LineEdit, PrimaryPushButton, FluentIcon, TextEdit, \
     StateToolTip, Theme, isDarkTheme
 
 from core.event_manager import EventManager
 from settings import cfg
-from utils.utils import *
+from common.utils import *
 from .data_convert_thread import DataConvertThread, LoadDatasetInfo
 from .dataset_show_widget import DatasetDrawWidget
 

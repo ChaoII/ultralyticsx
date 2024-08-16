@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from PySide6.QtCore import QSize, Signal, QRect, QThread
 from PySide6.QtGui import QPixmap, QPainter, QPen, QFont, QBrush, QFontMetrics
-from utils.utils import *
+from common.utils import *
 
 SMALL = QSize(60, 60)
 MEDIUM = QSize(120, 120)

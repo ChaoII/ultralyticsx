@@ -2,9 +2,9 @@ from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
                                QSplitter)
 from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip
+    ProgressBar, TextEdit, StateToolTip
 
-from utils.utils import log_info, log_warning, format_log
+from common.utils import log_info, log_warning, format_log
 from .model_info_widget import ModelInfoCard
 from .train_parameter_widget import ModelTrainParamCard, TrainParameter
 from .trainer import ModelTrainThread

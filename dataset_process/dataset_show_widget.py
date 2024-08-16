@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidgetItem, QListV
 from qfluentwidgets import ComboBox, CheckBox, isDarkTheme, Theme, ListWidget
 
 from settings.config import cfg
-from utils.utils import *
+from common.utils import *
 from .data_convert_thread import LoadDatasetInfo
 from .dataset_draw_thread import DatasetDrawThread
 from .image_tip_widget import ImageTip

@@ -1,13 +1,9 @@
 import enum
 
-from qframelesswindow import FramelessWindow
-from qfluentwidgets import themeColor, theme, ThemeColor, ImageLabel, BodyLabel, PillPushButton, ElevatedCardWidget, \
-    BodyLabel,SimpleCardWidget
-from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QFont, QFontMetrics, QCursor, QImage, QColor
-from PySide6.QtCore import Qt, QPoint, QRect, Signal, Slot, QLine
+from qfluentwidgets import themeColor, BodyLabel,SimpleCardWidget
+from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QCursor, QImage
+from PySide6.QtCore import Qt, QPoint, Signal, Slot, QLine
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
-
-from utils.utils import invert_color
 
 
 class ProjectType(enum.Enum):

@@ -5,13 +5,14 @@ from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColo
 from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
     isDarkTheme
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
-
+import shutil
 from home.new_project import ProjectInfo
 from settings import cfg
 
 
 class ProjectCard(ElevatedCardWidget):
     view_clicked = Signal()
+    delete_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -146,6 +147,7 @@ class ProjectCard(ElevatedCardWidget):
         if self.delete_rect.contains(mouse_pos):
             self.is_pressed_delete = True
             self.update()
+            self._delete_item()
 
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
@@ -154,4 +156,4 @@ class ProjectCard(ElevatedCardWidget):
         self.update()
 
     def _delete_item(self):
-        Path(cfg.get(cfg.workspace_folder)) / self.lbl_project_id.text()
+        self.delete_clicked.emit()

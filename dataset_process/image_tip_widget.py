@@ -3,7 +3,7 @@ from PySide6.QtGui import QPixmap, QResizeEvent
 from PySide6.QtWidgets import (QVBoxLayout)
 from qfluentwidgets import FluentIcon, ImageLabel, FlyoutViewBase, TransparentToolButton, Flyout, FlyoutAnimationType
 
-from utils.utils import *
+from common.utils import *
 
 
 class CustomFlyoutView(FlyoutViewBase):

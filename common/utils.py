@@ -3,11 +3,20 @@ from datetime import datetime
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QColor
 from random import randint
+from datetime import datetime
 
 NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
 DARK_BG = "rgb(33,39,54)"
 LIGHT_BG = "rgb(249, 249, 249)"
+
+
+def format_datatime(data_time: datetime, fmt="%Y-%m-%d %H:%M:%S") -> str:
+    return data_time.strftime(fmt)
+
+
+def str_to_datetime(datetime_str: str, fmt="%Y-%m-%d %H:%M:%S"):
+    return datetime.strptime(datetime_str, fmt)
 
 
 def log_info(message: str, color: str = "green") -> str:

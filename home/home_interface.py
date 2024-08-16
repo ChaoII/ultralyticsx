@@ -1,18 +1,28 @@
+import json
 import os
 import time
 from pathlib import Path
 
+from sqlalchemy import desc, asc
+from sqlalchemy.orm import Query
+
+from common.db_helper import Session
+
 from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication, QEasingCurve
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
                                QSplitter, QFormLayout)
+from loguru import logger
 from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
     ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
     Theme, setTheme, HorizontalPipsPager, ComboBox
 from common.cust_scrollwidget import CustomScrollWidget
 from common.page_widget import PipsPager, PipsScrollButtonDisplayMode
+from common.utils import str_to_datetime, format_datatime
 from settings import cfg
 from .project_card import ProjectCard
 from .new_project import NewProject, ProjectInfo
+from models.models import Project
+from common.db_helper import db_session
 
 
 class HomeWidget(QWidget):
@@ -57,34 +67,87 @@ class HomeWidget(QWidget):
 
         self._connect_signals_and_slot()
 
-    def _flush_flowlayout(self):
-        # 移除全部组件
-        self.layout.removeAllWidgets()
-        # 重新添加组件
-        for index in range(self.layout.count()):
-            item = self.layout.itemAt(index)
-            if item.widget():
-                widget = item.widget()
-                self.layout.addWidget(widget)
-
     def _connect_signals_and_slot(self):
         self.btn_create_project.clicked.connect(self._on_clicked_create_project)
-        self.cmb_sort.currentIndexChanged.connect(self._on_load_projects())
+        self.cmb_sort.currentIndexChanged.connect(self._on_sorting_changed)
 
     def _on_clicked_create_project(self):
         self.new_project_window = NewProject(self)
         self.new_project_window.project_created.connect(self._on_add_new_project)
         self.new_project_window.exec()
 
+    def _clear_project_layout(self):
+        while self.layout.count():
+            item = self.layout.takeAt(0)
+            if isinstance(item, ProjectCard):
+                item.deleteLater()
+
     @Slot(int)
-    def _on_load_projects(self):
-        # todo
+    def _on_sorting_changed(self, index):
+        # self.cmb_sort.addItems([self.tr("time ascending"),
+        #                         self.tr("time descending"),
+        #                         self.tr("name ascending"),
+        #                         self.tr("name descending")])
+        field = Project.project_name
+        order = asc
+        if index == 0:
+            field = Project.create_time
+            order = asc
+        if index == 1:
+            field = Project.create_time
+            order = desc
+        if index == 2:
+            field = Project.project_name
+            order = asc
+        if index == 3:
+            field = Project.project_name
+            order = desc
+        self._load_projects(field, order)
+
+    def _load_projects(self, field=Project.project_name, order=asc):
+        self._clear_project_layout()
+        with db_session() as session:
+            query: Query = session.query(Project)
+            result: list[Project] = query.order_by(order(field)).all()
+            # 转成json
+            # json_result = json.dumps([user.__dict__ for user in result], default=str)
+            for row in result:
+                project_info = ProjectInfo()
+                project_info.project_name = row.project_name
+                project_info.project_id = row.project_id
+                project_info.project_description = row.project_description
+                project_info.create_time = format_datatime(row.create_time)
+                project_info.worker_dir = row.worker_dir
+                self._add_new_project(project_info)
+
+    def _add_new_project(self, project_info: ProjectInfo):
+        self.project_card = ProjectCard()
+        self.project_card.delete_clicked.connect(self._on_delete_project_card)
+        self.project_card.view_clicked.connect(self._on_view_project_detail)
+        self.project_card.set_project_info(project_info)
+        self.layout.addWidget(self.project_card)
+
+    @Slot()
+    def _on_delete_project_card(self):
+        pass
+
+    @Slot()
+    def _on_view_project_detail(self):
         pass
 
     @Slot(ProjectInfo)
     def _on_add_new_project(self, project_info: ProjectInfo):
-        self.project_card = ProjectCard()
-        self.project_card.set_project_info(project_info)
-        self.layout.addWidget(self.project_card)
+        self._add_new_project(project_info)
         # 创建一个目录
+        new_project_row = Project(
+            project_name=project_info.project_name,
+            project_id=project_info.project_id,
+            project_description=project_info.project_description,
+            project_type=project_info.project_type.value,
+            worker_dir=project_info.worker_dir,
+            create_time=str_to_datetime(project_info.create_time),
+        )
+        # 这里想获取新增后的id,需要refresh数据，就不能在上下文里提交
+        with db_session(True) as session:
+            session.add(new_project_row)
         os.makedirs(Path(project_info.worker_dir) / project_info.project_id, exist_ok=True)
