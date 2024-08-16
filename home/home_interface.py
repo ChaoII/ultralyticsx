@@ -1,28 +1,21 @@
-import json
 import os
-import time
+import shutil
 from pathlib import Path
 
+from PySide6.QtCore import Slot, Signal, Qt, QEasingCurve
+from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QFormLayout)
+from qfluentwidgets import BodyLabel, PrimaryPushButton, FluentIcon, \
+    FlowLayout, ComboBox
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import Query
 
-from common.db_helper import Session
-
-from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication, QEasingCurve
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
-                               QSplitter, QFormLayout)
-from loguru import logger
-from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
-    Theme, setTheme, HorizontalPipsPager, ComboBox
 from common.cust_scrollwidget import CustomScrollWidget
+from common.db_helper import db_session
 from common.page_widget import PipsPager, PipsScrollButtonDisplayMode
 from common.utils import str_to_datetime, format_datatime
-from settings import cfg
-from .project_card import ProjectCard
-from .new_project import NewProject, ProjectInfo
 from models.models import Project
-from common.db_helper import db_session
+from .new_project import NewProject, ProjectInfo
+from .project_card import ProjectCard
 
 
 class HomeWidget(QWidget):
@@ -65,6 +58,7 @@ class HomeWidget(QWidget):
         pager.setPreviousButtonDisplayMode(PipsScrollButtonDisplayMode.ALWAYS)
         self.vly.addWidget(pager)
 
+        self._load_projects()
         self._connect_signals_and_slot()
 
     def _connect_signals_and_slot(self):
@@ -84,27 +78,24 @@ class HomeWidget(QWidget):
 
     @Slot(int)
     def _on_sorting_changed(self, index):
-        # self.cmb_sort.addItems([self.tr("time ascending"),
-        #                         self.tr("time descending"),
-        #                         self.tr("name ascending"),
-        #                         self.tr("name descending")])
+        self._load_projects()
+
+    def _load_projects(self):
         field = Project.project_name
         order = asc
-        if index == 0:
+        if self.cmb_sort.currentIndex() == 0:
             field = Project.create_time
             order = asc
-        if index == 1:
+        if self.cmb_sort.currentIndex() == 1:
             field = Project.create_time
             order = desc
-        if index == 2:
+        if self.cmb_sort.currentIndex() == 2:
             field = Project.project_name
             order = asc
-        if index == 3:
+        if self.cmb_sort.currentIndex() == 3:
             field = Project.project_name
             order = desc
-        self._load_projects(field, order)
 
-    def _load_projects(self, field=Project.project_name, order=asc):
         self._clear_project_layout()
         with db_session() as session:
             query: Query = session.query(Project)
@@ -127,9 +118,13 @@ class HomeWidget(QWidget):
         self.project_card.set_project_info(project_info)
         self.layout.addWidget(self.project_card)
 
-    @Slot()
-    def _on_delete_project_card(self):
-        pass
+    @Slot(str)
+    def _on_delete_project_card(self, project_id):
+        with db_session(auto_commit_exit=True) as session:
+            record = session.query(Project).filter_by(project_id=project_id).first()
+            session.delete(record)
+        shutil.rmtree(Path(record.worker_dir) / project_id)
+        self._load_projects()
 
     @Slot()
     def _on_view_project_detail(self):

@@ -2,9 +2,10 @@ from pathlib import Path
 
 from PySide6.QtCore import QRect, QPoint, Signal
 from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColor, QPainterPath
+from click import style
 from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
     isDarkTheme
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption
 import shutil
 from home.new_project import ProjectInfo
 from settings import cfg
@@ -12,16 +13,14 @@ from settings import cfg
 
 class ProjectCard(ElevatedCardWidget):
     view_clicked = Signal()
-    delete_clicked = Signal()
+    delete_clicked = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setMouseTracking(True)
 
-        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-
         self.vly_1 = QVBoxLayout(self)
-        self.lbl_project_name = TitleLabel()
+        self.lbl_project_name = StrongBodyLabel()
         self.lbl_project_id = StrongBodyLabel()
         self.lbl_project_description = BodyLabel()
         self.lbl_project_type = BodyLabel()
@@ -40,18 +39,21 @@ class ProjectCard(ElevatedCardWidget):
         self.is_pressed_view = False
         self.is_hover_delete = False
         self.is_pressed_delete = False
+        self.project_id = ""
 
         self.view_rect = QRect(0, self.height() - 40, int(self.width() / 2), 40)
         self.delete_rect = QRect(int(self.width() / 2), self.height() - 40, int(self.width() / 2), 40)
 
     def set_project_info(self, project_info: ProjectInfo):
         self.lbl_project_name.setText(project_info.project_name)
-        self.lbl_project_id.setText(project_info.project_id)
+        self.lbl_project_id.setText("ID: " + project_info.project_id)
         self.lbl_project_description.setText(project_info.project_description)
         self.lbl_project_type.setText(project_info.project_type.name)
         self.lbl_create_time.setText(project_info.create_time)
+        self.project_id = project_info.project_id
 
     def paintEvent(self, e):
+        self.lbl_project_name.update()
         if self.isHover:
             # 绘制自定义边框
             painter = QPainter(self)
@@ -108,7 +110,6 @@ class ProjectCard(ElevatedCardWidget):
             painter.drawText(self.view_rect, Qt.AlignmentFlag.AlignCenter, self.tr("view"))
             painter.setPen(themeColor())
             painter.drawText(self.delete_rect, Qt.AlignmentFlag.AlignCenter, self.tr("delete"))
-
         else:
             super().paintEvent(e)
 
@@ -117,6 +118,7 @@ class ProjectCard(ElevatedCardWidget):
         self.lbl_project_type.setVisible(False)
         self.lbl_create_time.setVisible(False)
         super().enterEvent(e)
+        self.lbl_project_name.update()
 
     def leaveEvent(self, e):
         self.lbl_project_name.setTextColor()
@@ -135,10 +137,15 @@ class ProjectCard(ElevatedCardWidget):
             self.is_hover_delete = True
         else:
             self.is_hover_delete = False
+
+        if self.is_hover_view or self.is_hover_delete:
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
+        if not self.is_hover_delete and not self.is_hover_view:
+            self.setCursor(Qt.CursorShape.ArrowCursor)
         self.update()
 
     def mousePressEvent(self, e):
-        # super().mousePressEvent(e)
+        super().mousePressEvent(e)
         mouse_pos = e.pos()
         if self.view_rect.contains(mouse_pos):
             self.is_pressed_view = True
@@ -156,4 +163,4 @@ class ProjectCard(ElevatedCardWidget):
         self.update()
 
     def _delete_item(self):
-        self.delete_clicked.emit()
+        self.delete_clicked.emit(self.project_id)
