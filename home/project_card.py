@@ -2,13 +2,10 @@ from pathlib import Path
 
 from PySide6.QtCore import QRect, QPoint, Signal
 from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColor, QPainterPath
-from click import style
 from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
     isDarkTheme, FluentIcon
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption
-import shutil
 from home.new_project import ProjectInfo
-from settings import cfg
 from common.tag_widget import TagWidget
 
 
@@ -22,15 +19,13 @@ class ProjectCard(ElevatedCardWidget):
 
         self.vly_1 = QVBoxLayout(self)
         self.lbl_project_name = StrongBodyLabel()
-        self.cc = TagWidget(FluentIcon.SCROLL,"asdasdas")
         self.lbl_project_id = StrongBodyLabel()
         self.lbl_project_description = BodyLabel()
-        self.lbl_project_type = BodyLabel()
+        self.tg_project_type = TagWidget(FluentIcon.SCROLL, "")
         self.lbl_create_time = BodyLabel()
         self.hly_bottom = QHBoxLayout()
-        self.hly_bottom.addWidget(self.lbl_project_type)
+        self.hly_bottom.addWidget(self.tg_project_type)
         self.hly_bottom.addWidget(self.lbl_create_time)
-        self.vly_1.addWidget(self.cc)
         self.vly_1.addWidget(self.lbl_project_name)
         self.vly_1.addWidget(self.lbl_project_id)
         self.vly_1.addWidget(self.lbl_project_description)
@@ -51,7 +46,8 @@ class ProjectCard(ElevatedCardWidget):
         self.lbl_project_name.setText(project_info.project_name)
         self.lbl_project_id.setText("ID: " + project_info.project_id)
         self.lbl_project_description.setText(project_info.project_description)
-        self.lbl_project_type.setText(project_info.project_type.name)
+        self.tg_project_type.setText(project_info.project_type.name)
+        self.tg_project_type.set_color(project_info.project_type.color)
         self.lbl_create_time.setText(project_info.create_time)
         self.project_id = project_info.project_id
 
@@ -118,14 +114,14 @@ class ProjectCard(ElevatedCardWidget):
 
     def enterEvent(self, e) -> None:
         self.lbl_project_name.setTextColor(themeColor())
-        self.lbl_project_type.setVisible(False)
+        self.tg_project_type.setVisible(False)
         self.lbl_create_time.setVisible(False)
         super().enterEvent(e)
         self.lbl_project_name.update()
 
     def leaveEvent(self, e):
         self.lbl_project_name.setTextColor()
-        self.lbl_project_type.setVisible(True)
+        self.tg_project_type.setVisible(True)
         self.lbl_create_time.setVisible(True)
         super().leaveEvent(e)
 

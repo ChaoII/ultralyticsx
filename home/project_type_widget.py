@@ -1,7 +1,7 @@
 import enum
 
-from qfluentwidgets import themeColor, BodyLabel,SimpleCardWidget
-from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QCursor, QImage
+from qfluentwidgets import themeColor, BodyLabel, SimpleCardWidget, isDarkTheme
+from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QCursor, QImage, QColor
 from PySide6.QtCore import Qt, QPoint, Signal, Slot, QLine
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 
@@ -12,6 +12,29 @@ class ProjectType(enum.Enum):
     SEGMENT = 2
     OBB = 3
     POSE = 4
+
+    @property
+    def color(self):
+        _color_map = {
+            # 红色
+            ProjectType.CLASSIFY: QColor("#FF0000"),
+            # 蓝色
+            ProjectType.DETECT: QColor("#3399ff"),
+            ProjectType.SEGMENT: QColor("#042AFF"),
+            ProjectType.OBB: QColor("#111F68"),
+            ProjectType.POSE: QColor("#BD00FF"),
+        }
+        if isDarkTheme():
+            _color_map = {
+                # 青色
+                ProjectType.CLASSIFY: QColor("#0BDBEB"),
+                ProjectType.DETECT: QColor("#66ff66"),
+                ProjectType.SEGMENT: QColor("#4da6ff"),
+                ProjectType.OBB: QColor("#ffb3d9"),
+                ProjectType.POSE: QColor("#ffff80")
+            }
+
+        return _color_map[self]
 
 
 class ProjectTypeItemWidget(SimpleCardWidget):

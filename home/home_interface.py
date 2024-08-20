@@ -16,6 +16,7 @@ from common.utils import str_to_datetime, format_datatime
 from models.models import Project
 from .new_project import NewProject, ProjectInfo
 from .project_card import ProjectCard
+from .project_type_widget import ProjectType
 
 
 class HomeWidget(QWidget):
@@ -29,6 +30,16 @@ class HomeWidget(QWidget):
         self.vly.setSpacing(9)
         self.hvy_btn = QHBoxLayout()
         self.btn_create_project = PrimaryPushButton(FluentIcon.ADD, self.tr("Create project"))
+        self.lbl_type = BodyLabel(self.tr("type:"), self)
+        self.cmb_type = ComboBox()
+        self.cmb_type.setMinimumWidth(200)
+        self.cmb_type.addItems([self.tr("All type"),
+                                self.tr("Classify"),
+                                self.tr("Detection"),
+                                self.tr("Segmentation"),
+                                self.tr("OBB"),
+                                self.tr("Pose")])
+
         self.lbl_sort = BodyLabel(self.tr("sort:"), self)
         self.cmb_sort = ComboBox()
         self.cmb_sort.setMinimumWidth(200)
@@ -36,10 +47,15 @@ class HomeWidget(QWidget):
                                 self.tr("time descending"),
                                 self.tr("name ascending"),
                                 self.tr("name descending")])
+
+        self.fly_type = QFormLayout()
+        self.fly_type.addRow(self.lbl_type, self.cmb_type)
         self.fly_sort = QFormLayout()
         self.fly_sort.addRow(self.lbl_sort, self.cmb_sort)
+
         self.hvy_btn.addWidget(self.btn_create_project)
         self.hvy_btn.addStretch(1)
+        self.hvy_btn.addLayout(self.fly_type)
         self.hvy_btn.addLayout(self.fly_sort)
 
         self.scroll_area = CustomScrollWidget(orient=Qt.Orientation.Vertical)
@@ -64,6 +80,7 @@ class HomeWidget(QWidget):
     def _connect_signals_and_slot(self):
         self.btn_create_project.clicked.connect(self._on_clicked_create_project)
         self.cmb_sort.currentIndexChanged.connect(self._on_sorting_changed)
+        self.cmb_type.currentIndexChanged.connect(self._on_sorting_changed)
 
     def _on_clicked_create_project(self):
         self.new_project_window = NewProject(self)
@@ -98,7 +115,10 @@ class HomeWidget(QWidget):
 
         self._clear_project_layout()
         with db_session() as session:
-            query: Query = session.query(Project)
+            if self.cmb_type.currentIndex() == 0:
+                query: Query = session.query(Project)
+            else:
+                query: Query = session.query(Project).filter(Project.project_type == self.cmb_type.currentIndex() - 1)
             result: list[Project] = query.order_by(order(field)).all()
             # 转成json
             # json_result = json.dumps([user.__dict__ for user in result], default=str)
@@ -109,6 +129,7 @@ class HomeWidget(QWidget):
                 project_info.project_description = row.project_description
                 project_info.create_time = format_datatime(row.create_time)
                 project_info.worker_dir = row.worker_dir
+                project_info.project_type = ProjectType(row.project_type)
                 self._add_new_project(project_info)
 
     def _add_new_project(self, project_info: ProjectInfo):
