@@ -1,9 +1,7 @@
-from pathlib import Path
-
 from PySide6.QtCore import QRect, QPoint, Signal
 from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColor, QPainterPath
 from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
-    isDarkTheme, FluentIcon, CaptionLabel, TextWrap
+    isDarkTheme, FluentIcon, CaptionLabel, TextWrap, TableWidget
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption, QLineEdit
 from project.new_project import ProjectInfo
 from common.tag_widget import TagWidget
@@ -121,7 +119,7 @@ class ProjectCard(ElevatedCardWidget):
             super().paintEvent(e)
 
     def enterEvent(self, e) -> None:
-        self.lbl_project_name.setTextColor(themeColor())
+        self.lbl_project_name.setTextColor(themeColor(), themeColor())
         self.tg_project_type.setVisible(False)
         self.lbl_create_time.setVisible(False)
         super().enterEvent(e)
