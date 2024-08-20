@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import re
 from qfluentwidgets import ElevatedCardWidget, BodyLabel, Dialog, MessageBoxBase, FluentStyleSheet, PrimaryPushButton, \
-    TextWrap, LineEdit, TextEdit
+    TextWrap, LineEdit, TextEdit, MessageDialog, InfoBar, InfoBarPosition
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
 from qframelesswindow import FramelessDialog
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton
@@ -55,6 +55,7 @@ class NewProject(FramelessDialog):
 
         self.lbl_name = BodyLabel(text=self.tr("project name:"))
         self.le_name = LineEdit()
+        self.le_name.setMaxLength(16)
         self.lbl_description = BodyLabel(text=self.tr("project description:"))
         self.ted_description = TextEdit()
         self.lbl_type = BodyLabel(text=self.tr("project type:"))
@@ -86,6 +87,23 @@ class NewProject(FramelessDialog):
     def _connect_signals_and_slots(self):
         self.project_type.project_type_selected.connect(self._on_project_type_selected)
         self.workdir_select.dir_selected.connect(self._on_workdir_selected)
+        self.ted_description.textChanged.connect(self._on_description_text_changed)
+
+    @Slot(str)
+    def _on_description_text_changed(self):
+        if len(self.ted_description.toPlainText()) > 100:
+            InfoBar.error(
+                title='',
+                content=self.tr("Over maximum length 100, current length is: ") + str(
+                    len(self.ted_description.toPlainText())),
+                orient=Qt.Orientation.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=-1,
+                parent=self
+            )
+            # 截断文本到最大长度
+            self.ted_description.setPlainText(self.ted_description.toPlainText()[:100])
 
     @Slot(str)
     def _on_workdir_selected(self, worker_idr):

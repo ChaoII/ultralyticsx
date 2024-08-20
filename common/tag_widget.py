@@ -40,8 +40,8 @@ class TagWidget(QWidget):
         font = QFont()
         fm = QFontMetrics(font)
         self.text_width = fm.boundingRect(self._text).width()
-        self.setFixedWidth(12 + 2 + self.text_width + self._icon_size.width() * 2)
-        self.setFixedWidth(120)
+        # self.setFixedWidth(12 + 2 + self.text_width + self._icon_size.width() * 2)
+        self.setFixedWidth(100)
 
     def setIconSize(self, size: QSize):
         self._icon_size = size
@@ -59,20 +59,18 @@ class TagWidget(QWidget):
 
     def set_color(self, color: QColor):
         self._color = color
+        # self.update()
 
     def paintEvent(self, e):
         super().paintEvent(e)
-        if self.icon().isNull():
+        if self.icon().isNull() and self._text is None:
             return
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.iconSize().width(), self.iconSize().height()
         y = (self.height() - h) / 2
-        mw = self.minimumSizeHint().width()
-        if mw > 0:
-            x = 12 + (self.width() - mw) // 2
-        else:
-            x = 12
-        x = (self.width() - self._icon_size.width() - self.text_width) // 2 - 8
+        gap = 8  # 文字和icon之间的间隔
+        x = (self.width() - self._icon_size.width() - self.text_width) // 2 - gap
 
         if self.isRightToLeft():
             x = self.width() - w - x
@@ -83,4 +81,4 @@ class TagWidget(QWidget):
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, self._text)
         brush_color = QColor(self._color.red(), self._color.green(), self._color.blue(), 100)
         painter.setBrush(brush_color)
-        painter.drawRoundedRect(self.rect(), 3, 3)
+        painter.drawRoundedRect(self.rect(), 10, 10)

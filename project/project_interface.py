@@ -17,6 +17,7 @@ from models.models import Project
 from .new_project import NewProject, ProjectInfo
 from .project_card import ProjectCard
 from .project_type_widget import ProjectType
+from settings.config import cfg
 
 
 class HomeWidget(QWidget):
@@ -78,9 +79,16 @@ class HomeWidget(QWidget):
         self._connect_signals_and_slot()
 
     def _connect_signals_and_slot(self):
+        cfg.themeChanged.connect(self._on_Theme_changed)
         self.btn_create_project.clicked.connect(self._on_clicked_create_project)
         self.cmb_sort.currentIndexChanged.connect(self._on_sorting_changed)
         self.cmb_type.currentIndexChanged.connect(self._on_sorting_changed)
+
+    def _on_Theme_changed(self):
+        for i in range(self.layout.count()):
+            project_card = self.layout.itemAt(i).widget()
+            if isinstance(project_card, ProjectCard):
+                project_card.update_project_type_tag_style()
 
     def _on_clicked_create_project(self):
         self.new_project_window = NewProject(self)

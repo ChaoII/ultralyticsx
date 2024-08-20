@@ -15,7 +15,7 @@ from settings import SettingInterface, cfg
 from model_train import ModelTrainWidget
 from dataset_process import DataProcessWidget
 
-from home import HomeWidget
+from project import HomeWidget
 
 
 class Widget(QFrame):

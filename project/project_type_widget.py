@@ -16,10 +16,8 @@ class ProjectType(enum.Enum):
     @property
     def color(self):
         _color_map = {
-            # 红色
             ProjectType.CLASSIFY: QColor("#FF0000"),
-            # 蓝色
-            ProjectType.DETECT: QColor("#3399ff"),
+            ProjectType.DETECT: QColor("#e65c00"),
             ProjectType.SEGMENT: QColor("#042AFF"),
             ProjectType.OBB: QColor("#111F68"),
             ProjectType.POSE: QColor("#BD00FF"),
@@ -33,7 +31,6 @@ class ProjectType(enum.Enum):
                 ProjectType.OBB: QColor("#ffb3d9"),
                 ProjectType.POSE: QColor("#ffff80")
             }
-
         return _color_map[self]
 
 

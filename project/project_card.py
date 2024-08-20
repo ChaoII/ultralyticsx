@@ -3,9 +3,9 @@ from pathlib import Path
 from PySide6.QtCore import QRect, QPoint, Signal
 from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColor, QPainterPath
 from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
-    isDarkTheme, FluentIcon
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption
-from home.new_project import ProjectInfo
+    isDarkTheme, FluentIcon, CaptionLabel, TextWrap
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption, QLineEdit
+from project.new_project import ProjectInfo
 from common.tag_widget import TagWidget
 
 
@@ -22,9 +22,10 @@ class ProjectCard(ElevatedCardWidget):
         self.lbl_project_id = StrongBodyLabel()
         self.lbl_project_description = BodyLabel()
         self.tg_project_type = TagWidget(FluentIcon.SCROLL, "")
-        self.lbl_create_time = BodyLabel()
+        self.lbl_create_time = CaptionLabel()
         self.hly_bottom = QHBoxLayout()
         self.hly_bottom.addWidget(self.tg_project_type)
+        self.hly_bottom.addStretch(1)
         self.hly_bottom.addWidget(self.lbl_create_time)
         self.vly_1.addWidget(self.lbl_project_name)
         self.vly_1.addWidget(self.lbl_project_id)
@@ -38,18 +39,25 @@ class ProjectCard(ElevatedCardWidget):
         self.is_hover_delete = False
         self.is_pressed_delete = False
         self.project_id = ""
+        self.project_info = None
 
         self.view_rect = QRect(0, self.height() - 40, int(self.width() / 2), 40)
         self.delete_rect = QRect(int(self.width() / 2), self.height() - 40, int(self.width() / 2), 40)
 
     def set_project_info(self, project_info: ProjectInfo):
+        self.project_info = project_info
         self.lbl_project_name.setText(project_info.project_name)
         self.lbl_project_id.setText("ID: " + project_info.project_id)
-        self.lbl_project_description.setText(project_info.project_description)
+        self.lbl_project_description.setText(
+            TextWrap.wrap(project_info.project_description, 36, once=False)[0])
         self.tg_project_type.setText(project_info.project_type.name)
         self.tg_project_type.set_color(project_info.project_type.color)
         self.lbl_create_time.setText(project_info.create_time)
         self.project_id = project_info.project_id
+
+    def update_project_type_tag_style(self):
+        if self.project_info is not None:
+            self.tg_project_type.set_color(self.project_info.project_type.color)
 
     def paintEvent(self, e):
         self.lbl_project_name.update()
