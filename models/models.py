@@ -27,7 +27,7 @@ class Task(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(String)
-    project_id = Column(Integer, ForeignKey('projects.id'))
+    project_id = Column(String, ForeignKey('projects.project_id'))
     comment = Column(String)
     task_status = Column(Integer)
     create_time = Column(DateTime, default=datetime.utcnow())

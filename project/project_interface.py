@@ -215,7 +215,7 @@ class HomeWidget(QWidget):
         self.breadcrumbBar.addItem(self.task_widget.objectName(), project_info.project_name)
         with db_session(auto_commit_exit=True) as session:
             tasks: list[Task] = session.query(Task).filter_by(project_id=project_info.project_id).all()
-            print(tasks)
+            self.task_widget.set_data(tasks)
 
     @Slot(str)
     def _on_bread_bar_item_changed(self, obj_name):
