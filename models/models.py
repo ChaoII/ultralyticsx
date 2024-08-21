@@ -18,8 +18,8 @@ class Project(Base):
     project_description = Column(String)
     project_type = Column(Integer)
     worker_dir = Column(Integer)
-    task = relationship("Task", back_populates="project")
     create_time = Column(DateTime, default=datetime.utcnow())
+    task = relationship("Task", back_populates="project")
 
 
 class Task(Base):
@@ -28,10 +28,10 @@ class Task(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(String)
     project_id = Column(Integer, ForeignKey('projects.id'))
-    project = relationship("Project", back_populates="task")
     comment = Column(String)
     task_status = Column(Integer)
     create_time = Column(DateTime, default=datetime.utcnow())
+    project = relationship("Project", back_populates="task")
 
 
 Base.metadata.create_all(engine)

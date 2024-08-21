@@ -9,7 +9,11 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
 from qframelesswindow import FramelessDialog
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton
 from PySide6.QtCore import Qt, Signal, Slot
+from sqlalchemy.orm import Query
+
+from common.db_helper import db_session
 from common.file_select_widget import DirSelectWidget
+from models.models import Project
 from settings import cfg
 from .project_type_widget import ProjectTypeItemWidget, ProjectTypeGroupWidget
 from .project_type_widget import ProjectType
@@ -142,6 +146,19 @@ class NewProject(FramelessDialog):
         self.cancelSignal.emit()
 
     def _onYesButtonClicked(self):
+        with db_session(True) as session:
+            projects: Query = session.query(Project).filter_by(project_name=self.le_name.text().strip())
+            if len(projects.all()) > 0:
+                InfoBar.error(
+                    title='',
+                    content=self.tr("Project name is existing"),
+                    orient=Qt.Orientation.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP_RIGHT,
+                    duration=-1,
+                    parent=self
+                )
+                return
         self.accept()
         self.project_info.project_name = self.le_name.text()
         self.project_info.project_description = self.ted_description.toPlainText()

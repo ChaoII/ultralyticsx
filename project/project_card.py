@@ -1,14 +1,17 @@
-from PySide6.QtCore import QRect, QPoint, Signal
+from PySide6.QtCore import QRect, QPoint, Signal, Slot
 from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColor, QPainterPath
 from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
-    isDarkTheme, FluentIcon, CaptionLabel, TextWrap, TableWidget
+    isDarkTheme, FluentIcon, CaptionLabel, TextWrap, TableWidget, TeachingTip, TeachingTipTailPosition, \
+    PopupTeachingTip, InfoBarIcon
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption, QLineEdit
+
+from common.delete_ensure_widget import CustomFlyoutView
 from project.new_project import ProjectInfo
 from common.tag_widget import TagWidget
 
 
 class ProjectCard(ElevatedCardWidget):
-    view_clicked = Signal()
+    view_clicked = Signal(ProjectInfo)
     delete_clicked = Signal(str)
 
     def __init__(self, parent=None):
@@ -36,8 +39,7 @@ class ProjectCard(ElevatedCardWidget):
         self.is_pressed_view = False
         self.is_hover_delete = False
         self.is_pressed_delete = False
-        self.project_id = ""
-        self.project_info = None
+        self.project_info = ProjectInfo()
 
         self.view_rect = QRect(0, self.height() - 40, int(self.width() / 2), 40)
         self.delete_rect = QRect(int(self.width() / 2), self.height() - 40, int(self.width() / 2), 40)
@@ -51,7 +53,6 @@ class ProjectCard(ElevatedCardWidget):
         self.tg_project_type.setText(project_info.project_type.name)
         self.tg_project_type.set_color(project_info.project_type.color)
         self.lbl_create_time.setText(project_info.create_time)
-        self.project_id = project_info.project_id
 
     def update_project_type_tag_style(self):
         if self.project_info is not None:
@@ -155,7 +156,7 @@ class ProjectCard(ElevatedCardWidget):
         if self.view_rect.contains(mouse_pos):
             self.is_pressed_view = True
             self.update()
-            self.view_clicked.emit()
+            self.view_clicked.emit(self.project_info)
         if self.delete_rect.contains(mouse_pos):
             self.is_pressed_delete = True
             self.update()
@@ -168,4 +169,18 @@ class ProjectCard(ElevatedCardWidget):
         self.update()
 
     def _delete_item(self):
-        self.delete_clicked.emit(self.project_id)
+        self.view = CustomFlyoutView(content=self.tr("Are you sure to delete this item?"))
+        self.popup_tip = PopupTeachingTip.make(
+            target=self.lbl_create_time,
+            view=self.view,
+            tailPosition=TeachingTipTailPosition.BOTTOM,
+            duration=-1,
+            parent=self
+        )
+        self.view.accept_status.connect(self._on_ensure_delete_item)
+
+    @Slot(bool)
+    def _on_ensure_delete_item(self, accepted):
+        if accepted:
+            self.delete_clicked.emit(self.project_info.project_id)
+        self.popup_tip.close()

@@ -114,7 +114,6 @@ class TaskTableWidget(TableWidget):
         ]
         for i, songInfo in enumerate(songInfos):
             for j in range(5):
-                # self.setItem(i, j, QTableWidgetItem(songInfo[j]))
                 if j == 4:
                     self.setCellWidget(i, j, OperationWidget())
                 else:
@@ -134,3 +133,10 @@ class TaskWidget(QWidget):
         self.tb_task = TaskTableWidget()
         self.vly.addLayout(self.hly_btn)
         self.vly.addWidget(self.tb_task)
+        self._connect_signals_and_slots()
+
+    def _connect_signals_and_slots(self):
+        self.btn_create_task.clicked.connect(self._on_create_task_clicked)
+
+    def _on_create_task_clicked(self):
+        pass

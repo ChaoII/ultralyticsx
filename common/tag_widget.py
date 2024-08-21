@@ -41,7 +41,7 @@ class TagWidget(QWidget):
         fm = QFontMetrics(font)
         self.text_width = fm.boundingRect(self._text).width()
         # self.setFixedWidth(12 + 2 + self.text_width + self._icon_size.width() * 2)
-        self.setFixedWidth(100)
+        self.setFixedSize(QSize(100, 26))
 
     def setIconSize(self, size: QSize):
         self._icon_size = size
