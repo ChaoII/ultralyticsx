@@ -24,7 +24,7 @@ class ProjectInfo:
     project_id: str
     project_description: str
     project_type: ProjectType = ProjectType.CLASSIFY
-    worker_dir: str
+    workspace_dir: str
     create_time: str
 
 
@@ -34,7 +34,7 @@ class NewProject(FramelessDialog):
 
     def __init__(self, parent=None):
         super().__init__()
-        self._setUpUi(self.tr("Create home"), parent=parent)
+        self._setUpUi(self.tr("Create project"), parent=parent)
 
     def _setUpUi(self, title, parent):
         self.titleLabel = QLabel(title, parent)
@@ -57,21 +57,21 @@ class NewProject(FramelessDialog):
         self.hly_btn.setSpacing(12)
         self.hly_btn.setContentsMargins(24, 24, 24, 24)
 
-        self.lbl_name = BodyLabel(text=self.tr("home name:"))
+        self.lbl_name = BodyLabel(text=self.tr("Project name:"))
         self.le_name = LineEdit()
         self.le_name.setMaxLength(16)
-        self.lbl_description = BodyLabel(text=self.tr("home description:"))
+        self.lbl_description = BodyLabel(text=self.tr("Project description:"))
         self.ted_description = TextEdit()
-        self.lbl_type = BodyLabel(text=self.tr("home type:"))
+        self.lbl_type = BodyLabel(text=self.tr("Project type:"))
         self.project_type = ProjectTypeGroupWidget()
-        self.lbl_worker_dir = BodyLabel(text=self.tr("worker directory:"))
+        self.lbl_workspace_dir = BodyLabel(text=self.tr("worker directory:"))
         self.workdir_select = DirSelectWidget()
         self.fly_content = QFormLayout()
         self.fly_content.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.fly_content.addRow(self.lbl_name, self.le_name)
         self.fly_content.addRow(self.lbl_description, self.ted_description)
         self.fly_content.addRow(self.lbl_type, self.project_type)
-        self.fly_content.addRow(self.lbl_worker_dir, self.workdir_select)
+        self.fly_content.addRow(self.lbl_workspace_dir, self.workdir_select)
 
         self.vBoxLayout = QVBoxLayout(self)
         self.vBoxLayout.setSpacing(9)
@@ -82,8 +82,8 @@ class NewProject(FramelessDialog):
         self.vBoxLayout.addLayout(self.hly_btn)
         self.vBoxLayout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)
         self.project_info = ProjectInfo()
-        self.project_info.worker_dir = cfg.get(cfg.workspace_folder)
-        self.workdir_select.le_dir.setText(self.project_info.worker_dir)
+        self.project_info.workspace_dir = cfg.get(cfg.workspace_folder)
+        self.workdir_select.le_dir.setText(self.project_info.workspace_dir)
 
         self._initWidget()
         self._connect_signals_and_slots()
@@ -110,8 +110,8 @@ class NewProject(FramelessDialog):
             self.ted_description.setPlainText(self.ted_description.toPlainText()[:100])
 
     @Slot(str)
-    def _on_workdir_selected(self, worker_idr):
-        self.project_info.worker_dir = worker_idr
+    def _on_workdir_selected(self, workspace_idr):
+        self.project_info.workspace_dir = workspace_idr
 
     @Slot(ProjectType)
     def _on_project_type_selected(self, project_type: ProjectType):
@@ -168,7 +168,7 @@ class NewProject(FramelessDialog):
 
     def _get_project_id(self) -> str:
         project_id = f"P{0:06d}"
-        for item in Path(self.project_info.worker_dir).iterdir():
+        for item in Path(self.project_info.workspace_dir).iterdir():
             if item.is_dir() and re.match(r'^P\d{6}$', item.name):
                 project_id = f"P{int(item.name[1:]) + 1:06d}"
         return project_id

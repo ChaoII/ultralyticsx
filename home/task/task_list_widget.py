@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import sys
 from enum import Enum
 from pathlib import Path
@@ -9,12 +10,12 @@ from PySide6.QtGui import Qt, QColor, QPalette
 from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, HyperlinkLabel, \
     setCustomStyleSheet, PrimaryPushButton, PopupTeachingTip, TeachingTipTailPosition
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
-    QStyleOptionViewItem, QTableWidgetItem, QWidget
+    QStyleOptionViewItem, QTableWidgetItem, QWidget, QAbstractItemView
 
 from common.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.utils import format_datatime
-from models.models import Task
+from models.models import Task, Project
 
 from common.fill_tool_button import FillToolButton
 from common.tag_widget import TextTagWidget
@@ -28,9 +29,9 @@ class TaskStatus(Enum):
     @property
     def widget(self):
         _widget_map = {
-            TaskStatus.Initializing: TextTagWidget(QObject().tr("Initializing"), QColor("#FF0000")),
-            TaskStatus.Training: TextTagWidget(QObject().tr("Training"), QColor("#e65c00")),
-            TaskStatus.TrainFailed: TextTagWidget(QObject().tr("TrainFailed"), QColor("#042AFF")),
+            TaskStatus.Initializing: TextTagWidget(QObject().tr("INITIALIZING"), QColor("#ff6600")),
+            TaskStatus.Training: TextTagWidget(QObject().tr("TRAINING"), QColor("#00e600")),
+            TaskStatus.TrainFailed: TextTagWidget(QObject().tr("TRAIN-FAILED"), QColor("#FF0000")),
         }
         return _widget_map[self]
 
@@ -127,6 +128,7 @@ class TaskTableWidget(TableWidget):
         self.setBorderVisible(True)
         self.setColumnCount(6)
         self.setRowCount(24)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setItemDelegate(CustomTableItemDelegate(self))
         self.setHorizontalHeaderLabels([
             self.tr('Task ID'), self.tr('Project name'), self.tr('Task status'),
@@ -200,8 +202,10 @@ class TaskWidget(QWidget):
     @Slot(str)
     def _on_delete_task(self, task_id):
         with db_session(auto_commit_exit=True) as session:
-            record = session.query(Task).filter_by(task_id=task_id).first()
-            session.delete(record)
+            task = session.query(Task).filter_by(task_id=task_id).first()
+            directory = Path(task.project.workspace_dir) / task.project.project_id / task_id
+            session.delete(task)
+        shutil.rmtree(directory)
         self.set_data(self.project_id)
 
     @Slot(str)
@@ -210,7 +214,9 @@ class TaskWidget(QWidget):
 
     @Slot(str)
     def _on_open_task_dir(self, task_id):
-        directory = "."
+        with db_session() as session:
+            task: Task = session.query(Task).filter_by(task_id=task_id).first()
+            directory = Path(task.project.workspace_dir) / task.project.project_id / task_id
         if sys.platform.startswith('win'):
             os.startfile(directory)
         elif sys.platform.startswith('darwin'):  # macOS
@@ -222,4 +228,17 @@ class TaskWidget(QWidget):
 
     @Slot()
     def _on_create_task(self):
+        # 创建任务路径
+        with db_session() as session:
+            project: Project = session.query(Project).filter_by(project_id=self.project_id).first()
+            workspace_dir = project.workspace_dir
+            task_id = self.get_task_id(Path(workspace_dir) / self.project_id)
+            os.makedirs(Path(workspace_dir) / self.project_id / task_id, exist_ok=True)
+            task = Task(
+                task_id=task_id,
+                comment="",
+                task_status=0,
+            )
+            project.tasks.append(task)
+        self.set_data(self.project_id)
         self.create_task_clicked.emit()

@@ -49,15 +49,8 @@ class HomeWidget(QWidget):
 
     @Slot()
     def _on_create_task_clicked(self):
-        print("===", self.sender())
         self.stackedWidget.setCurrentWidget(self.task_detail_widget)
         self.breadcrumbBar.addItem(self.task_detail_widget.objectName(), self.tr("Create Task"))
-        with db_session() as session:
-            project: Project = session.query(Project).filter_by(project_id=self.task_widget.project_id).first()
-            worker_dir = project.worker_dir
-            project_id = self.task_widget.project_id
-            task_id = self.task_widget.get_task_id(Path(worker_dir) / project_id)
-            os.makedirs(Path(worker_dir) / project_id / task_id, exist_ok=True)
 
     @Slot(str)
     def _on_view_task_clicked(self, task_id):

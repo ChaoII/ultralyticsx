@@ -26,12 +26,12 @@ class ProjectWidget(QWidget):
 
     def __init__(self, parent=None):
         super(ProjectWidget, self).__init__(parent=parent)
-        self.setObjectName("home_widget")
+        self.setObjectName("project_widget")
         self.vly = QVBoxLayout(self)
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
 
-        self.btn_create_project = PrimaryPushButton(FluentIcon.ADD, self.tr("Create home"))
+        self.btn_create_project = PrimaryPushButton(FluentIcon.ADD, self.tr("Create project"))
         self.lbl_type = BodyLabel(self.tr("type:"), self)
         self.cmb_type = ComboBox()
         self.cmb_type.setMinimumWidth(200)
@@ -137,7 +137,7 @@ class ProjectWidget(QWidget):
                 project_info.project_id = row.project_id
                 project_info.project_description = row.project_description
                 project_info.create_time = format_datatime(row.create_time)
-                project_info.worker_dir = row.worker_dir
+                project_info.workspace_dir = row.workspace_dir
                 project_info.project_type = ProjectType(row.project_type)
                 self._add_new_project(project_info)
 
@@ -153,7 +153,7 @@ class ProjectWidget(QWidget):
         with db_session(auto_commit_exit=True) as session:
             record = session.query(Project).filter_by(project_id=project_id).first()
             session.delete(record)
-        shutil.rmtree(Path(record.worker_dir) / project_id)
+        shutil.rmtree(Path(record.workspace_dir) / project_id)
         self._load_projects()
 
     @Slot(ProjectInfo)
@@ -166,13 +166,13 @@ class ProjectWidget(QWidget):
             project_id=project_info.project_id,
             project_description=project_info.project_description,
             project_type=project_info.project_type.value,
-            worker_dir=project_info.worker_dir,
+            workspace_dir=project_info.workspace_dir,
             create_time=str_to_datetime(project_info.create_time),
         )
         # 这里想获取新增后的id,需要refresh数据，就不能在上下文里提交
         with db_session(True) as session:
             session.add(new_project_row)
-        os.makedirs(Path(project_info.worker_dir) / project_info.project_id, exist_ok=True)
+        os.makedirs(Path(project_info.workspace_dir) / project_info.project_id, exist_ok=True)
 
     @Slot(str)
     def _on_view_project_detail(self, project_info):

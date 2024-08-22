@@ -17,8 +17,8 @@ class Project(Base):
     project_id = Column(String)
     project_description = Column(String)
     project_type = Column(Integer)
-    worker_dir = Column(String)
-    create_time = Column(DateTime, default=datetime.utcnow())
+    workspace_dir = Column(String)
+    create_time = Column(DateTime, default=datetime.now())
     tasks = relationship("Task", back_populates="project")
 
 
@@ -30,7 +30,7 @@ class Task(Base):
     project_id = Column(String, ForeignKey('projects.project_id'))
     comment = Column(String)
     task_status = Column(Integer)
-    create_time = Column(DateTime, default=datetime.utcnow())
+    create_time = Column(DateTime, default=datetime.now())
     project = relationship("Project", back_populates="tasks")
 
 
