@@ -17,9 +17,9 @@ class Project(Base):
     project_id = Column(String)
     project_description = Column(String)
     project_type = Column(Integer)
-    worker_dir = Column(Integer)
+    worker_dir = Column(String)
     create_time = Column(DateTime, default=datetime.utcnow())
-    task = relationship("Task", back_populates="project")
+    tasks = relationship("Task", back_populates="project")
 
 
 class Task(Base):
@@ -31,7 +31,7 @@ class Task(Base):
     comment = Column(String)
     task_status = Column(Integer)
     create_time = Column(DateTime, default=datetime.utcnow())
-    project = relationship("Project", back_populates="task")
+    project = relationship("Project", back_populates="tasks")
 
 
 Base.metadata.create_all(engine)

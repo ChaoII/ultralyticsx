@@ -1,12 +1,12 @@
-from PySide6.QtCore import QRect, QPoint, Signal, Slot
-from PySide6.QtGui import QMouseEvent, QCursor, Qt, QPainter, QPen, QFont, QColor, QPainterPath
-from qfluentwidgets import ElevatedCardWidget, SimpleCardWidget, StrongBodyLabel, TitleLabel, BodyLabel, themeColor, \
-    isDarkTheme, FluentIcon, CaptionLabel, TextWrap, TableWidget, TeachingTip, TeachingTipTailPosition, \
-    PopupTeachingTip, InfoBarIcon
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QStyle, QStyleOption, QLineEdit
+from PySide6.QtCore import QRect, Signal, Slot
+from PySide6.QtGui import QMouseEvent, Qt, QPainter, QPen, QFont, QColor, QPainterPath
+from qfluentwidgets import ElevatedCardWidget, StrongBodyLabel, BodyLabel, themeColor, \
+    isDarkTheme, FluentIcon, CaptionLabel, TextWrap, TeachingTipTailPosition, \
+    PopupTeachingTip
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
 
 from common.delete_ensure_widget import CustomFlyoutView
-from project.new_project import ProjectInfo
+from home.project.new_project import ProjectInfo
 from common.tag_widget import TagWidget
 
 

@@ -34,7 +34,7 @@ class NewProject(FramelessDialog):
 
     def __init__(self, parent=None):
         super().__init__()
-        self._setUpUi(self.tr("Create project"), parent=parent)
+        self._setUpUi(self.tr("Create home"), parent=parent)
 
     def _setUpUi(self, title, parent):
         self.titleLabel = QLabel(title, parent)
@@ -57,12 +57,12 @@ class NewProject(FramelessDialog):
         self.hly_btn.setSpacing(12)
         self.hly_btn.setContentsMargins(24, 24, 24, 24)
 
-        self.lbl_name = BodyLabel(text=self.tr("project name:"))
+        self.lbl_name = BodyLabel(text=self.tr("home name:"))
         self.le_name = LineEdit()
         self.le_name.setMaxLength(16)
-        self.lbl_description = BodyLabel(text=self.tr("project description:"))
+        self.lbl_description = BodyLabel(text=self.tr("home description:"))
         self.ted_description = TextEdit()
-        self.lbl_type = BodyLabel(text=self.tr("project type:"))
+        self.lbl_type = BodyLabel(text=self.tr("home type:"))
         self.project_type = ProjectTypeGroupWidget()
         self.lbl_worker_dir = BodyLabel(text=self.tr("worker directory:"))
         self.workdir_select = DirSelectWidget()

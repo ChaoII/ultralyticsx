@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (QStyleOptionViewItem, QStyle, QListWidget, QListW
                                QToolButton)
 
 from qfluentwidgets import FluentIcon, drawIcon, isDarkTheme, FluentStyleSheet, ToolButton, ToolTipFilter, \
-    ToolTipPosition, SmoothScrollBar, PrimaryToolButton, themeColor
+    ToolTipPosition, SmoothScrollBar, PrimaryToolButton, themeColor,PipsPager
 
 from functools import singledispatch, update_wrapper
 

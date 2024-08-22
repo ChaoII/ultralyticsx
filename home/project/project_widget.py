@@ -3,9 +3,9 @@ import shutil
 from pathlib import Path
 
 from PySide6.QtCore import Slot, Signal, Qt, QEasingCurve
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QFormLayout, QStackedWidget)
+from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QFormLayout)
 from qfluentwidgets import BodyLabel, PrimaryPushButton, FluentIcon, \
-    FlowLayout, ComboBox, BreadcrumbBar, InfoBar, InfoBarPosition
+    FlowLayout, ComboBox
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import Query
 
@@ -13,16 +13,14 @@ from common.cust_scrollwidget import CustomScrollWidget
 from common.db_helper import db_session
 from common.page_widget import PipsPager, PipsScrollButtonDisplayMode
 from common.utils import str_to_datetime, format_datatime
-from models.models import Project, Task
+from models.models import Project
 from .new_project import NewProject, ProjectInfo
 from .project_card import ProjectCard
 from .project_type_widget import ProjectType
 from settings.config import cfg
-from .task import TaskTableWidget, TaskWidget
 
 
 class ProjectWidget(QWidget):
-    start_train_model_signal = Signal(str, int, int, float, int)
     stop_train_model_signal = Signal()
     project_detail_clicked = Signal(ProjectInfo)
 
@@ -33,7 +31,7 @@ class ProjectWidget(QWidget):
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
 
-        self.btn_create_project = PrimaryPushButton(FluentIcon.ADD, self.tr("Create project"))
+        self.btn_create_project = PrimaryPushButton(FluentIcon.ADD, self.tr("Create home"))
         self.lbl_type = BodyLabel(self.tr("type:"), self)
         self.cmb_type = ComboBox()
         self.cmb_type.setMinimumWidth(200)
@@ -179,46 +177,3 @@ class ProjectWidget(QWidget):
     @Slot(str)
     def _on_view_project_detail(self, project_info):
         self.project_detail_clicked.emit(project_info)
-
-
-class HomeWidget(QWidget):
-    start_train_model_signal = Signal(str, int, int, float, int)
-    stop_train_model_signal = Signal()
-
-    def __init__(self, parent=None):
-        super(HomeWidget, self).__init__(parent=parent)
-        self.setObjectName("home_widget")
-        self.vly = QVBoxLayout(self)
-        self.vly.setSpacing(9)
-        self.breadcrumbBar = BreadcrumbBar(self)
-        self.stackedWidget = QStackedWidget(self)
-        self.project_widget = ProjectWidget()
-        self.task_widget = TaskWidget()
-
-        self.stackedWidget.addWidget(self.project_widget)
-        self.stackedWidget.addWidget(self.task_widget)
-        self.stackedWidget.setCurrentWidget(self.project_widget)
-        self.breadcrumbBar.addItem(self.project_widget.objectName(), self.tr("All projects"))
-
-        self.vly.addWidget(self.breadcrumbBar)
-        self.vly.addWidget(self.stackedWidget)
-        self._on_connect_signals_and_slots()
-        self._on_connect_signals_and_slots()
-
-    def _on_connect_signals_and_slots(self):
-        self.project_widget.project_detail_clicked.connect(self._on_project_detail_clicked)
-        self.breadcrumbBar.currentItemChanged.connect(self._on_bread_bar_item_changed)
-
-    @Slot(ProjectInfo)
-    def _on_project_detail_clicked(self, project_info: ProjectInfo):
-        self.stackedWidget.setCurrentWidget(self.task_widget)
-        self.breadcrumbBar.addItem(self.task_widget.objectName(), project_info.project_name)
-        with db_session(auto_commit_exit=True) as session:
-            tasks: list[Task] = session.query(Task).filter_by(project_id=project_info.project_id).all()
-            self.task_widget.set_data(tasks)
-
-    @Slot(str)
-    def _on_bread_bar_item_changed(self, obj_name):
-        obj = self.findChild(QWidget, obj_name)
-        if isinstance(obj, QWidget):
-            self.stackedWidget.setCurrentWidget(obj)

@@ -8,18 +8,8 @@ from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
 from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
     ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
     Theme, setTheme, PillPushButton, PipsPager, ToolButton, FluentIconBase, Icon, PrimaryToolButton, HyperlinkButton
-from qfluentwidgets.common.icon import toQIcon
+from qfluentwidgets.common.icon import toQIcon, drawIcon
 from settings import cfg
-
-
-def drawIcon(icon, painter, rect, state=QIcon.State.Off, **attributes):
-    if isinstance(icon, FluentIconBase):
-        icon.render(painter, rect, **attributes)
-    elif isinstance(icon, Icon):
-        icon.fluentIcon.render(painter, rect, **attributes)
-    else:
-        icon = QIcon(icon)
-        icon.paint(painter, QRectF(rect).toRect(), Qt.AlignmentFlag.AlignCenter, state=state)
 
 
 class TagWidget(QWidget):
@@ -82,3 +72,41 @@ class TagWidget(QWidget):
         brush_color = QColor(self._color.red(), self._color.green(), self._color.blue(), 100)
         painter.setBrush(brush_color)
         painter.drawRoundedRect(self.rect(), 10, 10)
+
+
+class TextTagWidget(QWidget):
+    """ Scroll button """
+
+    def __init__(self, text="", color=QColor(255, 0, 0)):
+        super().__init__()
+        self._color = color
+        self._text = text
+        self.setMinimumSize(120, 32)
+        self._fit_width()
+
+    def _fit_width(self):
+        # 获取字体大小
+        font = QFont()
+        fm = QFontMetrics(font)
+        self.text_width = fm.boundingRect(self._text).width()
+        # self.setFixedWidth(12 + 2 + self.text_width + self._icon_size.width() * 2)
+        self.setFixedSize(QSize(100, 26))
+
+    def setText(self, text):
+        self._text = text
+        self._fit_width()
+
+    def set_color(self, color: QColor):
+        self._color = color
+        # self.update()
+
+    def paintEvent(self, e):
+        super().paintEvent(e)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        painter.setPen(QPen(self._color, 2))
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self._text)
+        brush_color = QColor(self._color.red(), self._color.green(), self._color.blue(), 100)
+        painter.setBrush(brush_color)
+        painter.drawRoundedRect(self.rect(), 4, 4)
