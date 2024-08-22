@@ -14,6 +14,7 @@ from qfluentwidgets import FluentIcon as FIcon
 from settings import SettingInterface, cfg
 from model_train import ModelTrainWidget
 from dataset_process import DataProcessWidget
+from dataset import DatasetWidget
 
 from home import HomeWidget
 
@@ -39,6 +40,7 @@ class Window(FluentWindow):
         self.show()
         # create sub interface
         self.home_interface = HomeWidget(self)
+        self.dataset_interface1 = DatasetWidget(self)
         self.dataset_interface = DataProcessWidget(self)
         self.train_interface = ModelTrainWidget(self)
         self.val_interface = Widget('Val Interface', self)
@@ -53,6 +55,7 @@ class Window(FluentWindow):
     def initNavigation(self):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
         self.navigationInterface.addSeparator()
+        self.addSubInterface(self.dataset_interface1, FIcon.DOCUMENT, self.tr('dataset1'))
         self.addSubInterface(self.dataset_interface, FIcon.PHOTO, self.tr('dataset'))
         self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('model train'))
         self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('model valid'))
@@ -82,8 +85,6 @@ class Window(FluentWindow):
 
         # NOTE: enable acrylic effect
         self.navigationInterface.setAcrylicEnabled(True)
-
-        self.stackedWidget.currentChanged.connect(lambda: print(self.stackedWidget.currentWidget()))
 
     def initWindow(self):
         self.resize(900, 700)
