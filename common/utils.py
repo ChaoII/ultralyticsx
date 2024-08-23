@@ -1,3 +1,7 @@
+import os
+import sys
+from pathlib import Path
+
 from loguru import logger
 from datetime import datetime
 from PySide6.QtWidgets import QApplication, QWidget
@@ -13,6 +17,17 @@ LIGHT_BG = "rgb(249, 249, 249)"
 
 def format_datatime(data_time: datetime, fmt="%Y-%m-%d %H:%M:%S") -> str:
     return data_time.strftime(fmt)
+
+
+def open_directory(directory: Path):
+    if sys.platform.startswith('win'):
+        os.startfile(directory)
+    elif sys.platform.startswith('darwin'):  # macOS
+        import subprocess
+        subprocess.Popen(['open', directory])
+    else:  # Linux
+        import subprocess
+        subprocess.Popen(['xdg-open', directory])
 
 
 def str_to_datetime(datetime_str: str, fmt="%Y-%m-%d %H:%M:%S"):

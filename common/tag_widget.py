@@ -92,6 +92,9 @@ class TextTagWidget(QWidget):
         # self.setFixedWidth(12 + 2 + self.text_width + self._icon_size.width() * 2)
         self.setFixedSize(QSize(100, 26))
 
+    def text(self):
+        return self._text
+
     def setText(self, text):
         self._text = text
         self._fit_width()

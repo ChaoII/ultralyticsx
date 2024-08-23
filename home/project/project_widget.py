@@ -1,6 +1,5 @@
 import os
 import shutil
-from pathlib import Path
 
 from PySide6.QtCore import Slot, Signal, Qt, QEasingCurve
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QFormLayout)
@@ -11,13 +10,13 @@ from sqlalchemy.orm import Query
 
 from common.cust_scrollwidget import CustomScrollWidget
 from common.db_helper import db_session
+from common.model_type_widget import ModelType
 from common.page_widget import PipsPager, PipsScrollButtonDisplayMode
 from common.utils import str_to_datetime, format_datatime
 from models.models import Project
-from .new_project import NewProject, ProjectInfo
-from .project_card import ProjectCard
-from .project_type_widget import ProjectType
 from settings.config import cfg
+from .new_project_dialog import NewProjectDialog, ProjectInfo
+from .project_card import ProjectCard
 
 
 class ProjectWidget(QWidget):
@@ -34,7 +33,7 @@ class ProjectWidget(QWidget):
         self.btn_create_project = PrimaryPushButton(FluentIcon.ADD, self.tr("Create project"))
         self.lbl_type = BodyLabel(self.tr("type:"), self)
         self.cmb_type = ComboBox()
-        self.cmb_type.setMinimumWidth(200)
+        self.cmb_type.setMinimumWidth(160)
         self.cmb_type.addItems([self.tr("All type"),
                                 self.tr("Classify"),
                                 self.tr("Detection"),
@@ -44,7 +43,7 @@ class ProjectWidget(QWidget):
 
         self.lbl_sort = BodyLabel(self.tr("sort:"), self)
         self.cmb_sort = ComboBox()
-        self.cmb_sort.setMinimumWidth(200)
+        self.cmb_sort.setMinimumWidth(160)
         self.cmb_sort.addItems([self.tr("time ascending"),
                                 self.tr("time descending"),
                                 self.tr("name ascending"),
@@ -92,7 +91,7 @@ class ProjectWidget(QWidget):
                 project_card.update_project_type_tag_style()
 
     def _on_clicked_create_project(self):
-        self.new_project_window = NewProject(self)
+        self.new_project_window = NewProjectDialog(self)
         self.new_project_window.project_created.connect(self._on_add_new_project)
         self.new_project_window.exec()
 
@@ -137,8 +136,8 @@ class ProjectWidget(QWidget):
                 project_info.project_id = row.project_id
                 project_info.project_description = row.project_description
                 project_info.create_time = format_datatime(row.create_time)
-                project_info.workspace_dir = row.workspace_dir
-                project_info.project_type = ProjectType(row.project_type)
+                project_info.project_dir = row.project_dir
+                project_info.model_type = ModelType(row.model_type)
                 self._add_new_project(project_info)
 
     def _add_new_project(self, project_info: ProjectInfo):
@@ -151,9 +150,9 @@ class ProjectWidget(QWidget):
     @Slot(str)
     def _on_delete_project_card(self, project_id):
         with db_session(auto_commit_exit=True) as session:
-            record = session.query(Project).filter_by(project_id=project_id).first()
+            record: Project = session.query(Project).filter_by(project_id=project_id).first()
             session.delete(record)
-        shutil.rmtree(Path(record.workspace_dir) / project_id)
+        shutil.rmtree(record.project_dir)
         self._load_projects()
 
     @Slot(ProjectInfo)
@@ -165,14 +164,14 @@ class ProjectWidget(QWidget):
             project_name=project_info.project_name,
             project_id=project_info.project_id,
             project_description=project_info.project_description,
-            project_type=project_info.project_type.value,
-            workspace_dir=project_info.workspace_dir,
+            model_type=project_info.model_type.value,
+            project_dir=project_info.project_dir,
             create_time=str_to_datetime(project_info.create_time),
         )
         # 这里想获取新增后的id,需要refresh数据，就不能在上下文里提交
         with db_session(True) as session:
             session.add(new_project_row)
-        os.makedirs(Path(project_info.workspace_dir) / project_info.project_id, exist_ok=True)
+        os.makedirs(project_info.project_dir, exist_ok=True)
 
     @Slot(str)
     def _on_view_project_detail(self, project_info):

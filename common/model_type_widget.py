@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, QPoint, Signal, Slot, QLine
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 
 
-class ProjectType(enum.Enum):
+class ModelType(enum.Enum):
     CLASSIFY = 0
     DETECT = 1
     SEGMENT = 2
@@ -16,28 +16,28 @@ class ProjectType(enum.Enum):
     @property
     def color(self):
         _color_map = {
-            ProjectType.CLASSIFY: QColor("#FF0000"),
-            ProjectType.DETECT: QColor("#e65c00"),
-            ProjectType.SEGMENT: QColor("#042AFF"),
-            ProjectType.OBB: QColor("#111F68"),
-            ProjectType.POSE: QColor("#BD00FF"),
+            ModelType.CLASSIFY: QColor("#FF0000"),
+            ModelType.DETECT: QColor("#e65c00"),
+            ModelType.SEGMENT: QColor("#042AFF"),
+            ModelType.OBB: QColor("#111F68"),
+            ModelType.POSE: QColor("#BD00FF"),
         }
         if isDarkTheme():
             _color_map = {
                 # 青色
-                ProjectType.CLASSIFY: QColor("#0BDBEB"),
-                ProjectType.DETECT: QColor("#66ff66"),
-                ProjectType.SEGMENT: QColor("#4da6ff"),
-                ProjectType.OBB: QColor("#ffb3d9"),
-                ProjectType.POSE: QColor("#ffff80")
+                ModelType.CLASSIFY: QColor("#0BDBEB"),
+                ModelType.DETECT: QColor("#66ff66"),
+                ModelType.SEGMENT: QColor("#4da6ff"),
+                ModelType.OBB: QColor("#ffb3d9"),
+                ModelType.POSE: QColor("#ffff80")
             }
         return _color_map[self]
 
 
-class ProjectTypeItemWidget(SimpleCardWidget):
+class ModelTypeItemWidget(SimpleCardWidget):
     item_selected = Signal()
 
-    def __init__(self, name: str, pic_url: str, project_type: ProjectType):
+    def __init__(self, name: str, pic_url: str, model_type: ModelType):
         super().__init__()
         self.setFixedSize(120, 120)
         self.vly_content = QVBoxLayout(self)
@@ -48,7 +48,7 @@ class ProjectTypeItemWidget(SimpleCardWidget):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.selected = False
         self.pic_url = pic_url
-        self.project_type = project_type
+        self.model_type = model_type
 
     def mousePressEvent(self, event):
         # 当鼠标点击时，记录点击位置
@@ -101,8 +101,8 @@ class ProjectTypeItemWidget(SimpleCardWidget):
         self.update()
 
 
-class ProjectTypeGroupWidget(QWidget):
-    project_type_selected = Signal(ProjectType)
+class ModelTypeGroupWidget(QWidget):
+    model_type_selected = Signal(ModelType)
 
     def __init__(self):
         super().__init__()
@@ -111,19 +111,19 @@ class ProjectTypeGroupWidget(QWidget):
         self._init_type_item()
 
     def _init_type_item(self):
-        type_classify = ProjectTypeItemWidget(self.tr("classify"), "resource/images/classify.png", ProjectType.CLASSIFY)
+        type_classify = ModelTypeItemWidget(self.tr("classify"), "resource/images/classify.png", ModelType.CLASSIFY)
         type_classify.enable_selected()
-        type_detect = ProjectTypeItemWidget(self.tr("detect"), "resource/images/detect.png", ProjectType.DETECT)
-        type_segment = ProjectTypeItemWidget(self.tr("segment"), "resource/images/segment.png", ProjectType.SEGMENT)
-        type_obb = ProjectTypeItemWidget(self.tr("obb"), "resource/images/obb.png", ProjectType.OBB)
-        type_pose = ProjectTypeItemWidget(self.tr("pose"), "resource/images/pose.png", ProjectType.POSE)
+        type_detect = ModelTypeItemWidget(self.tr("detect"), "resource/images/detect.png", ModelType.DETECT)
+        type_segment = ModelTypeItemWidget(self.tr("segment"), "resource/images/segment.png", ModelType.SEGMENT)
+        type_obb = ModelTypeItemWidget(self.tr("obb"), "resource/images/obb.png", ModelType.OBB)
+        type_pose = ModelTypeItemWidget(self.tr("pose"), "resource/images/pose.png", ModelType.POSE)
         self.addItem(type_classify)
         self.addItem(type_detect)
         self.addItem(type_segment)
         self.addItem(type_obb)
         self.addItem(type_pose)
 
-    def addItem(self, item: ProjectTypeItemWidget):
+    def addItem(self, item: ModelTypeItemWidget):
         self.hly_content.addWidget(item)
         item.item_selected.connect(self._on_item_selected)
 
@@ -131,13 +131,13 @@ class ProjectTypeGroupWidget(QWidget):
         for i in range(self.hly_content.count()):
             item = self.hly_content.itemAt(i)
             type_item_widget = item.widget()
-            if isinstance(type_item_widget, ProjectTypeItemWidget):
+            if isinstance(type_item_widget, ModelTypeItemWidget):
                 type_item_widget.disable_selected()
 
     @Slot()
     def _on_item_selected(self):
         self._disable_all_items_selected()
         sender = self.sender()
-        if isinstance(sender, ProjectTypeItemWidget):
+        if isinstance(sender, ModelTypeItemWidget):
             sender.enable_selected()
-            self.project_type_selected.emit(sender.project_type)
+            self.model_type_selected.emit(sender.model_type)

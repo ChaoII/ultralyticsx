@@ -1,53 +1,43 @@
 import os
 import re
 import shutil
-import sys
 from enum import Enum
 from pathlib import Path
 
-from PySide6.QtCore import Signal, QModelIndex, Slot, QObject
+from PySide6.QtCore import Signal, QModelIndex, Slot
 from PySide6.QtGui import Qt, QColor, QPalette
-from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, HyperlinkLabel, \
-    setCustomStyleSheet, PrimaryPushButton, PopupTeachingTip, TeachingTipTailPosition
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
     QStyleOptionViewItem, QTableWidgetItem, QWidget, QAbstractItemView
+from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, HyperlinkLabel, \
+    setCustomStyleSheet, PrimaryPushButton, PopupTeachingTip, TeachingTipTailPosition
 
 from common.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
-from common.utils import format_datatime
-from models.models import Task, Project
-
 from common.fill_tool_button import FillToolButton
 from common.tag_widget import TextTagWidget
+from common.utils import format_datatime, open_directory
+from models.models import Task, Project
 
 
 class TaskStatus(Enum):
-    Initializing = 0
-    Training = 1
-    TrainFailed = 2
+    INITIALIZING = 0
+    TRAINING = 1
+    TRAIN_FAILED = 2
 
     @property
-    def widget(self):
-        _widget_map = {
-            TaskStatus.Initializing: TextTagWidget(QObject().tr("INITIALIZING"), QColor("#ff6600")),
-            TaskStatus.Training: TextTagWidget(QObject().tr("TRAINING"), QColor("#00e600")),
-            TaskStatus.TrainFailed: TextTagWidget(QObject().tr("TRAIN-FAILED"), QColor("#FF0000")),
+    def color(self):
+        _color_map = {
+            TaskStatus.INITIALIZING: QColor("#ff6600"),
+            TaskStatus.TRAINING: QColor("#0d5f07"),
+            TaskStatus.TRAIN_FAILED: QColor("#ff3333"),
         }
-        return _widget_map[self]
-
-
-class CustomLabel(HyperlinkLabel):
-    def __init__(self, text: str, parent=None):
-        super().__init__(parent=parent)
-        self.setText(text)
-        self.setUnderlineVisible(True)
-
-    def setTextColor(self, light=QColor(0, 0, 0), dark=QColor(255, 255, 255)):
-        setCustomStyleSheet(
-            self,
-            f"CustomLabel{{color:{light.name(QColor.NameFormat.HexArgb)}}}",
-            f"CustomLabel{{color:{dark.name(QColor.NameFormat.HexArgb)}}}"
-        )
+        if isDarkTheme():
+            _color_map = {
+                TaskStatus.INITIALIZING: QColor("#ffa366"),
+                TaskStatus.TRAINING: QColor("#66ff66"),
+                TaskStatus.TRAIN_FAILED: QColor("#ff9999"),
+            }
+        return _color_map[self]
 
 
 class OperationWidget(QWidget):
@@ -169,7 +159,7 @@ class TaskWidget(QWidget):
             for i, task in enumerate(tasks):
                 item0 = QTableWidgetItem(task.task_id)
                 item1 = QTableWidgetItem(task.project.project_name)
-                item2 = TaskStatus(task.task_status).widget
+                item2 = TextTagWidget(TaskStatus(task.task_status).name, TaskStatus(task.task_status).color)
                 item3 = QTableWidgetItem(task.comment)
                 item4 = QTableWidgetItem(format_datatime(task.create_time))
                 item5 = OperationWidget(task.task_id)
@@ -217,14 +207,7 @@ class TaskWidget(QWidget):
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=task_id).first()
             directory = Path(task.project.workspace_dir) / task.project.project_id / task_id
-        if sys.platform.startswith('win'):
-            os.startfile(directory)
-        elif sys.platform.startswith('darwin'):  # macOS
-            import subprocess
-            subprocess.Popen(['open', directory])
-        else:  # Linux
-            import subprocess
-            subprocess.Popen(['xdg-open', directory])
+        open_directory(directory)
 
     @Slot()
     def _on_create_task(self):

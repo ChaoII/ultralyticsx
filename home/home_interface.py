@@ -1,16 +1,13 @@
-import os
-from pathlib import Path
-
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QStackedWidget
 from qfluentwidgets import BreadcrumbBar
 
 from common.db_helper import db_session
-from models.models import Project, Task
-from home.project.new_project import ProjectInfo
+from home.project.new_project_dialog import ProjectInfo
 from home.project.project_widget import ProjectWidget
 from home.task.task_detail_widget import TaskDetailWidget
 from home.task.task_list_widget import TaskWidget
+from models.models import Task
 
 
 class HomeWidget(QWidget):

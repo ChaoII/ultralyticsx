@@ -6,7 +6,7 @@ from qfluentwidgets import ElevatedCardWidget, StrongBodyLabel, BodyLabel, theme
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
 
 from common.delete_ensure_widget import CustomFlyoutView
-from home.project.new_project import ProjectInfo
+from home.project.new_project_dialog import ProjectInfo
 from common.tag_widget import TagWidget
 
 
@@ -50,13 +50,13 @@ class ProjectCard(ElevatedCardWidget):
         self.lbl_project_id.setText("ID: " + project_info.project_id)
         self.lbl_project_description.setText(
             TextWrap.wrap(project_info.project_description, 36, once=False)[0])
-        self.tg_project_type.setText(project_info.project_type.name)
-        self.tg_project_type.set_color(project_info.project_type.color)
+        self.tg_project_type.setText(project_info.model_type.name)
+        self.tg_project_type.set_color(project_info.model_type.color)
         self.lbl_create_time.setText(project_info.create_time)
 
     def update_project_type_tag_style(self):
         if self.project_info is not None:
-            self.tg_project_type.set_color(self.project_info.project_type.color)
+            self.tg_project_type.set_color(self.project_info.model_type.color)
 
     def paintEvent(self, e):
         self.lbl_project_name.update()

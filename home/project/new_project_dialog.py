@@ -13,28 +13,27 @@ from sqlalchemy.orm import Query
 
 from common.db_helper import db_session
 from common.file_select_widget import DirSelectWidget
-from common.utils import format_datatime
+from common.model_type_widget import ModelTypeGroupWidget, ModelType
 from models.models import Project
 from settings import cfg
-from .project_type_widget import ProjectType
-from .project_type_widget import ProjectTypeGroupWidget
 
 
-class DatasetInfo:
-    dataset_name: str
-    dataset_id: str
-    dataset_description: str
-    dataset_type: ProjectType = ProjectType.CLASSIFY
+class ProjectInfo:
+    project_name: str
+    project_id: str
+    project_description: str
+    model_type: ModelType = ModelType.CLASSIFY
+    project_dir: str
     create_time: str
 
 
-class NewDatasetDialog(FramelessDialog):
-    project_created = Signal(DatasetInfo)
+class NewProjectDialog(FramelessDialog):
+    project_created = Signal(ProjectInfo)
     cancelSignal = Signal()
 
     def __init__(self, parent=None):
         super().__init__()
-        self._setUpUi(self.tr("Create dataset"), parent=parent)
+        self._setUpUi(self.tr("Create project"), parent=parent)
 
     def _setUpUi(self, title, parent):
         self.titleLabel = QLabel(title, parent)
@@ -57,18 +56,21 @@ class NewDatasetDialog(FramelessDialog):
         self.hly_btn.setSpacing(12)
         self.hly_btn.setContentsMargins(24, 24, 24, 24)
 
-        self.lbl_name = BodyLabel(text=self.tr("Dataset name:"))
+        self.lbl_name = BodyLabel(text=self.tr("Project name:"))
         self.le_name = LineEdit()
         self.le_name.setMaxLength(16)
-        self.lbl_description = BodyLabel(text=self.tr("Dataset description:"))
+        self.lbl_description = BodyLabel(text=self.tr("Project description:"))
         self.ted_description = TextEdit()
-        self.lbl_type = BodyLabel(text=self.tr("Dataset type:"))
-        self.project_type = ProjectTypeGroupWidget()
+        self.lbl_type = BodyLabel(text=self.tr("model type:"))
+        self.model_type = ModelTypeGroupWidget()
+        self.lbl_workspace_dir = BodyLabel(text=self.tr("workspace directory:"))
+        self.workdir_select = DirSelectWidget()
         self.fly_content = QFormLayout()
         self.fly_content.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.fly_content.addRow(self.lbl_name, self.le_name)
         self.fly_content.addRow(self.lbl_description, self.ted_description)
-        self.fly_content.addRow(self.lbl_type, self.project_type)
+        self.fly_content.addRow(self.lbl_type, self.model_type)
+        self.fly_content.addRow(self.lbl_workspace_dir, self.workdir_select)
 
         self.vBoxLayout = QVBoxLayout(self)
         self.vBoxLayout.setSpacing(9)
@@ -78,13 +80,16 @@ class NewDatasetDialog(FramelessDialog):
 
         self.vBoxLayout.addLayout(self.hly_btn)
         self.vBoxLayout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)
-        self.dataset_info = DatasetInfo()
-        self.dataset_root_dir = Path(cfg.get(cfg.workspace_folder)) / "dataset"
+        self.project_info = ProjectInfo()
+        self.workdir_select.le_dir.setText(cfg.get(cfg.workspace_folder))
+        self.project_root_dir = Path(cfg.get(cfg.workspace_folder)) / "project"
+        os.makedirs(self.project_root_dir, exist_ok=True)
         self._initWidget()
         self._connect_signals_and_slots()
 
     def _connect_signals_and_slots(self):
-        self.project_type.project_type_selected.connect(self._on_project_type_selected)
+        self.model_type.model_type_selected.connect(self._on_project_type_selected)
+        self.workdir_select.dir_selected.connect(self._on_workdir_selected)
         self.ted_description.textChanged.connect(self._on_description_text_changed)
 
     @Slot(str)
@@ -103,36 +108,22 @@ class NewDatasetDialog(FramelessDialog):
             # 截断文本到最大长度
             self.ted_description.setPlainText(self.ted_description.toPlainText()[:100])
 
-    @Slot(ProjectType)
-    def _on_project_type_selected(self, dataset_info: ProjectType):
-        self.dataset_info.project_type = dataset_info
+    @Slot(str)
+    def _on_workdir_selected(self, workspace_idr):
+        self.project_info.workspace_dir = workspace_idr
+
+    @Slot(ModelType)
+    def _on_project_type_selected(self, project_type: ModelType):
+        self.project_info.model_type = project_type
 
     def _initWidget(self):
         self._setQss()
         # fixes https://github.com/zhiyiYo/PyQt-Fluent-Widgets/issues/19
         self.yesButton.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect)
         self.cancelButton.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect)
-
         self.yesButton.setFocus()
-
-        self._adjustText()
-
         self.yesButton.clicked.connect(self._onYesButtonClicked)
         self.cancelButton.clicked.connect(self._onCancelButtonClicked)
-
-        if not self.dataset_root_dir.exists():
-            os.makedirs(self.dataset_root_dir, exist_ok=True)
-
-    def _adjustText(self):
-        if self.isWindow():
-            if self.parent():
-                w = max(self.titleLabel.width(), self.parent().width())
-                chars = max(min(w / 9, 140), 30)
-            else:
-                chars = 100
-        else:
-            w = max(self.titleLabel.width(), self.window().width())
-            chars = max(min(w / 9, 100), 30)
 
     def _onCancelButtonClicked(self):
         self.reject()
@@ -144,7 +135,7 @@ class NewDatasetDialog(FramelessDialog):
             if len(projects.all()) > 0:
                 InfoBar.error(
                     title='',
-                    content=self.tr("Dataset name is existing"),
+                    content=self.tr("Project name is existing"),
                     orient=Qt.Orientation.Vertical,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
@@ -153,26 +144,24 @@ class NewDatasetDialog(FramelessDialog):
                 )
                 return
         self.accept()
-        self.dataset_info.dataset_name = self.le_name.text()
-        self.dataset_info.dataset_description = self.ted_description.toPlainText()
-        self.dataset_info.dataset_id = self.get_dataset_id(self.dataset_root_dir)
-        self.dataset_info.create_time = format_datatime(datetime.now())
-        self.project_created.emit(self.dataset_info)
+        self.project_info.project_id = self._get_project_id()
+        self.project_info.project_name = self.le_name.text()
+        self.project_info.project_description = self.ted_description.toPlainText()
+        self.project_info.project_dir = (self.project_root_dir / self.project_info.project_id).resolve().as_posix()
+        self.project_info.create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.project_created.emit(self.project_info)
 
-    @staticmethod
-    def get_dataset_id(dataset_dir: Path) -> str:
-        dataset_id = f"D{0:06d}"
-        for item in dataset_dir.iterdir():
-            if item.is_dir() and re.match(r'^D\d{6}$', item.name):
-                dataset_id = f"D{int(item.name[1:]) + 1:06d}"
-        return dataset_id
+    def _get_project_id(self) -> str:
+        project_id = f"P{0:06d}"
+        for item in self.project_root_dir.iterdir():
+            if item.is_dir() and re.match(r'^P\d{6}$', item.name):
+                project_id = f"P{int(item.name[1:]) + 1:06d}"
+        return project_id
 
     def _setQss(self):
         self.titleLabel.setObjectName("titleLabel")
         self.cancelButton.setObjectName('cancelButton')
-
         FluentStyleSheet.DIALOG.apply(self)
-
         self.yesButton.adjustSize()
         self.cancelButton.adjustSize()
 

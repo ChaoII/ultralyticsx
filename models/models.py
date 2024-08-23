@@ -20,10 +20,12 @@ projects_to_datasets = Table(
 class Dataset(Base):
     __tablename__ = "tb_datasets"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    dataset_name = Column(String)
     dataset_id = Column(String)
+    dataset_name = Column(String)
+    model_type = Column(Integer)
     dataset_description = Column(String)
-    dataset_type = Column(Integer)
+    dataset_status = Column(Integer)
+    dataset_dir = Column(String)
     create_time = Column(DateTime, default=datetime.now())
 
     projects = relationship("Project", secondary=projects_to_datasets, back_populates="datasets")
@@ -36,10 +38,12 @@ class Project(Base):
     project_name = Column(String)
     project_id = Column(String)
     project_description = Column(String)
-    project_type = Column(Integer)
-    workspace_dir = Column(String)
+    model_type = Column(Integer)
+    project_dir = Column(String)
     create_time = Column(DateTime, default=datetime.now())
+
     tasks = relationship("Task", back_populates="project")
+
     datasets = relationship("Dataset", secondary=projects_to_datasets, back_populates="projects")
 
 

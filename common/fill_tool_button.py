@@ -1,16 +1,8 @@
-from typing import Union
-
-import overrides
-from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication, QEasingCurve, QRectF, QRect, QPoint, QSize, QEvent
-from PySide6.QtGui import QPainter, QColor, QIcon, QPen, QFont, QFontMetrics, QEnterEvent, QMouseEvent, QBrush
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
-                               QSplitter, QLayout, QApplication, QAbstractButton, QToolButton)
-from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
-    Theme, setTheme, PillPushButton, PipsPager, ToolButton, FluentIconBase, Icon, PrimaryToolButton, HyperlinkButton, \
-    themeColor
+from PySide6.QtCore import Signal, Qt, QRectF, QSize, QEvent
+from PySide6.QtGui import QPainter, QColor, QEnterEvent, QMouseEvent, QBrush
+from PySide6.QtWidgets import (QWidget)
+from qfluentwidgets import themeColor
 from qfluentwidgets.common.icon import toQIcon, drawIcon
-from settings import cfg
 
 
 class FillToolButton(QWidget):
@@ -60,6 +52,7 @@ class FillToolButton(QWidget):
             bg_color = QColor(self._bg_color.red(), self._bg_color.green(), self._bg_color.blue(), 100)
         if self._is_pressed:
             bg_color = QColor(self._bg_color.red(), self._bg_color.green(), self._bg_color.blue(), 120)
+            # 点击时右下移动，有按下去的感觉
             rect = self.rect().adjusted(1, 1, 1, 1)
             icon_rect = QRectF(x, y, w, h).adjusted(1, 1, 1, 1)
 
