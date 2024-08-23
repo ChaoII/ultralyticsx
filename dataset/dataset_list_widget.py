@@ -45,6 +45,7 @@ class DatasetStatus(Enum):
 
 
 class OperationWidget(QWidget):
+    dataset_imported = Signal(str)
     dataset_deleted = Signal(str)
     dataset_detail = Signal(str)
     open_dataset_dir = Signal(str)
@@ -93,12 +94,16 @@ class OperationWidget(QWidget):
         self.btn_delete.clicked.connect(self._on_delete_clicked)
         self.btn_view.clicked.connect(self._on_view_clicked)
         self.btn_open.clicked.connect(self._on_open_clicked)
+        self.btn_import.clicked.connect(self._on_import_clicked)
 
     def _on_view_clicked(self):
         self.dataset_detail.emit(self.dataset_id)
 
     def _on_open_clicked(self):
         self.open_dataset_dir.emit(self.dataset_id)
+
+    def _on_import_clicked(self):
+        self.dataset_imported.emit(self.dataset_id)
 
     def _on_delete_clicked(self):
         self.view = CustomFlyoutView(content=self.tr("Are you sure to delete this dataset?"))
@@ -140,8 +145,8 @@ class DatasetTableWidget(TableWidget):
 
 
 class DatasetListWidget(QWidget):
-    create_dataset_clicked = Signal()
     view_dataset_clicked = Signal(str)
+    import_dataset_clicked = Signal(DatasetInfo)
 
     def __init__(self):
         super().__init__()
@@ -240,6 +245,7 @@ class DatasetListWidget(QWidget):
                 item5.dataset_deleted.connect(self._on_delete_dataset)
                 item5.dataset_detail.connect(self._on_view_dataset)
                 item5.open_dataset_dir.connect(self._on_open_dataset_dir)
+                item5.dataset_imported.connect(self._on_import_dataset)
 
                 item0.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 item1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -272,7 +278,18 @@ class DatasetListWidget(QWidget):
             )
             session.add(dataset)
         self._load_dataset_data()
-        self.create_dataset_clicked.emit()
+
+    @Slot(str)
+    def _on_import_dataset(self, dataset_id):
+        with db_session() as session:
+            dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
+            dataset_info = DatasetInfo()
+            dataset_info.dataset_id = dataset.dataset_id
+            dataset_info.dataset_description = dataset.dataset_description
+            dataset_info.dataset_name = dataset.dataset_name
+            dataset_info.dataset_dir = dataset.dataset_dir
+            dataset_info.model_type = ModelType(dataset.model_type)
+        self.import_dataset_clicked.emit(dataset_info)
 
     @Slot(str)
     def _on_delete_dataset(self, dataset_id):

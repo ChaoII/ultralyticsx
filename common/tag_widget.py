@@ -1,15 +1,7 @@
-from typing import Union
-
-import overrides
-from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication, QEasingCurve, QRectF, QRect, QPoint, QSize
-from PySide6.QtGui import QPainter, QColor, QIcon, QPen, QFont, QFontMetrics
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
-                               QSplitter, QLayout, QApplication, QAbstractButton)
-from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
-    Theme, setTheme, PillPushButton, PipsPager, ToolButton, FluentIconBase, Icon, PrimaryToolButton, HyperlinkButton
+from PySide6.QtCore import Qt, QRectF, QRect, QPoint, QSize
+from PySide6.QtGui import QPainter, QColor, QPen, QFont, QFontMetrics
+from PySide6.QtWidgets import (QWidget)
 from qfluentwidgets.common.icon import toQIcon, drawIcon
-from settings import cfg
 
 
 class TagWidget(QWidget):
