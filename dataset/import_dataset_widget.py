@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout
 from qfluentwidgets import BodyLabel, ComboBox, TitleLabel, SubtitleLabel, TextWrap, LineEdit
 
-from common.file_select_widget1 import FileSelectWidget
+from common.file_select_widget import FileSelectWidget
 from dataset.new_dataset_dialog import DatasetInfo
 
 

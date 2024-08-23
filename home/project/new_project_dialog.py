@@ -12,7 +12,7 @@ from qframelesswindow import FramelessDialog
 from sqlalchemy.orm import Query
 
 from common.db_helper import db_session
-from common.file_select_widget import DirSelectWidget
+from common.file_select_widget import FileSelectWidget
 from common.model_type_widget import ModelTypeGroupWidget, ModelType
 from models.models import Project
 from settings import cfg
@@ -64,7 +64,7 @@ class NewProjectDialog(FramelessDialog):
         self.lbl_type = BodyLabel(text=self.tr("model type:"))
         self.model_type = ModelTypeGroupWidget()
         self.lbl_workspace_dir = BodyLabel(text=self.tr("workspace directory:"))
-        self.workdir_select = DirSelectWidget()
+        self.workdir_select = FileSelectWidget()
         self.fly_content = QFormLayout()
         self.fly_content.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.fly_content.addRow(self.lbl_name, self.le_name)
@@ -81,7 +81,7 @@ class NewProjectDialog(FramelessDialog):
         self.vBoxLayout.addLayout(self.hly_btn)
         self.vBoxLayout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)
         self.project_info = ProjectInfo()
-        self.workdir_select.le_dir.setText(cfg.get(cfg.workspace_folder))
+        self.workdir_select.setText(cfg.get(cfg.workspace_folder))
         self.project_root_dir = Path(cfg.get(cfg.workspace_folder)) / "project"
         os.makedirs(self.project_root_dir, exist_ok=True)
         self._initWidget()
@@ -89,7 +89,7 @@ class NewProjectDialog(FramelessDialog):
 
     def _connect_signals_and_slots(self):
         self.model_type.model_type_selected.connect(self._on_project_type_selected)
-        self.workdir_select.dir_selected.connect(self._on_workdir_selected)
+        self.workdir_select.path_selected.connect(self._on_workdir_selected)
         self.ted_description.textChanged.connect(self._on_description_text_changed)
 
     @Slot(str)
