@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
                                QSplitter, QLayout)
 from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
     ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
-    Theme, setTheme
+    Theme, setTheme, setCustomStyleSheet
 
 from settings import cfg
 
@@ -18,7 +18,6 @@ class CustomScrollWidget(SingleDirectionScrollArea):
         # 必须要加这个方法
         self.setWidgetResizable(True)
         self.setWidget(self.scrollWidget)
-        self._connect_signals_and_slot()
         self._set_qss()
 
     @overrides.override()
@@ -28,16 +27,12 @@ class CustomScrollWidget(SingleDirectionScrollArea):
     def _set_qss(self):
         """ set style sheet """
         self.scrollWidget.setObjectName('scrollWidget')
-        theme = 'dark' if isDarkTheme() else 'light'
-        with open(f'resource/qss/{theme}/setting_interface.qss', encoding='utf-8') as f:
-            self.setStyleSheet(f.read())
-
-    def _on_Theme_changed(self, theme: Theme):
-        """ theme changed slot """
-        # change the theme of qfluentwidgets
-        setTheme(theme)
-        # chang the theme of setting interface
-        self._set_qss()
-
-    def _connect_signals_and_slot(self):
-        cfg.themeChanged.connect(self._on_Theme_changed)
+        self.setStyleSheet(
+            """
+            #scrollWidget {
+                background-color: transparent;
+            }
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }""")

@@ -5,7 +5,7 @@ from PySide6.QtGui import QResizeEvent, QPaintEvent, QPainter, QMouseEvent
 from qfluentwidgets import SubtitleLabel, TransparentToolButton, FluentIcon, PushButton, ElevatedCardWidget, \
     SimpleCardWidget, StrongBodyLabel
 
-from common.cust_scrollwidget import CustomScrollWidget
+from common.custom_scroll_widget import   CustomScrollWidget
 
 
 class HeaderWidget(SimpleCardWidget):

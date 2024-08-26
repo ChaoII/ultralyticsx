@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QHBoxLayout, QFrame
 from qfluentwidgets import BodyLabel, ComboBox, TitleLabel, SubtitleLabel, TextWrap, LineEdit, PrimaryPushButton, \
-    FluentIcon
+    FluentIcon, TextEdit, PlainTextEdit
 
 from common.file_select_widget import FileSelectWidget
 import core
@@ -22,6 +22,7 @@ class ImportDatasetWidget(QWidget):
         self.lbl_dataset_name = BodyLabel()
         self.lbl_dataset_dir = BodyLabel()
         self.lbl_dataset_description = BodyLabel()
+        self.lbl_dataset_description.setWordWrap(True)
         self.file_select_widget = FileSelectWidget()
 
         self.fly_dataset_info = QFormLayout()
@@ -70,6 +71,6 @@ class ImportDatasetWidget(QWidget):
             self.btn_import.setText(self.tr("Import"))
         self.lbl_dataset_id.setText(dataset_info.dataset_id)
         self.lbl_dataset_name.setText(dataset_info.dataset_name)
-        self.lbl_dataset_description.setText(TextWrap.wrap(dataset_info.dataset_description, 48, once=False)[0])
+        self.lbl_dataset_description.setText(dataset_info.dataset_description)
         self.lbl_dataset_dir.setText(dataset_info.dataset_dir)
         self.dataset_format_doc_widget.set_current_model_type(dataset_info.model_type)

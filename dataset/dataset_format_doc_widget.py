@@ -1,17 +1,27 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
-from qfluentwidgets import BodyLabel
+from qfluentwidgets import BodyLabel, TextWrap
 from common.collapsible_widget import CollapsibleWidget
-from common.cust_scrollwidget import CustomScrollWidget
+from common.custom_scroll_widget import CustomScrollWidget
 from common.model_type_widget import ModelType
 
 
 class ClassifyDocWidget(QWidget):
-    def __init__(self, cc, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent=parent)
         vly = QVBoxLayout(self)
-        self.til = BodyLabel(cc, self)
-        vly.addWidget(self.til)
+        self.lbl_content = BodyLabel(self)
+        self.lbl_content.setWordWrap(True)
+        vly.addWidget(self.lbl_content)
+
+        self._init_widgets()
+
+    def _init_widgets(self):
+        self.lbl_content.setText(
+            "1.需要选定数据集所在文件夹路径(路径中仅含一个数据集)\n"
+            "2.不支持.zip、tar.gz等压缩包形式的数据\n"
+            "3.导入图片格式支持png，jpg，jpeg，bmp格式\n"
+            "4.文件夹名为需要分类的类名，输入限定为英文字符，不可包含空格、中文或特殊字符")
 
 
 class DetectionDocWidget(QWidget):
@@ -39,8 +49,7 @@ class DatasetFormatDocWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.classify_doc = CollapsibleWidget(self.tr("Classify"))
-        self.classify_doc.set_content_widget(ClassifyDocWidget("1231"))
-        self.classify_doc.set_content_widget(ClassifyDocWidget("35434"))
+        self.classify_doc.set_content_widget(ClassifyDocWidget())
 
         self.detection_doc = CollapsibleWidget(self.tr("Detection"))
         self.segmentation_doc = CollapsibleWidget(self.tr("Segmentation"))
@@ -60,6 +69,8 @@ class DatasetFormatDocWidget(QWidget):
 
         self.vly_content = QVBoxLayout(self)
         self.vly_content.addWidget(self.scroll_area)
+
+        self.setFixedWidth(500)
 
     def _collapse_all_doc(self):
         self.classify_doc.set_content_hidden(True)

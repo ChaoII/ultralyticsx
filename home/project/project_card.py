@@ -22,6 +22,7 @@ class ProjectCard(ElevatedCardWidget):
         self.lbl_project_name = StrongBodyLabel()
         self.lbl_project_id = StrongBodyLabel()
         self.lbl_project_description = BodyLabel()
+        self.lbl_project_description.setWordWrap(True)
         self.tg_project_type = TagWidget(FluentIcon.SCROLL, "")
         self.lbl_create_time = CaptionLabel()
         self.hly_bottom = QHBoxLayout()
@@ -48,8 +49,7 @@ class ProjectCard(ElevatedCardWidget):
         self.project_info = project_info
         self.lbl_project_name.setText(project_info.project_name)
         self.lbl_project_id.setText("ID: " + project_info.project_id)
-        self.lbl_project_description.setText(
-            TextWrap.wrap(project_info.project_description, 36, once=False)[0])
+        self.lbl_project_description.setText(project_info.project_description)
         self.tg_project_type.setText(project_info.model_type.name)
         self.tg_project_type.set_color(project_info.model_type.color)
         self.lbl_create_time.setText(project_info.create_time)

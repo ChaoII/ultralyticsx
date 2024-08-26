@@ -8,7 +8,7 @@ from qfluentwidgets import BodyLabel, PrimaryPushButton, FluentIcon, \
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import Query
 
-from common.cust_scrollwidget import CustomScrollWidget
+from common.custom_scroll_widget import CustomScrollWidget
 from common.db_helper import db_session
 from common.model_type_widget import ModelType
 from common.page_widget import PipsPager, PipsScrollButtonDisplayMode
