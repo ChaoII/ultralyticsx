@@ -4,7 +4,11 @@ from PySide6.QtCore import Slot, Signal
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QFileDialog
 from qfluentwidgets import HeaderCardWidget, BodyLabel, LineEdit, PrimaryPushButton, FluentIcon, \
     CompactSpinBox, CompactDoubleSpinBox
-from core.event_manager import EventManager
+
+from core import EventManager
+
+
+# from core import EventManager
 
 
 class TrainParameter:
@@ -111,7 +115,7 @@ class ModelTrainParamCard(HeaderCardWidget):
         self.sp_workers.valueChanged.connect(self._on_workers_changed)
         self.btn_load_dataset_config.clicked.connect(self._on_clicked_load_dataset_config)
         self.led_dataset_config.textChanged.connect(self._on_data_config_text_changed)
-        EventManager.get_instance().dataset_process_finished.connect(lambda x: self.led_dataset_config.setText(x))
+        EventManager().dataset_process_finished.connect(lambda x: self.led_dataset_config.setText(x))
 
     @Slot(str)
     def _on_data_config_text_changed(self, file_path):

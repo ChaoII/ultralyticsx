@@ -77,5 +77,10 @@ class FileSelectWidget(LineEdit):
         else:
             filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), ".")
             self._cur_text = filename
+
+        self._is_hovered = False
+        if not self._cur_text:
+            return
+
         self.path_selected.emit(self._cur_text)
         self.setText(self._cur_text)

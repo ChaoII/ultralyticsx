@@ -87,7 +87,7 @@ class Window(FluentWindow):
         self.navigationInterface.setAcrylicEnabled(True)
 
     def initWindow(self):
-        self.resize(900, 700)
+        self.resize(1280, 800)
         self.setWindowIcon(QIcon('./resource/images/ux.png'))
         self.setWindowTitle('UltralyticsX')
 

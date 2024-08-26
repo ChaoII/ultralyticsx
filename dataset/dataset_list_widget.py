@@ -18,30 +18,11 @@ from common.fill_tool_button import FillToolButton
 from common.model_type_widget import ModelType
 from common.tag_widget import TextTagWidget
 from common.utils import format_datatime, open_directory
+import core
 from dataset.new_dataset_dialog import NewDatasetDialog, DatasetInfo
+from dataset.types import DatasetStatus
 from models.models import Dataset
 from settings import cfg
-
-
-class DatasetStatus(Enum):
-    WAIT_IMPORT = 0
-    CHECKED = 1
-    CHECK_FAILED = 2
-
-    @property
-    def color(self):
-        _color_map = {
-            DatasetStatus.WAIT_IMPORT: QColor("#ff6600"),
-            DatasetStatus.CHECKED: QColor("#0d5f07"),
-            DatasetStatus.CHECK_FAILED: QColor("#ff3333"),
-        }
-        if isDarkTheme():
-            _color_map = {
-                DatasetStatus.WAIT_IMPORT: QColor("#ffa366"),
-                DatasetStatus.CHECKED: QColor("#66ff66"),
-                DatasetStatus.CHECK_FAILED: QColor("#ff9999"),
-            }
-        return _color_map[self]
 
 
 class OperationWidget(QWidget):
@@ -187,6 +168,8 @@ class DatasetListWidget(QWidget):
         self.vly.addLayout(self.hly_btn)
         self.vly.addWidget(self.tb_dataset)
         self._connect_signals_and_slots()
+
+        self.item_dataset_id_map = dict()
         self._load_dataset_data()
 
     def _connect_signals_and_slots(self):
@@ -194,6 +177,7 @@ class DatasetListWidget(QWidget):
         cfg.themeChanged.connect(self._on_theme_changed)
         self.cmb_sort.currentIndexChanged.connect(self._load_dataset_data)
         self.cmb_type.currentIndexChanged.connect(self._load_dataset_data)
+        core.EventManager().import_dataset_finished.connect(self._on_import_dataset_finished)
 
     def _on_theme_changed(self):
         for row in range(self.tb_dataset.rowCount()):
@@ -257,6 +241,7 @@ class DatasetListWidget(QWidget):
                 self.tb_dataset.setItem(i, 3, item3)
                 self.tb_dataset.setCellWidget(i, 4, item4)
                 self.tb_dataset.setCellWidget(i, 5, item5)
+                self.item_dataset_id_map[dataset.dataset_id] = item0
 
     def _on_create_dataset_clicked(self):
         self.new_dataset_dialog = NewDatasetDialog(self)
@@ -286,10 +271,24 @@ class DatasetListWidget(QWidget):
             dataset_info = DatasetInfo()
             dataset_info.dataset_id = dataset.dataset_id
             dataset_info.dataset_description = dataset.dataset_description
+            dataset_info.dataset_status = DatasetStatus(dataset.dataset_status)
             dataset_info.dataset_name = dataset.dataset_name
             dataset_info.dataset_dir = dataset.dataset_dir
             dataset_info.model_type = ModelType(dataset.model_type)
         self.import_dataset_clicked.emit(dataset_info)
+
+    @Slot(str)
+    def _on_import_dataset_finished(self, dataset_id, status: DatasetStatus):
+        item = self.item_dataset_id_map.get(dataset_id, None)
+        if item:
+            row_index = self.tb_dataset.row(item)
+            tag = self.tb_dataset.cellWidget(row_index, 4)
+            if isinstance(tag, TextTagWidget):
+                tag.set_text(status.name)
+                tag.set_color(status.color)
+        with db_session() as session:
+            dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
+            dataset.dataset_status = status.value
 
     @Slot(str)
     def _on_delete_dataset(self, dataset_id):

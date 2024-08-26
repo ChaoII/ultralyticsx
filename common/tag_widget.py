@@ -1,7 +1,8 @@
 from PySide6.QtCore import Qt, QRectF, QRect, QPoint, QSize
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QFontMetrics
+from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (QWidget)
-from qfluentwidgets.common.icon import toQIcon, drawIcon
+from qfluentwidgets.common.icon import toQIcon, drawIcon, FluentIcon
 
 
 class TagWidget(QWidget):
@@ -87,7 +88,7 @@ class TextTagWidget(QWidget):
     def text(self):
         return self._text
 
-    def setText(self, text):
+    def set_text(self, text):
         self._text = text
         self._fit_width()
 

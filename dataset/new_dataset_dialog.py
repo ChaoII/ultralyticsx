@@ -1,13 +1,15 @@
 import os
 import re
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QLabel, QPushButton
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
 from qfluentwidgets import BodyLabel, FluentStyleSheet, PrimaryPushButton, \
-    LineEdit, TextEdit, InfoBar, InfoBarPosition
+    LineEdit, TextEdit, InfoBar, InfoBarPosition, isDarkTheme
 from qframelesswindow import FramelessDialog
 from sqlalchemy.orm import Query
 
@@ -15,17 +17,9 @@ from common.db_helper import db_session
 from common.model_type_widget import ModelType
 from common.model_type_widget import ModelTypeGroupWidget
 from common.utils import format_datatime
+from dataset.types import DatasetInfo
 from models.models import Dataset
 from settings import cfg
-
-
-class DatasetInfo:
-    dataset_name: str
-    dataset_id: str
-    dataset_description: str
-    dataset_dir: str
-    model_type: ModelType = ModelType.CLASSIFY
-    create_time: str
 
 
 class NewDatasetDialog(FramelessDialog):
