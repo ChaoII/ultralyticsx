@@ -1,12 +1,11 @@
 from PySide6.QtGui import QColor
-from qfluentwidgets import HyperlinkLabel, setCustomStyleSheet
+from qfluentwidgets import HyperlinkLabel, setCustomStyleSheet, BodyLabel
 
 
-class CustomLabel(HyperlinkLabel):
+class CustomLabel(BodyLabel):
     def __init__(self, text: str, parent=None):
         super().__init__(parent=parent)
         self.setText(text)
-        self.setUnderlineVisible(True)
 
     def setTextColor(self, light=QColor(0, 0, 0), dark=QColor(255, 255, 255)):
         setCustomStyleSheet(
