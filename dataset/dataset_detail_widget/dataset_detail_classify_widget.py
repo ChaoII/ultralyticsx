@@ -3,12 +3,32 @@ from pathlib import Path
 from pprint import pprint
 
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QAbstractItemView, QHeaderView
 from qfluentwidgets import SimpleCardWidget, SubtitleLabel, BodyLabel, HyperlinkLabel, PopupTeachingTip, \
-    TeachingTipTailPosition
+    TeachingTipTailPosition, TableWidget
 
 from dataset.dataset_detail_widget.dataset_split_view import DatasetSplitFlyoutView
 from dataset.types import DatasetInfo
+
+
+class LabelTableWidget(TableWidget):
+    def __init__(self, split_rates: list):
+        super().__init__()
+        self.verticalHeader().hide()
+        self.setBorderRadius(8)
+        self.setBorderVisible(True)
+        self.setColumnCount(5)
+        self.setRowCount(24)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setHorizontalHeaderLabels([self.tr("Label name"), self.tr("Total data"),
+                                        self.tr("Training set") + f"\n{split_rates[0]}%",
+                                        self.tr("Validation set") + f"\n{split_rates[1]}%",
+                                        self.tr("Testing set") + f"\n{split_rates[2]}%"])
+        self.setColumnWidth(0, 100)
+        self.setColumnWidth(1, 100)
+        self.setColumnWidth(2, 100)
+        self.setColumnWidth(3, 160)
+        self.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
 
 
 class ClassifyDataset(SimpleCardWidget):
