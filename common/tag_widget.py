@@ -1,8 +1,7 @@
 from PySide6.QtCore import Qt, QRectF, QRect, QPoint, QSize
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QFontMetrics
-from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (QWidget)
-from qfluentwidgets.common.icon import toQIcon, drawIcon, FluentIcon
+from qfluentwidgets.common.icon import toQIcon, drawIcon
 
 
 class TagWidget(QWidget):

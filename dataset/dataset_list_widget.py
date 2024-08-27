@@ -59,11 +59,11 @@ class OperationWidget(QWidget):
         with db_session(auto_commit_exit=True) as session:
             dataset: Dataset = session.query(Dataset).filter_by(dataset_id=self.dataset_id).first()
             if dataset.dataset_status == DatasetStatus.CHECKED.value:
-                self._set_checked_status(True)
+                self.set_checked_status(True)
             else:
-                self._set_checked_status(False)
+                self.set_checked_status(False)
 
-    def _set_checked_status(self, check_status: bool):
+    def set_checked_status(self, check_status: bool):
         if check_status:
             self.btn_import.setVisible(False)
             self.btn_view.setVisible(True)
@@ -126,7 +126,7 @@ class DatasetTableWidget(TableWidget):
 
 
 class DatasetListWidget(QWidget):
-    view_dataset_clicked = Signal(str)
+    view_dataset_clicked = Signal(DatasetInfo)
     import_dataset_clicked = Signal(DatasetInfo)
 
     def __init__(self):
@@ -275,20 +275,27 @@ class DatasetListWidget(QWidget):
             dataset_info.dataset_name = dataset.dataset_name
             dataset_info.dataset_dir = dataset.dataset_dir
             dataset_info.model_type = ModelType(dataset.model_type)
+            dataset_info.create_time = format_datatime(dataset.create_time)
         self.import_dataset_clicked.emit(dataset_info)
 
     @Slot(str)
     def _on_import_dataset_finished(self, dataset_id, status: DatasetStatus):
-        item = self.item_dataset_id_map.get(dataset_id, None)
-        if item:
-            row_index = self.tb_dataset.row(item)
-            tag = self.tb_dataset.cellWidget(row_index, 4)
-            if isinstance(tag, TextTagWidget):
-                tag.set_text(status.name)
-                tag.set_color(status.color)
+        # 部分区域刷新
+        # item = self.item_dataset_id_map.get(dataset_id, None)
+        # if item:
+        #     row_index = self.tb_dataset.row(item)
+        #     tag = self.tb_dataset.cellWidget(row_index, 4)
+        #     op = self.tb_dataset.cellWidget(row_index, 5)
+        #     if isinstance(tag, TextTagWidget):
+        #         tag.set_text(status.name)
+        #         tag.set_color(status.color)
+        #     if isinstance(op, OperationWidget):
+        #         op.set_checked_status(True)
         with db_session() as session:
             dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
             dataset.dataset_status = status.value
+        # 全量数据刷新，如果此处存在性能瓶颈，请使用部分区域刷新
+        self._load_dataset_data()
 
     @Slot(str)
     def _on_delete_dataset(self, dataset_id):
@@ -300,8 +307,19 @@ class DatasetListWidget(QWidget):
         self._load_dataset_data()
 
     @Slot(str)
-    def _on_view_dataset(self, task_id):
-        self.view_dataset_clicked.emit(task_id)
+    def _on_view_dataset(self, dataset_id):
+
+        with db_session() as session:
+            dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
+            dataset_info = DatasetInfo()
+            dataset_info.dataset_id = dataset.dataset_id
+            dataset_info.dataset_description = dataset.dataset_description
+            dataset_info.dataset_status = DatasetStatus(dataset.dataset_status)
+            dataset_info.dataset_name = dataset.dataset_name
+            dataset_info.dataset_dir = dataset.dataset_dir
+            dataset_info.model_type = ModelType(dataset.model_type)
+            dataset_info.create_time = format_datatime(dataset.create_time)
+        self.view_dataset_clicked.emit(dataset_info)
 
     @Slot(str)
     def _on_open_dataset_dir(self, dataset_id):

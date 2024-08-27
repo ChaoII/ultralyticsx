@@ -1,10 +1,13 @@
-from PySide6.QtCore import QSize, Signal
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
-from qfluentwidgets import FlyoutViewBase, BodyLabel, PrimaryPushButton, PushButton, FluentIcon, InfoBarIcon, \
-    TransparentToolButton, LargeTitleLabel, StrongBodyLabel
+from PySide6.QtCore import QSize, Signal, Qt
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget
+from qfluentwidgets import FlyoutViewBase, BodyLabel, PrimaryPushButton, PushButton, InfoBarIcon, \
+    TransparentToolButton, StrongBodyLabel
 
 
 class CustomFlyoutView(FlyoutViewBase):
+    def addWidget(self, widget: QWidget, stretch=0, align=Qt.AlignmentFlag.AlignLeft):
+        pass
+
     accept_status = Signal(bool)
 
     def __init__(self, content: str, parent=None):

@@ -1,11 +1,7 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QSizeGrip, QHBoxLayout, \
-    QGraphicsOpacityEffect, QGroupBox
-from PySide6.QtCore import QPropertyAnimation, QRect, Qt, QEasingCurve, Property, QSize, Signal
-from PySide6.QtGui import QResizeEvent, QPaintEvent, QPainter, QMouseEvent
-from qfluentwidgets import SubtitleLabel, TransparentToolButton, FluentIcon, PushButton, ElevatedCardWidget, \
-    SimpleCardWidget, StrongBodyLabel
-
-from common.custom_scroll_widget import   CustomScrollWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from qfluentwidgets import TransparentToolButton, FluentIcon, SimpleCardWidget, StrongBodyLabel
 
 
 class HeaderWidget(SimpleCardWidget):
@@ -33,6 +29,8 @@ class HeaderWidget(SimpleCardWidget):
 
 
 class CollapsibleWidget(QWidget):
+    collapse_clicked = Signal()
+
     def __init__(self, title: str, parent=None):
         super().__init__(parent)
         self.header = HeaderWidget(title)
@@ -53,7 +51,13 @@ class CollapsibleWidget(QWidget):
         self.vly_content.addWidget(self.content_widget)
 
     def set_content_hidden(self, hidden: bool):
+
         self._is_collapsed = hidden
+
+        if self._is_collapsed:
+            self.header.setIcon(FluentIcon.CHEVRON_DOWN_MED)
+        else:
+            self.header.setIcon(FluentIcon.UP)
         if not self.content_widget:
             return
         self.content_widget.setHidden(hidden)
@@ -63,9 +67,5 @@ class CollapsibleWidget(QWidget):
 
     def _on_collapse_clicked(self):
         # 如果是折叠，那么展开
-        print(self._is_collapsed)
-        if self._is_collapsed:
-            self.header.setIcon(FluentIcon.UP)
-        else:
-            self.header.setIcon(FluentIcon.CHEVRON_DOWN_MED)
         self.set_content_hidden(not self._is_collapsed)
+        self.collapse_clicked.emit()

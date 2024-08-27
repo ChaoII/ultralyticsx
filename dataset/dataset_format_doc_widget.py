@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
-from qfluentwidgets import BodyLabel, TextWrap
+from qfluentwidgets import BodyLabel, TextWrap, ImageLabel
 from common.collapsible_widget import CollapsibleWidget
 from common.custom_scroll_widget import CustomScrollWidget
 from common.model_type_widget import ModelType
@@ -12,7 +12,9 @@ class ClassifyDocWidget(QWidget):
         vly = QVBoxLayout(self)
         self.lbl_content = BodyLabel(self)
         self.lbl_content.setWordWrap(True)
+        self.lbl_image = ImageLabel()
         vly.addWidget(self.lbl_content)
+        vly.addWidget(self.lbl_image)
 
         self._init_widgets()
 
@@ -22,6 +24,8 @@ class ClassifyDocWidget(QWidget):
             "2.不支持.zip、tar.gz等压缩包形式的数据\n"
             "3.导入图片格式支持png，jpg，jpeg，bmp格式\n"
             "4.文件夹名为需要分类的类名，输入限定为英文字符，不可包含空格、中文或特殊字符")
+        self.lbl_image.setImage("resource/images/classify_help.png")
+        self.lbl_image.scaledToWidth(450)
 
 
 class DetectionDocWidget(QWidget):
@@ -48,13 +52,13 @@ class DatasetFormatDocWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.classify_doc = CollapsibleWidget(self.tr("Classify"))
+        self.classify_doc = CollapsibleWidget(self.tr("▌Classify"))
         self.classify_doc.set_content_widget(ClassifyDocWidget())
 
-        self.detection_doc = CollapsibleWidget(self.tr("Detection"))
-        self.segmentation_doc = CollapsibleWidget(self.tr("Segmentation"))
-        self.OBB_doc = CollapsibleWidget(self.tr("OBB"))
-        self.pose_doc = CollapsibleWidget(self.tr("Pose"))
+        self.detection_doc = CollapsibleWidget(self.tr("▌Detection"))
+        self.segmentation_doc = CollapsibleWidget(self.tr("▌Segmentation"))
+        self.OBB_doc = CollapsibleWidget(self.tr("▌OBB"))
+        self.pose_doc = CollapsibleWidget(self.tr("▌Pose"))
         self.vly_dataset_info = QVBoxLayout(self)
         self.vly_dataset_info.setSpacing(0)
 
@@ -71,6 +75,14 @@ class DatasetFormatDocWidget(QWidget):
         self.vly_content.addWidget(self.scroll_area)
 
         self.setFixedWidth(500)
+        self._connect_signals_and_slots()
+
+    def _connect_signals_and_slots(self):
+        self.classify_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.CLASSIFY))
+        self.detection_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.DETECT))
+        self.segmentation_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.SEGMENT))
+        self.OBB_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.OBB))
+        self.pose_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.POSE))
 
     def _collapse_all_doc(self):
         self.classify_doc.set_content_hidden(True)

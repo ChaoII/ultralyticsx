@@ -1,12 +1,7 @@
 import overrides
-from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication, QEasingCurve
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QGridLayout,
-                               QSplitter, QLayout)
-from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressBar, TextEdit, InfoBar, InfoBarPosition, StateToolTip, FlowLayout, SingleDirectionScrollArea, isDarkTheme, \
-    Theme, setTheme, setCustomStyleSheet
-
-from settings import cfg
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QWidget, QLayout)
+from qfluentwidgets import SingleDirectionScrollArea
 
 
 class CustomScrollWidget(SingleDirectionScrollArea):
