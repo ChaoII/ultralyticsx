@@ -135,7 +135,7 @@ class DatasetListWidget(QWidget):
         self.vly = QVBoxLayout(self)
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
-        self.btn_create_dataset = PrimaryPushButton(FluentIcon.ADD, self.tr("Create task"))
+        self.btn_create_dataset = PrimaryPushButton(FluentIcon.ADD, self.tr("Create dataset"))
 
         self.lbl_type = BodyLabel(self.tr("type:"), self)
         self.cmb_type = ComboBox()

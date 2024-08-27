@@ -70,17 +70,18 @@ class FileSelectWidget(LineEdit):
             self._open_directory()
 
     def _open_directory(self):
+        current_text = ""
         if self.is_dir:
             directory = QFileDialog.getExistingDirectory(self, self.tr("Select a directory"), Path.home().as_posix())
             if directory:
-                self._cur_text = directory
+                current_text = directory
         else:
             filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), ".")
-            self._cur_text = filename
+            current_text = filename
 
         self._is_hovered = False
-        if not self._cur_text:
+        if not current_text:
             return
 
-        self.path_selected.emit(self._cur_text)
-        self.setText(self._cur_text)
+        self.path_selected.emit(current_text)
+        self.setText(current_text)
