@@ -2,7 +2,7 @@ from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QStackedWidget
 from qfluentwidgets import BreadcrumbBar
 
-from .dataset_detail_widget import DatasetDetailWidget
+from dataset.dataset_detail_widget.dataset_detail_widget import DatasetDetailWidget
 from .dataset_list_widget import DatasetListWidget
 from .import_dataset_widget import ImportDatasetWidget
 from .new_dataset_dialog import DatasetInfo
