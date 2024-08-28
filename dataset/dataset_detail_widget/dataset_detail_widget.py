@@ -13,7 +13,7 @@ class DatasetDetailWidget(QWidget):
         self.content = ClassifyDataset()
         self.vly.addWidget(self.header)
         self.vly.addWidget(self.content)
-        self.vly.addStretch(1)
+        # self.vly.addStretch(1)
         self._dataset_info: DatasetInfo | None = None
         self._is_split = False
 

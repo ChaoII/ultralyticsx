@@ -2,6 +2,7 @@ from PySide6.QtCore import Signal, Qt, QSize, Slot
 from PySide6.QtWidgets import QWidget, QGridLayout, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import BodyLabel, CompactSpinBox, FlyoutViewBase, themeColor, PrimaryPushButton, PushButton, \
     InfoBarIcon, TransparentToolButton, StrongBodyLabel, InfoBarPosition, InfoBar
+from qfluentwidgets import SubtitleLabel, HyperlinkLabel, PopupTeachingTip, TeachingTipTailPosition
 
 from common.custom_label_widget import CustomLabel
 
@@ -155,3 +156,47 @@ class DatasetSplitFlyoutView(FlyoutViewBase):
     def _on_rate_changed(self, _split_rates: list):
         print(_split_rates)
         self._split_rates = _split_rates
+
+
+class DatasetSplitWidget(QWidget):
+    split_clicked = Signal(list)
+
+    def __init__(self):
+        super().__init__()
+        self.lbl_title = SubtitleLabel("▌" + self.tr("Data analysis"), self)
+        self.lbl_split_tip = BodyLabel(self.tr("Dataset have split, you can split again"), self)
+        self.btn_split = HyperlinkLabel(self.tr("Split again"))
+        self.btn_split.setUnderlineVisible(True)
+        self.hly_dataset_info = QHBoxLayout(self)
+        self.hly_dataset_info.setSpacing(30)
+        self.hly_dataset_info.addWidget(self.lbl_title)
+        self.hly_dataset_info.addWidget(self.lbl_split_tip)
+        self.hly_dataset_info.addWidget(self.btn_split)
+        self.hly_dataset_info.addStretch(1)
+
+        self._total_dataset = 0
+        self._connect_signals_and_slots()
+
+    def set_total_dataset(self, total_dataset: int):
+        self._total_dataset = total_dataset
+
+    def _connect_signals_and_slots(self):
+        self.btn_split.clicked.connect(self._on_split_clicked)
+
+    def _on_split_clicked(self):
+        self.view = DatasetSplitFlyoutView(self._total_dataset)
+        self.popup_tip = PopupTeachingTip.make(
+            target=self.btn_split,
+            view=self.view,
+            tailPosition=TeachingTipTailPosition.TOP,
+            duration=-1,
+            parent=self
+        )
+        self.view.accept_status.connect(self._on_split_dataset)
+
+    @Slot(bool, list)
+    def _on_split_dataset(self, accepted, split_rates):
+        if accepted:
+            self._split_rates = split_rates
+            self.split_clicked.emit(self._split_rates)
+        self.popup_tip.close()
