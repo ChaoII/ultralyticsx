@@ -27,6 +27,7 @@ class Dataset(Base):
     dataset_status = Column(Integer)
     dataset_dir = Column(String)
     create_time = Column(DateTime, default=datetime.now())
+    split_rate = Column(String, default="70_20_10")
 
     projects = relationship("Project", secondary=projects_to_datasets, back_populates="datasets")
 

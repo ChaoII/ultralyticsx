@@ -10,9 +10,9 @@ from common.custom_label_widget import CustomLabel
 class SplitDatasetContentWidget(QWidget):
     rate_changed = Signal(list)
 
-    def __init__(self, total_dataset: int, rates: list):
+    def __init__(self, total_dataset: int, split_rates: list):
         super().__init__()
-        self._rates = rates
+        self._split_rates = split_rates
         self.lbl_type = BodyLabel(self.tr("Type"), self)
         self.lbl_type.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_training_set = BodyLabel(self.tr("Training set"), self)
@@ -27,15 +27,15 @@ class SplitDatasetContentWidget(QWidget):
         self.lbl_rate = BodyLabel(self.tr("Rate(%)"), self)
         self.lbl_rate.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.csb_training_rate = CompactSpinBox()
-        self.csb_training_rate.setValue(self._rates[0])
+        self.csb_training_rate.setValue(self._split_rates[0])
         self.csb_training_rate.setRange(0, 100)
 
         self.csb_validation_rate = CompactSpinBox()
-        self.csb_validation_rate.setValue(self._rates[1])
+        self.csb_validation_rate.setValue(self._split_rates[1])
         self.csb_validation_rate.setRange(0, 100)
 
         self.csb_testing_rate = CompactSpinBox()
-        self.csb_testing_rate.setValue(self._rates[2])
+        self.csb_testing_rate.setValue(self._split_rates[2])
         self.csb_testing_rate.setRange(0, 100)
 
         self.lbl_num = BodyLabel(self.tr("Number"), self)
@@ -80,14 +80,14 @@ class SplitDatasetContentWidget(QWidget):
         self.csb_testing_rate.valueChanged.connect(lambda value: self._on_rate_value_changed(2, value))
 
     def _on_rate_value_changed(self, index: int, value: int):
-        self._rates[index] = value
+        self._split_rates[index] = value
         self.update_num()
-        self.rate_changed.emit(self._rates)
+        self.rate_changed.emit(self._split_rates)
 
     def update_num(self):
-        self.lbl_training_num.setText(str(int(self.total_dataset * self._rates[0] / 100)))
-        self.lbl_validation_num.setText(str(int(self.total_dataset * self._rates[1] / 100)))
-        self.lbl_testing_num.setText(str(int(self.total_dataset * self._rates[2] / 100)))
+        self.lbl_training_num.setText(str(int(self.total_dataset * self._split_rates[0] / 100)))
+        self.lbl_validation_num.setText(str(int(self.total_dataset * self._split_rates[1] / 100)))
+        self.lbl_testing_num.setText(str(int(self.total_dataset * self._split_rates[2] / 100)))
 
 
 class DatasetSplitFlyoutView(FlyoutViewBase):
@@ -96,9 +96,9 @@ class DatasetSplitFlyoutView(FlyoutViewBase):
 
     accept_status = Signal(bool, list)
 
-    def __init__(self, total_datasets: int, parent=None):
+    def __init__(self, total_datasets: int, split_rates: list, parent=None):
         super().__init__(parent)
-        self._split_rates = [70, 20, 10]
+        self._split_rates = split_rates
         self.setFixedWidth(440)
         self.vBoxLayout = QVBoxLayout(self)
         self.lbl_title = StrongBodyLabel(self.tr("Dataset split"), self)
@@ -153,9 +153,8 @@ class DatasetSplitFlyoutView(FlyoutViewBase):
         self.accept_status.emit(status, self._split_rates)
 
     @Slot(list)
-    def _on_rate_changed(self, _split_rates: list):
-        print(_split_rates)
-        self._split_rates = _split_rates
+    def _on_rate_changed(self, split_rates: list):
+        self._split_rates = split_rates
 
 
 class DatasetSplitWidget(QWidget):
@@ -173,18 +172,19 @@ class DatasetSplitWidget(QWidget):
         self.hly_dataset_info.addWidget(self.lbl_split_tip)
         self.hly_dataset_info.addWidget(self.btn_split)
         self.hly_dataset_info.addStretch(1)
-
+        self._split_rates = []
         self._total_dataset = 0
         self._connect_signals_and_slots()
 
-    def set_total_dataset(self, total_dataset: int):
+    def set_dataset(self, total_dataset: int, split_rates: list):
         self._total_dataset = total_dataset
+        self._split_rates = split_rates
 
     def _connect_signals_and_slots(self):
         self.btn_split.clicked.connect(self._on_split_clicked)
 
     def _on_split_clicked(self):
-        self.view = DatasetSplitFlyoutView(self._total_dataset)
+        self.view = DatasetSplitFlyoutView(self._total_dataset, self._split_rates)
         self.popup_tip = PopupTeachingTip.make(
             target=self.btn_split,
             view=self.view,

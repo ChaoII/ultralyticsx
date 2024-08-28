@@ -35,3 +35,4 @@ class DatasetInfo:
     dataset_dir: str
     model_type: ModelType = ModelType.CLASSIFY
     create_time: str
+    split_rate: list

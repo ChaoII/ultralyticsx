@@ -9,10 +9,12 @@ from PySide6.QtGui import QIcon, QPixmap, QCursor
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QListView, QListWidgetItem, QApplication
 from qfluentwidgets import SimpleCardWidget, ComboBox, CheckBox, ListWidget
 
+from common.db_helper import db_session
 from dataset.dataset_detail_widget.dataset_split_widget import DatasetSplitWidget
 from dataset.dataset_detail_widget.label_table_Widget import LabelTableWidget, SplitLabelInfo
 from dataset.types import DatasetInfo
 from dataset_process.image_tip_widget import ImageTip
+from models.models import Dataset
 
 
 class ImageItemSize(enum.Enum):
@@ -258,6 +260,7 @@ class ClassifyDataset(QWidget):
         self.hly_content.addWidget(self.labels_widget)
         self.hly_content.addWidget(self.draw_widget)
 
+        self._dataset_info: DatasetInfo = DatasetInfo()
         self.vly_dataset_info.addLayout(self.hly_content)
         self._dataset_map = dict()
         self._total_dataset = 0
@@ -266,8 +269,13 @@ class ClassifyDataset(QWidget):
         self._connect_signals_and_slots()
 
     def set_dataset_info(self, dataset_info: DatasetInfo):
+        self._dataset_info = dataset_info
+        with db_session() as session:
+            dataset = session.query(Dataset).filter_by(dataset_id=dataset_info.dataset_id).first()
+            self._split_rates = [int(rate) for rate in dataset.split_rate.split("_")]
         self._parser_dataset(dataset_info)
-        self.dataset_header.set_total_dataset(self._total_dataset)
+        self.dataset_header.set_dataset(self._total_dataset, self._split_rates)
+        self._split_dataset()
 
     def _connect_signals_and_slots(self):
         self.dataset_header.split_clicked.connect(self._on_split_clicked)
@@ -275,6 +283,10 @@ class ClassifyDataset(QWidget):
     @Slot(list)
     def _on_split_clicked(self, split_rates):
         self._split_rates = split_rates
+        # 更新拆分比例
+        with db_session() as session:
+            dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()
+            dataset.split_rate = "_".join([str(rate) for rate in split_rates])
         self._split_dataset()
 
     def _parser_dataset(self, dataset_info: DatasetInfo):
@@ -290,7 +302,6 @@ class ClassifyDataset(QWidget):
         train = dict()
         val = dict()
         test = dict()
-
         info = SplitLabelInfo(label=self.tr("All"), all_num=self._total_dataset,
                               train_num=round(self._total_dataset * self._split_rates[0] / 100),
                               val_num=round(self._total_dataset * self._split_rates[1] / 100),
