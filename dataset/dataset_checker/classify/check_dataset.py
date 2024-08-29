@@ -1,6 +1,12 @@
 from pathlib import Path
 from PIL import Image
 
+from dataset.dataset_checker.classify.split_dataset import split_dataset
+
+
+def is_empty(folder_path: Path):
+    return not any(folder_path.iterdir())
+
 
 def is_image(filename):
     try:
@@ -12,10 +18,14 @@ def is_image(filename):
 
 
 def classify_dataset_check(dataset_dir: Path):
-    if not any(dataset_dir.iterdir()):
+    exist_one_type = False
+    if is_empty(dataset_dir):
         return False
     for item in dataset_dir.iterdir():
         if item.is_dir():
+            exist_one_type = True
+            if is_empty(item):
+                return False
             for file in item.iterdir():
                 if file.is_file():
                     if not is_image(file):
@@ -23,5 +33,5 @@ def classify_dataset_check(dataset_dir: Path):
                 else:
                     return False
         else:
-            return False
-    return True
+            continue
+    return exist_one_type
