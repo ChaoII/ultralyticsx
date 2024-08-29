@@ -146,7 +146,8 @@ class DataProcessWidget(QWidget):
         self.btn_data_valid.clicked.connect(self.data_valid)
         self.select_card.dataset_file_changed.connect(self._on_update_dataset)
         self.data_convert_thread.dataset_resolve_finished.connect(self._on_dataset_resolve_finished)
-        self.dataset_process_finished.connect(core.EventManager().on_dataset_process_finished)
+        self.dataset_process_finished.connect(
+            lambda config_path: core.EventManager().dataset_process_finished.emit(config_path))
 
     @Slot(str)
     def _on_update_dataset(self, dataset_path: str):

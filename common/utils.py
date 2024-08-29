@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -62,6 +63,16 @@ def show_center(widget: QWidget):
     w, h = desktop.width(), desktop.height()
     widget.move(w // 2 - widget.width() // 2, h // 2 - widget.height() // 2)
     widget.show()
+
+
+def copy_tree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            if os.path.exists(d):
+                shutil.rmtree(d)
+            shutil.copytree(s, d, symlinks, ignore)
 
 
 def generate_color_map(classes: int):

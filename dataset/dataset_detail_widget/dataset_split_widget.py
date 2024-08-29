@@ -139,10 +139,10 @@ class DatasetSplitFlyoutView(FlyoutViewBase):
         self.split_dataset_content_widget.rate_changed.emit(self._on_rate_changed)
 
     def _on_btn_clicked(self, status: bool):
-        if status and sum(self._split_rates) != 100:
+        if status and (sum(self._split_rates) != 100 or self._split_rates[0] <= 0):
             InfoBar.error(
                 title='',
-                content=self.tr("Split dataset error!"),
+                content=self.tr(f"Split dataset error!"),
                 orient=Qt.Orientation.Vertical,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,

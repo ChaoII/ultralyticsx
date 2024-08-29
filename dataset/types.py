@@ -1,3 +1,4 @@
+import enum
 from enum import Enum
 
 from PySide6.QtGui import QColor
@@ -25,6 +26,13 @@ class DatasetStatus(Enum):
                 DatasetStatus.CHECK_FAILED: QColor("#ff9999"),
             }
         return _color_map[self]
+
+
+class DatasetType(enum.Enum):
+    ALL = "all"
+    TRAIN = "train"
+    VAL = "val"
+    TEST = "test"
 
 
 class DatasetInfo:

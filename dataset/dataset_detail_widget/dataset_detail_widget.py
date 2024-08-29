@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from dataset.dataset_detail_widget.dataset_detail_classify_widget import ClassifyDataset
 from dataset.dataset_detail_widget.datset_header_widget import DatasetHeaderWidget
 from dataset.new_dataset_dialog import DatasetInfo
+from dataset.types import DatasetStatus
 
 
 class DatasetDetailWidget(QWidget):

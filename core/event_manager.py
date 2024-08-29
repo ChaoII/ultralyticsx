@@ -21,11 +21,3 @@ class EventManager(QObject):
 
     def __init__(self):
         super().__init__()
-
-    @Slot(str)
-    def on_dataset_process_finished(self, dataset_config: str):
-        self.dataset_process_finished.emit(dataset_config)
-
-    @Slot(str, DatasetStatus)
-    def on_import_dataset_finished(self, dataset_id: str, status: DatasetStatus):
-        self.import_dataset_finished.emit(dataset_id, status)
