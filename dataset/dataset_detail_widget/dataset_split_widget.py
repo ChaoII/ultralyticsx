@@ -162,13 +162,11 @@ class DatasetSplitWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.lbl_title = SubtitleLabel("▌" + self.tr("Data analysis"), self)
         self.lbl_split_tip = BodyLabel(self.tr("Dataset have split, you can split again"), self)
         self.btn_split = HyperlinkLabel(self.tr("Split again"))
         self.btn_split.setUnderlineVisible(True)
         self.hly_dataset_info = QHBoxLayout(self)
         self.hly_dataset_info.setSpacing(30)
-        self.hly_dataset_info.addWidget(self.lbl_title)
         self.hly_dataset_info.addWidget(self.lbl_split_tip)
         self.hly_dataset_info.addWidget(self.btn_split)
         self.hly_dataset_info.addStretch(1)

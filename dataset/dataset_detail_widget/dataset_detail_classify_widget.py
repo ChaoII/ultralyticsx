@@ -10,7 +10,6 @@ from qfluentwidgets import SimpleCardWidget, ComboBox, CheckBox, ListWidget
 from common.db_helper import db_session
 from common.utils import generate_color_map, invert_color
 from dataset.dataset_checker.classify.split_dataset import split_dataset, load_split_dataset
-from dataset.dataset_detail_widget.dataset_split_widget import DatasetSplitWidget
 from dataset.dataset_detail_widget.label_table_Widget import LabelTableWidget, SplitLabelInfo
 from dataset.types import DatasetInfo, DatasetType, DatasetStatus
 from dataset_process.image_tip_widget import ImageTip
