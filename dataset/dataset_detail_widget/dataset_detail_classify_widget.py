@@ -271,14 +271,16 @@ class ClassifyDatasetDrawWidget(SimpleCardWidget):
 
 
 class ClassifyDataset(QWidget):
+    load_dataset_finished = Signal(int, list)
+
     def __init__(self):
         super().__init__()
         self.setObjectName("classify_dataset")
-        self.dataset_header = DatasetSplitWidget()
+        # self.dataset_header = DatasetSplitWidget()
         self.labels_widget = ClassifyDatasetLabelsWidget()
         self.vly_dataset_info = QVBoxLayout(self)
         self.vly_dataset_info.setContentsMargins(0, 0, 0, 0)
-        self.vly_dataset_info.addWidget(self.dataset_header)
+        # self.vly_dataset_info.addWidget(self.dataset_header)
         self.draw_widget = ClassifyDatasetDrawWidget()
 
         self.hly_content = QHBoxLayout()
@@ -293,8 +295,6 @@ class ClassifyDataset(QWidget):
         self._total_dataset = 0
         self._split_rates = []
 
-        self._connect_signals_and_slots()
-
     def set_dataset_info(self, dataset_info: DatasetInfo):
         self._dataset_info = dataset_info
         with db_session() as session:
@@ -305,21 +305,7 @@ class ClassifyDataset(QWidget):
             dataset_df = load_split_dataset(Path(self._dataset_info.dataset_dir))
             self._load_dataset(dataset_df)
         else:
-            self._split_dataset()
-
-    def _connect_signals_and_slots(self):
-        self.dataset_header.split_clicked.connect(self._on_split_clicked)
-
-    @Slot(list)
-    def _on_split_clicked(self, split_rates):
-        self._split_rates = split_rates
-        # 更新拆分比例
-        dataset_df = split_dataset(Path(self._dataset_info.dataset_dir), self._split_rates)
-        with db_session() as session:
-            dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()
-            dataset.split_rate = "_".join([str(rate) for rate in split_rates])
-            dataset.dataset_total = dataset_df.shape[0]
-        self._split_dataset()
+            self.split_dataset()
 
     def _load_dataset(self, dataset_df: pd.DataFrame):
         all_num = dataset_df.shape[0]
@@ -339,11 +325,13 @@ class ClassifyDataset(QWidget):
                                                          train_num=train_num,
                                                          val_num=val_num,
                                                          test_num=test_num))
-        self.dataset_header.set_dataset(self._total_dataset, self._split_rates)
         self.labels_widget.update_table(self._split_rates, dataset_split_num_info)
         self.draw_widget.update_dataset(dataset_df)
+        self.load_dataset_finished.emit(self._total_dataset, self._split_rates)
 
-    def _split_dataset(self):
+    @Slot(list)
+    def split_dataset(self, split_rates):
+        self._split_rates = split_rates
         dataset_df = split_dataset(Path(self._dataset_info.dataset_dir), self._split_rates)
         with db_session() as session:
             dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()

@@ -7,10 +7,10 @@
     },
     "model": {
         "enable_tensorboard": false,
-        "workspace_dir": "C:/Users/AC/Desktop/1231"
+        "workspace_dir": "C:/Users/84945/Desktop/ultralytics_workspace"
     },
     "QFluentWidgets": {
         "ThemeColor": "#ff009faa",
-        "ThemeMode": "Dark"
+        "ThemeMode": "Light"
     }
 }

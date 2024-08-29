@@ -1,3 +1,4 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTableWidgetItem
 from qfluentwidgets import TableWidget
 
@@ -48,6 +49,10 @@ class LabelTableWidget(TableWidget):
             item2 = QTableWidgetItem(str(dataset_num_info.train_num))
             item3 = QTableWidgetItem(str(dataset_num_info.val_num))
             item4 = QTableWidgetItem(str(dataset_num_info.test_num))
+            item1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item3.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item4.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.setItem(index, 0, item0)
             self.setItem(index, 1, item1)
             self.setItem(index, 2, item2)

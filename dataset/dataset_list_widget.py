@@ -266,16 +266,7 @@ class DatasetListWidget(QWidget):
 
     @Slot(str)
     def _on_import_dataset(self, dataset_id):
-        with db_session() as session:
-            dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
-            dataset_info = DatasetInfo()
-            dataset_info.dataset_id = dataset.dataset_id
-            dataset_info.dataset_description = dataset.dataset_description
-            dataset_info.dataset_status = DatasetStatus(dataset.dataset_status)
-            dataset_info.dataset_name = dataset.dataset_name
-            dataset_info.dataset_dir = dataset.dataset_dir
-            dataset_info.model_type = ModelType(dataset.model_type)
-            dataset_info.create_time = format_datatime(dataset.create_time)
+        dataset_info = self._binding_dataset_info_from_db(dataset_id)
         self.import_dataset_clicked.emit(dataset_info)
 
     @Slot(str)
@@ -303,22 +294,12 @@ class DatasetListWidget(QWidget):
             dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
             directory = dataset.dataset_dir
             session.delete(dataset)
-        shutil.rmtree(directory)
+        shutil.rmtree(directory, ignore_errors=True)
         self._load_dataset_data()
 
     @Slot(str)
     def _on_view_dataset(self, dataset_id):
-
-        with db_session() as session:
-            dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
-            dataset_info = DatasetInfo()
-            dataset_info.dataset_id = dataset.dataset_id
-            dataset_info.dataset_description = dataset.dataset_description
-            dataset_info.dataset_status = DatasetStatus(dataset.dataset_status)
-            dataset_info.dataset_name = dataset.dataset_name
-            dataset_info.dataset_dir = dataset.dataset_dir
-            dataset_info.model_type = ModelType(dataset.model_type)
-            dataset_info.create_time = format_datatime(dataset.create_time)
+        dataset_info = self._binding_dataset_info_from_db(dataset_id)
         self.view_dataset_clicked.emit(dataset_info)
 
     @Slot(str)
@@ -327,3 +308,17 @@ class DatasetListWidget(QWidget):
             dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
             directory = Path(dataset.dataset_dir)
         open_directory(directory)
+
+    @staticmethod
+    def _binding_dataset_info_from_db(dataset_id: str) -> DatasetInfo:
+        dataset_info = DatasetInfo()
+        with db_session() as session:
+            dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
+            dataset_info.dataset_id = dataset.dataset_id
+            dataset_info.dataset_description = dataset.dataset_description
+            dataset_info.dataset_status = DatasetStatus(dataset.dataset_status)
+            dataset_info.dataset_name = dataset.dataset_name
+            dataset_info.dataset_dir = dataset.dataset_dir
+            dataset_info.model_type = ModelType(dataset.model_type)
+            dataset_info.create_time = format_datatime(dataset.create_time)
+        return dataset_info

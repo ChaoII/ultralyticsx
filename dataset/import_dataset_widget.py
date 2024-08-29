@@ -85,7 +85,7 @@ class ImportDatasetWidget(QWidget):
                           duration=2000, parent=self)
             return False
         if not classify_dataset_check(Path(self._selected_dataset_dir)):
-            InfoBar.error(title='', content=self.tr("Dataset format error,please check your dataset"),
+            InfoBar.error(title='', content=self.tr("Dataset format error, please check your dataset"),
                           orient=Qt.Orientation.Vertical, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
                           duration=2000, parent=self)
             return False

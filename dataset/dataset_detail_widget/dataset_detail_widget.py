@@ -1,3 +1,4 @@
+from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from dataset.dataset_detail_widget.dataset_detail_classify_widget import ClassifyDataset
@@ -17,6 +18,12 @@ class DatasetDetailWidget(QWidget):
         # self.vly.addStretch(1)
         self._dataset_info: DatasetInfo | None = None
         self._is_split = False
+
+        self._connect_signals_and_slots()
+
+    def _connect_signals_and_slots(self):
+        self.header.split_dataset_clicked.connect(self.content.split_dataset)
+        self.content.load_dataset_finished.connect(self.header.set_dataset_header)
 
     def set_dataset_info(self, dataset_info: DatasetInfo):
         self.header.set_header_info(dataset_info)

@@ -21,7 +21,6 @@ class ClassifySplitDataset:
 
 def load_split_dataset(dataset_dir: Path):
     dataset_df = pickle.load(open(dataset_dir / "dataset_cache", "rb"))
-
     return dataset_df
 
 
@@ -35,8 +34,8 @@ def split_dataset(dataset_dir: Path, split_rates: list):
             label_list.append(item.name)
 
     train_dataset_list = []
-    val_datas_list = []
-    test_datas_list = []
+    val_dataset_list = []
+    test_dataset_list = []
 
     for key, item in dataset_map.items():
         label_dataset_num = len(item)
@@ -50,15 +49,15 @@ def split_dataset(dataset_dir: Path, split_rates: list):
         cur_label_val_data = [[item[index], key] for index in label_dataset_index[train_num:train_num + val_num]]
         cur_label_test_data = [[item[index], key] for index in label_dataset_index[train_num + val_num:]]
         train_dataset_list.extend(cur_label_train_data)
-        val_datas_list.extend(cur_label_val_data)
-        test_datas_list.extend(cur_label_test_data)
+        val_dataset_list.extend(cur_label_val_data)
+        test_dataset_list.extend(cur_label_test_data)
 
     train_df = pd.DataFrame(train_dataset_list, index=None, columns=['image_path', 'label'])
     train_df["type"] = ["train"] * len(train_dataset_list)
-    val_df = pd.DataFrame(val_datas_list, index=None, columns=['image_path', 'label'])
-    val_df["type"] = ["val"] * len(val_datas_list)
-    test_df = pd.DataFrame(test_datas_list, index=None, columns=['image_path', 'label'])
-    test_df["type"] = ["test"] * len(test_datas_list)
+    val_df = pd.DataFrame(val_dataset_list, index=None, columns=['image_path', 'label'])
+    val_df["type"] = ["val"] * len(val_dataset_list)
+    test_df = pd.DataFrame(test_dataset_list, index=None, columns=['image_path', 'label'])
+    test_df["type"] = ["test"] * len(test_dataset_list)
 
     all_df = pd.concat([train_df, val_df, test_df]).reset_index(drop=True)
     pickle.dump(all_df, open(dataset_dir / "dataset_cache", "wb"))
