@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from PySide6.QtCore import Slot, Qt, QSize
 from PySide6.QtGui import QIcon, QPixmap, QCursor
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidgetItem, QListView)
@@ -9,7 +7,7 @@ from settings.config import cfg
 from common.utils import *
 from .data_convert_thread import LoadDatasetInfo
 from .dataset_draw_thread import DatasetDrawThread
-from .image_tip_widget import ImageTip
+from common.image_tip_widget import ImageTip
 
 SMALL = QSize(60, 60)
 MEDIUM = QSize(120, 120)

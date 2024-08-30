@@ -2,7 +2,7 @@ from PySide6.QtCore import Signal, Qt, QSize, Slot
 from PySide6.QtWidgets import QWidget, QGridLayout, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import BodyLabel, CompactSpinBox, FlyoutViewBase, themeColor, PrimaryPushButton, PushButton, \
     InfoBarIcon, TransparentToolButton, StrongBodyLabel, InfoBarPosition, InfoBar
-from qfluentwidgets import SubtitleLabel, HyperlinkLabel, PopupTeachingTip, TeachingTipTailPosition
+from qfluentwidgets import HyperlinkLabel, PopupTeachingTip, TeachingTipTailPosition
 
 from common.custom_label_widget import CustomLabel
 

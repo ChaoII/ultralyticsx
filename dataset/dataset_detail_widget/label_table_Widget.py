@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTableWidgetItem
-from qfluentwidgets import TableWidget
+from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTableWidgetItem, QVBoxLayout
+from qfluentwidgets import TableWidget, SimpleCardWidget
 
 
 class SplitLabelInfo:
@@ -58,3 +58,16 @@ class LabelTableWidget(TableWidget):
             self.setItem(index, 2, item2)
             self.setItem(index, 3, item3)
             self.setItem(index, 4, item4)
+
+
+class ClassifyDatasetLabelsWidget(SimpleCardWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedWidth(500)
+        self.tb_label_info = LabelTableWidget()
+        self.vly_dataset_info = QVBoxLayout(self)
+        self.vly_dataset_info.addWidget(self.tb_label_info)
+
+    def update_table(self, split_rates: list, dataset_split_num_info: list[SplitLabelInfo]):
+        self.tb_label_info.set_split_rates(split_rates)
+        self.tb_label_info.set_data(dataset_split_num_info)
