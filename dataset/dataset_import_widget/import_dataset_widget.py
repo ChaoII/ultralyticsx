@@ -1,21 +1,19 @@
-import shutil
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QHBoxLayout, QFrame
-from qfluentwidgets import BodyLabel, ComboBox, TitleLabel, SubtitleLabel, TextWrap, LineEdit, PrimaryPushButton, \
-    FluentIcon, TextEdit, PlainTextEdit, InfoBar, InfoBarPosition
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QHBoxLayout
+from qfluentwidgets import BodyLabel, SubtitleLabel, PrimaryPushButton, \
+    FluentIcon, InfoBar, InfoBarPosition
 
 from common.file_select_widget import FileSelectWidget
 import core
 from common.tag_widget import TextTagWidget
-from common.utils import format_datatime, copy_tree
+from common.utils import copy_tree
 from dataset.dataset_checker.classify.check_dataset import classify_dataset_check
-from dataset.dataset_format_doc_widget import DatasetFormatDocWidget
+from dataset.dataset_import_widget.dataset_format_doc_widget import DatasetFormatDocWidget
 
-from dataset.new_dataset_dialog import DatasetInfo
+from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
 from dataset.types import DatasetStatus
-from common.collapsible_widget import CollapsibleWidget
 
 
 class ImportDatasetWidget(QWidget):

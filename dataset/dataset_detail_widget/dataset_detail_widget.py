@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from dataset.dataset_detail_widget.classify.dataset_detail_classify_widget import ClassifyDataset
-from dataset.dataset_detail_widget.datset_header_widget import DatasetHeaderWidget
-from dataset.new_dataset_dialog import DatasetInfo
+from dataset.dataset_detail_widget.common.datset_header_widget import DatasetHeaderWidget
+from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
 
 
 class DatasetDetailWidget(QWidget):

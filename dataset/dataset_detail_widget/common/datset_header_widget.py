@@ -7,7 +7,7 @@ from qfluentwidgets import SimpleCardWidget, SubtitleLabel, BodyLabel
 from common.db_helper import db_session
 from common.tag_widget import TextTagWidget
 from dataset.dataset_checker.classify.split_dataset import split_dataset
-from dataset.dataset_detail_widget.dataset_split_widget import DatasetSplitWidget
+from dataset.dataset_detail_widget.common.dataset_split_widget import DatasetSplitWidget
 from dataset.types import DatasetInfo
 from models.models import Dataset
 

@@ -60,7 +60,7 @@ class LabelTableWidget(TableWidget):
             self.setItem(index, 4, item4)
 
 
-class ClassifyDatasetLabelsWidget(SimpleCardWidget):
+class DatasetLabelsInfoWidget(SimpleCardWidget):
     def __init__(self):
         super().__init__()
         self.setFixedWidth(500)

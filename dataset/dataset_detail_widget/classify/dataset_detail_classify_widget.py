@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout
 from common.db_helper import db_session
 from dataset.dataset_checker.classify.split_dataset import split_dataset, load_split_dataset
 from dataset.dataset_detail_widget.classify.classify_dataset_draw_widget import ClassifyDatasetDrawWidget
-from dataset.dataset_detail_widget.label_table_Widget import SplitLabelInfo, ClassifyDatasetLabelsWidget
+from dataset.dataset_detail_widget.common.label_table_Widget import SplitLabelInfo, DatasetLabelsInfoWidget
 from dataset.types import DatasetInfo, DatasetType, DatasetStatus
 from models.models import Dataset
 
@@ -18,7 +18,7 @@ class ClassifyDataset(QWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("classify_dataset")
-        self.labels_widget = ClassifyDatasetLabelsWidget()
+        self.labels_widget = DatasetLabelsInfoWidget()
         self.vly_dataset_info = QVBoxLayout(self)
         self.vly_dataset_info.setContentsMargins(0, 0, 0, 0)
         self.draw_widget = ClassifyDatasetDrawWidget()

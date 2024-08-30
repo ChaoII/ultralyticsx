@@ -1,13 +1,12 @@
 import os
 import shutil
-from enum import Enum
 from pathlib import Path
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt, QColor
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
     QTableWidgetItem, QWidget, QAbstractItemView, QFormLayout
-from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, PrimaryPushButton, PopupTeachingTip, \
+from qfluentwidgets import FluentIcon, CaptionLabel, TableWidget, PrimaryPushButton, PopupTeachingTip, \
     TeachingTipTailPosition, BodyLabel, ComboBox
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Query
@@ -19,7 +18,7 @@ from common.model_type_widget import ModelType
 from common.tag_widget import TextTagWidget
 from common.utils import format_datatime, open_directory
 import core
-from dataset.new_dataset_dialog import NewDatasetDialog, DatasetInfo
+from dataset.dataset_list_widget.new_dataset_dialog import NewDatasetDialog, DatasetInfo
 from dataset.types import DatasetStatus
 from models.models import Dataset
 from settings import cfg
