@@ -5,6 +5,7 @@ from PySide6.QtGui import QPainter, QMouseEvent
 from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import themeColor, LineEdit
 from qfluentwidgets.common.icon import toQIcon, drawIcon, FluentIcon
+from common.custom_icon import CustomFluentIcon
 
 
 class FileSelectWidget(LineEdit):
@@ -14,7 +15,7 @@ class FileSelectWidget(LineEdit):
     def __init__(self, is_dir=True):
         super().__init__()
         self.setMouseTracking(True)
-        self._icon = FluentIcon.DICTIONARY
+        self._icon = CustomFluentIcon.FILL_DIRECTORY
         self.setMinimumSize(240, 32)
         self._icon_size = QSize(16, 16)
         self._icon_rect = None

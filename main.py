@@ -8,8 +8,9 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
-                            InfoBadge, InfoBadgePosition, SplashScreen)
+                            InfoBadge, InfoBadgePosition, SplashScreen, setThemeColor)
 from qfluentwidgets import FluentIcon as FIcon
+from common.custom_icon import CustomFluentIcon
 
 from settings import SettingInterface, cfg
 from model_train import ModelTrainWidget
@@ -55,7 +56,7 @@ class Window(FluentWindow):
     def initNavigation(self):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
         self.navigationInterface.addSeparator()
-        self.addSubInterface(self.dataset_interface1, FIcon.DOCUMENT, self.tr('dataset1'))
+        self.addSubInterface(self.dataset_interface1, CustomFluentIcon.DATASET1, self.tr('dataset1'))
         self.addSubInterface(self.dataset_interface, FIcon.PHOTO, self.tr('dataset'))
         self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('model train'))
         self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('model valid'))

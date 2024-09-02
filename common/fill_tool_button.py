@@ -4,6 +4,8 @@ from PySide6.QtWidgets import (QWidget)
 from qfluentwidgets import themeColor
 from qfluentwidgets.common.icon import toQIcon, drawIcon
 
+from settings import cfg
+
 
 class FillToolButton(QWidget):
     """ Scroll button """
@@ -20,6 +22,11 @@ class FillToolButton(QWidget):
 
         self._is_hover = False
         self._is_pressed = False
+
+        cfg.themeChanged.connect(lambda: self.set_background_color(themeColor()))
+
+    def set_icon_size(self, icon_size: QSize):
+        self._icon_size = icon_size
 
     def set_background_color(self, color: QColor):
         self._bg_color = color
@@ -45,13 +52,14 @@ class FillToolButton(QWidget):
         y = (self.height() - h) / 2
 
         bg_color = self._bg_color
+        bg_color.setAlpha(40)
         rect = self.rect().adjusted(0, 0, -1, -1)
         icon_rect = QRectF(x, y, w, h).adjusted(0, 0, -1, -1)
 
         if self._is_hover:
-            bg_color = QColor(self._bg_color.red(), self._bg_color.green(), self._bg_color.blue(), 100)
+            bg_color = self._bg_color.darker(150)
         if self._is_pressed:
-            bg_color = QColor(self._bg_color.red(), self._bg_color.green(), self._bg_color.blue(), 120)
+            bg_color = self._bg_color.darker(200)
             # 点击时右下移动，有按下去的感觉
             rect = self.rect().adjusted(1, 1, 1, 1)
             icon_rect = QRectF(x, y, w, h).adjusted(1, 1, 1, 1)
@@ -59,7 +67,7 @@ class FillToolButton(QWidget):
         painter.setPen(QColor(0, 0, 0, 0))
         painter.setBrush(QBrush(bg_color))
         painter.drawRoundedRect(rect, 4, 4)
-        drawIcon(self._icon, painter, icon_rect, fill=self._icon_color.name())
+        drawIcon(self._icon, painter, icon_rect)
 
     def enterEvent(self, event: QEnterEvent) -> None:
         super().enterEvent(event)

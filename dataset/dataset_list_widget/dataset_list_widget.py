@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import Signal, Slot, QSize
 from PySide6.QtGui import Qt, QColor
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
     QTableWidgetItem, QWidget, QAbstractItemView, QFormLayout
@@ -11,6 +11,7 @@ from qfluentwidgets import FluentIcon, CaptionLabel, TableWidget, PrimaryPushBut
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Query
 
+from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
@@ -33,10 +34,10 @@ class OperationWidget(QWidget):
     def __init__(self, dataset_id: str):
         super().__init__()
         self.hly_content = QHBoxLayout(self)
-        self.btn_import = FillToolButton(FluentIcon.CARE_UP_SOLID)
-        self.btn_view = FillToolButton(FluentIcon.VIEW)
-        self.btn_delete = FillToolButton(FluentIcon.DELETE)
-        self.btn_delete.set_background_color(QColor("#E61919"))
+        self.btn_import = FillToolButton(CustomFluentIcon.IMPORT1)
+        self.btn_import.set_icon_size(QSize(20, 20))
+        self.btn_view = FillToolButton(CustomFluentIcon.DETAIL1)
+        self.btn_delete = FillToolButton(FluentIcon.DELETE.icon(color="#E61919"))
         self.btn_delete.set_icon_color(QColor(0, 0, 0))
         self.btn_open = FillToolButton(FluentIcon.FOLDER)
 

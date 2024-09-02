@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QHBoxLayout
 from qfluentwidgets import BodyLabel, SubtitleLabel, PrimaryPushButton, \
     FluentIcon, InfoBar, InfoBarPosition
 
+from common.custom_icon import CustomFluentIcon
 from common.file_select_widget import FileSelectWidget
 import core
 from common.tag_widget import TextTagWidget
@@ -31,7 +32,7 @@ class ImportDatasetWidget(QWidget):
         self.lbl_dataset_description.setWordWrap(True)
         self.lbl_dataset_create_time = BodyLabel()
         self.file_select_widget = FileSelectWidget()
-        self.btn_import = PrimaryPushButton(FluentIcon.DOWN, self.tr("Import"))
+        self.btn_import = PrimaryPushButton(CustomFluentIcon.IMPORT, self.tr("Import"))
         self.btn_import.setFixedWidth(140)
 
         self.fly_dataset_info = QFormLayout()
