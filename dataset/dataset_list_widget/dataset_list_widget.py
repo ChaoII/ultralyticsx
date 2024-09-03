@@ -178,18 +178,20 @@ class DatasetListWidget(QWidget):
         core.EventManager().import_dataset_finished.connect(self._on_import_dataset_finished)
 
     def _on_theme_changed(self):
-        for row in range(self.tb_dataset.rowCount()):
-            item_model_type = self.tb_dataset.cellWidget(row, 2)
-            if isinstance(item_model_type, TextTagWidget):
-                model_type = ModelType.__members__.get(item_model_type.text(), None)
-                if model_type:
-                    item_model_type.set_color(*model_type.color)
-
-            item_dataset_status = self.tb_dataset.cellWidget(row, 4)
-            if isinstance(item_dataset_status, TextTagWidget):
-                dataset_status = DatasetStatus.__members__.get(item_dataset_status.text(), None)
-                if dataset_status:
-                    item_dataset_status.set_color(*dataset_status.color)
+        # 局部更新优化性能
+        # for row in range(self.tb_dataset.rowCount()):
+        #     item_model_type = self.tb_dataset.cellWidget(row, 2)
+        #     if isinstance(item_model_type, TextTagWidget):
+        #         model_type = ModelType.__members__.get(item_model_type.text(), None)
+        #         if model_type:
+        #             item_model_type.set_color(*model_type.color)
+        #
+        #     item_dataset_status = self.tb_dataset.cellWidget(row, 4)
+        #     if isinstance(item_dataset_status, TextTagWidget):
+        #         dataset_status = DatasetStatus.__members__.get(item_dataset_status.text(), None)
+        #         if dataset_status:
+        #             item_dataset_status.set_color(*dataset_status.color)
+        self._load_dataset_data()
 
     def _load_dataset_data(self):
         self.tb_dataset.clearContents()

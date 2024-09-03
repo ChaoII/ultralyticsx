@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
 from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, HyperlinkLabel, \
     setCustomStyleSheet, PrimaryPushButton, PopupTeachingTip, TeachingTipTailPosition
 
+from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
@@ -48,7 +49,7 @@ class OperationWidget(QWidget):
     def __init__(self, task_id: str):
         super().__init__()
         self.hly_content = QHBoxLayout(self)
-        self.btn_view = FillToolButton(FluentIcon.VIEW)
+        self.btn_view = FillToolButton(CustomFluentIcon.DETAIL1)
         self.btn_delete = FillToolButton(FluentIcon.DELETE)
         self.btn_delete.set_background_color(QColor("#E61919"))
         self.btn_delete.set_icon_color(QColor(0, 0, 0))
@@ -118,18 +119,40 @@ class TaskTableWidget(TableWidget):
         self.setBorderVisible(True)
         self.setColumnCount(6)
         self.setRowCount(24)
-        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        # self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setItemDelegate(CustomTableItemDelegate(self))
         self.setHorizontalHeaderLabels([
             self.tr('Task ID'), self.tr('Project name'), self.tr('Task status'),
             self.tr('Comment'), self.tr('Create time'), self.tr("Operation")
         ])
+        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.setColumnWidth(0, 100)
         self.setColumnWidth(2, 100)
+        self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         self.setColumnWidth(4, 160)
         self.setColumnWidth(5, 160)
-        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+
+    def setColumnEditable(self, column, editable):
+        """
+        设置指定列的可编辑性。
+
+        :param column: 列的索引（从0开始）
+        :param editable: 布尔值，表示是否可编辑
+        """
+        for row in range(self.rowCount()):
+            for col in range(self.columnCount()):
+                item = self.item(row, col)
+                if item:
+                    if col == column:
+                        if editable:
+                            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+                        else:
+                            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                    else:
+                        if editable:
+                            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                        else:
+                            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
 
 
 class TaskWidget(QWidget):
@@ -150,6 +173,22 @@ class TaskWidget(QWidget):
         self.vly.addWidget(self.tb_task)
         self._connect_signals_and_slots()
         self.project_id = ""
+
+        self._connect_signale_and_slots()
+
+    def _connect_signale_and_slots(self):
+        self.tb_task.itemChanged.connect(self._comment_item_changed)
+
+    @Slot(QTableWidgetItem)
+    def _comment_item_changed(self, item: QTableWidgetItem):
+        row = item.row()
+        if item.column() != 3:
+            return
+        comment = item.text()
+        task_id = self.tb_task.item(row, 0).text()
+        with db_session() as session:
+            task: Task = session.query(Task).filter_by(task_id=task_id).first()
+            task.comment = comment
 
     def set_data(self, project_id: str):
         self.tb_task.clearContents()
@@ -177,6 +216,7 @@ class TaskWidget(QWidget):
                 self.tb_task.setItem(i, 3, item3)
                 self.tb_task.setItem(i, 4, item4)
                 self.tb_task.setCellWidget(i, 5, item5)
+        self.tb_task.setColumnEditable(3, True)
 
     @staticmethod
     def get_task_id(project_dir: Path) -> str:
@@ -193,7 +233,7 @@ class TaskWidget(QWidget):
     def _on_delete_task(self, task_id):
         with db_session(auto_commit_exit=True) as session:
             task = session.query(Task).filter_by(task_id=task_id).first()
-            directory = Path(task.project.workspace_dir) / task.project.project_id / task_id
+            directory = Path(task.project.project_dir) / task_id
             session.delete(task)
         shutil.rmtree(directory)
         self.set_data(self.project_id)
@@ -206,7 +246,7 @@ class TaskWidget(QWidget):
     def _on_open_task_dir(self, task_id):
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=task_id).first()
-            directory = Path(task.project.workspace_dir) / task.project.project_id / task_id
+            directory = Path(task.project.project_dir) / task_id
         open_directory(directory)
 
     @Slot()
@@ -214,9 +254,9 @@ class TaskWidget(QWidget):
         # 创建任务路径
         with db_session() as session:
             project: Project = session.query(Project).filter_by(project_id=self.project_id).first()
-            workspace_dir = project.workspace_dir
-            task_id = self.get_task_id(Path(workspace_dir) / self.project_id)
-            os.makedirs(Path(workspace_dir) / self.project_id / task_id, exist_ok=True)
+            project_dir = Path(project.project_dir)
+            task_id = self.get_task_id(project_dir)
+            os.makedirs(project_dir / task_id, exist_ok=True)
             task = Task(
                 task_id=task_id,
                 comment="",

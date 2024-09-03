@@ -58,5 +58,5 @@ class DatasetHeaderWidget(SimpleCardWidget):
         self._dataset_info = dataset_info
         self.lbl_dataset_name.setText("▌" + dataset_info.dataset_name)
         self.tt_model_type.set_text(dataset_info.model_type.name)
-        self.tt_model_type.set_color(dataset_info.model_type.color)
+        self.tt_model_type.set_color(*dataset_info.model_type.color)
         self.lbl_dataset_create_time.setText(dataset_info.create_time)

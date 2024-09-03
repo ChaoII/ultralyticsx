@@ -29,6 +29,7 @@ class Dataset(Base):
     create_time = Column(DateTime, default=datetime.now())
     split_rate = Column(String, default="70_20_10")
     dataset_total = Column(Integer, default=0)
+    tasks = relationship("Task", back_populates="dataset")
 
     projects = relationship("Project", secondary=projects_to_datasets, back_populates="datasets")
 
@@ -55,10 +56,12 @@ class Task(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(String)
     project_id = Column(String, ForeignKey('tb_projects.project_id'))
+    dataset_id = Column(String, ForeignKey("tb_datasets.dataset_id"))
     comment = Column(String)
-    task_status = Column(Integer)
+    task_status = Column(Integer, default="")
     create_time = Column(DateTime, default=datetime.now())
     project = relationship("Project", back_populates="tasks")
+    dataset = relationship("Dataset", back_populates="tasks")
 
 
 Base.metadata.create_all(engine)
