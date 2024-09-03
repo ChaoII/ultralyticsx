@@ -2,13 +2,14 @@ from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QStackedWidget
 from qfluentwidgets import BreadcrumbBar
 
+from core.interface_base import InterfaceBase
 from dataset.dataset_detail_widget.dataset_detail_widget import DatasetDetailWidget
 from dataset.dataset_list_widget.dataset_list_widget import DatasetListWidget
 from dataset.dataset_import_widget.import_dataset_widget import ImportDatasetWidget
 from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
 
 
-class DatasetWidget(QWidget):
+class DatasetWidget(InterfaceBase):
     def __init__(self, parent=None):
         super(DatasetWidget, self).__init__(parent=parent)
         self.setObjectName("dataset_widget")
@@ -55,6 +56,9 @@ class DatasetWidget(QWidget):
     # def _on_create_task_clicked(self):
     #     self.stackedWidget.setCurrentWidget(self.dataset_detail_widget)
     #     self.breadcrumbBar.addItem(self.dataset_detail_widget.objectName(), self.tr("Create dataset"))
+
+    def update_widget(self):
+        self.breadcrumbBar.setCurrentItem(self.dataset_list_widget.objectName())
 
     @Slot(str)
     def _on_bread_bar_item_changed(self, obj_name):

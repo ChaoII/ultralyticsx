@@ -8,9 +8,11 @@ from home.project.project_widget import ProjectWidget
 from home.task.task_detail_widget import TaskDetailWidget
 from home.task.task_list_widget import TaskWidget
 from models.models import Task
+from core.interface_base import InterfaceBase
 
 
-class HomeWidget(QWidget):
+class HomeWidget(InterfaceBase):
+
     def __init__(self, parent=None):
         super(HomeWidget, self).__init__(parent=parent)
         self.setObjectName("home_widget")
@@ -55,6 +57,9 @@ class HomeWidget(QWidget):
         with db_session(auto_commit_exit=True) as session:
             task: Task = session.query(Task).filter_by(task_id=task_id).first()
             self.breadcrumbBar.addItem(self.task_detail_widget.objectName(), task.task_id)
+
+    def update_widget(self):
+        self.breadcrumbBar.setCurrentItem(self.project_widget.objectName())
 
     @Slot(str)
     def _on_bread_bar_item_changed(self, obj_name):

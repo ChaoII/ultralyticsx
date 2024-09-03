@@ -32,7 +32,7 @@ class ImportDatasetWidget(QWidget):
         self.lbl_dataset_description.setWordWrap(True)
         self.lbl_dataset_create_time = BodyLabel()
         self.file_select_widget = FileSelectWidget()
-        self.btn_import = PrimaryPushButton(CustomFluentIcon.IMPORT, self.tr("Import"))
+        self.btn_import = PrimaryPushButton(CustomFluentIcon.IMPORT1, self.tr("Import"))
         self.btn_import.setFixedWidth(140)
 
         self.fly_dataset_info = QFormLayout()
@@ -102,7 +102,7 @@ class ImportDatasetWidget(QWidget):
         self.lbl_dataset_id.setText(dataset_info.dataset_id)
         self.lbl_dataset_name.setText(dataset_info.dataset_name)
         self.tt_model_type.set_text(dataset_info.model_type.name)
-        self.tt_model_type.set_color(dataset_info.model_type.color)
+        self.tt_model_type.set_color(*dataset_info.model_type.color)
         self.lbl_dataset_description.setText(dataset_info.dataset_description)
         self.lbl_dataset_dir.setText(dataset_info.dataset_dir)
         self.lbl_dataset_create_time.setText(dataset_info.create_time)

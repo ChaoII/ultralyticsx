@@ -5,6 +5,7 @@ from PySide6.QtGui import QColor
 from qfluentwidgets import isDarkTheme
 
 from common.model_type_widget import ModelType
+from common.utils import CustomColor
 
 
 class DatasetStatus(Enum):
@@ -15,16 +16,11 @@ class DatasetStatus(Enum):
     @property
     def color(self):
         _color_map = {
-            DatasetStatus.WAIT_IMPORT: QColor("#ff6600"),
-            DatasetStatus.CHECKED: QColor("#0d5f07"),
-            DatasetStatus.CHECK_FAILED: QColor("#ff3333"),
+            DatasetStatus.WAIT_IMPORT: CustomColor.ORANGE.value,
+            DatasetStatus.CHECKED: CustomColor.GREEN.value,
+            DatasetStatus.CHECK_FAILED: CustomColor.RED.value,
         }
-        if isDarkTheme():
-            _color_map = {
-                DatasetStatus.WAIT_IMPORT: QColor("#ffa366"),
-                DatasetStatus.CHECKED: QColor("#66ff66"),
-                DatasetStatus.CHECK_FAILED: QColor("#ff9999"),
-            }
+
         return _color_map[self]
 
 

@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt, QRectF, QRect, QPoint, QSize
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QFontMetrics
 from PySide6.QtWidgets import (QWidget)
-from qfluentwidgets.common.icon import toQIcon, drawIcon
+from qfluentwidgets.common.icon import toQIcon, drawIcon, isDarkTheme
 
 
 class TagWidget(QWidget):
@@ -9,13 +9,17 @@ class TagWidget(QWidget):
 
     def __init__(self, icon, text=""):
         super().__init__()
-        self._color = QColor(255, 0, 0)
+        self._light_color = QColor(0, 0, 0)
+        self._dark_color = QColor(255, 255, 255)
         self._icon = icon
         self._text = text
         self.setMinimumSize(120, 32)
         self._icon_size = QSize(0, 0)
         self.setIconSize(QSize(16, 16))
         self._fit_width()
+
+    def set_icon(self, icon):
+        self._icon = icon
 
     def _fit_width(self):
         # 获取字体大小
@@ -39,9 +43,9 @@ class TagWidget(QWidget):
     def icon(self):
         return toQIcon(self._icon)
 
-    def set_color(self, color: QColor):
-        self._color = color
-        # self.update()
+    def set_color(self, light_color: QColor, dark_color: QColor):
+        self._light_color = light_color
+        self._dark_color = dark_color
 
     def paintEvent(self, e):
         super().paintEvent(e)
@@ -56,12 +60,17 @@ class TagWidget(QWidget):
 
         if self.isRightToLeft():
             x = self.width() - w - x
-        drawIcon(self._icon, painter, QRectF(x, y, w, h), fill=self._color.name())
+
+        if isDarkTheme():
+            color = self._dark_color
+        else:
+            color = self._light_color
+        drawIcon(self._icon, painter, QRectF(x, y, w, h), fill=color.name())
         text_rect = QRect(self.rect().topLeft() + QPoint(x + self._icon_size.width(), 0),
                           self.rect().bottomRight() - QPoint(x, 0))
-        painter.setPen(QPen(self._color, 2))
+        painter.setPen(QPen(color, 2))
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, self._text)
-        brush_color = QColor(self._color.red(), self._color.green(), self._color.blue(), 100)
+        brush_color = QColor(color.red(), color.green(), color.blue(), 100)
         painter.setBrush(brush_color)
         painter.drawRoundedRect(self.rect(), 10, 10)
 
@@ -69,9 +78,10 @@ class TagWidget(QWidget):
 class TextTagWidget(QWidget):
     """ Scroll button """
 
-    def __init__(self, text="", color=QColor(255, 0, 0)):
+    def __init__(self, text="", light_color: QColor = QColor(0, 0, 0), dark_color: QColor = QColor(255, 255, 255)):
         super().__init__()
-        self._color = color
+        self._dark_color = dark_color
+        self._light_color = light_color
         self._text = text
         self.setMinimumSize(120, 32)
         self._fit_width()
@@ -91,17 +101,22 @@ class TextTagWidget(QWidget):
         self._text = text
         self._fit_width()
 
-    def set_color(self, color: QColor):
-        self._color = color
-        # self.update()
+    def set_color(self, light_color: QColor, dark_color: QColor):
+        self._light_color = light_color
+        self._dark_color = dark_color
 
     def paintEvent(self, e):
         super().paintEvent(e)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        painter.setPen(QPen(self._color, 2))
+        if isDarkTheme():
+            pen_color = self._dark_color
+        else:
+            pen_color = self._light_color
+
+        painter.setPen(QPen(pen_color, 2))
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self._text)
-        brush_color = QColor(self._color.red(), self._color.green(), self._color.blue(), 100)
+        brush_color = QColor(pen_color.red(), pen_color.green(), pen_color.blue(), 100)
         painter.setBrush(brush_color)
         painter.drawRoundedRect(self.rect(), 4, 4)

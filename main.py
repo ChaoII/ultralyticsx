@@ -3,7 +3,7 @@ import sys
 import os
 
 from common.utils import show_center
-from PySide6.QtCore import Qt, QTranslator, QSize
+from PySide6.QtCore import Qt, QTranslator, QSize, Slot
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
@@ -11,6 +11,7 @@ from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             InfoBadge, InfoBadgePosition, SplashScreen, setThemeColor)
 from qfluentwidgets import FluentIcon as FIcon
 from common.custom_icon import CustomFluentIcon
+from core.interface_base import InterfaceBase
 
 from settings import SettingInterface, cfg
 from model_train import ModelTrainWidget
@@ -39,6 +40,7 @@ class Window(FluentWindow):
         self.splash_screen = SplashScreen(self.windowIcon(), self)
         self.splash_screen.setIconSize(QSize(102, 102))
         self.show()
+
         # create sub interface
         self.home_interface = HomeWidget(self)
         self.dataset_interface1 = DatasetWidget(self)
@@ -95,6 +97,16 @@ class Window(FluentWindow):
         # set the minimum window width that allows the navigation panel to be expanded
         # self.navigationInterface.setMinimumExpandWidth(900)
         # self.navigationInterface.expand(useAni=False)
+        self._connect_signals_and_slots()
+
+    def _connect_signals_and_slots(self):
+        self.stackedWidget.currentChanged.connect(self._on_widget_changed)
+
+    @Slot(int)
+    def _on_widget_changed(self, index: int):
+        item = self.stackedWidget.currentWidget()
+        if isinstance(item, InterfaceBase):
+            item.update_widget()
 
 
 if __name__ == '__main__':

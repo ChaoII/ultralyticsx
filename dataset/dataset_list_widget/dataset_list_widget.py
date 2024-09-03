@@ -35,10 +35,8 @@ class OperationWidget(QWidget):
         super().__init__()
         self.hly_content = QHBoxLayout(self)
         self.btn_import = FillToolButton(CustomFluentIcon.IMPORT1)
-        self.btn_import.set_icon_size(QSize(20, 20))
         self.btn_view = FillToolButton(CustomFluentIcon.DETAIL1)
-        self.btn_delete = FillToolButton(FluentIcon.DELETE.icon(color="#E61919"))
-        self.btn_delete.set_icon_color(QColor(0, 0, 0))
+        self.btn_delete = FillToolButton(FluentIcon.DELETE.icon(color=QColor("#E61919")))
         self.btn_open = FillToolButton(FluentIcon.FOLDER)
 
         self.hly_content.addStretch(1)
@@ -185,13 +183,13 @@ class DatasetListWidget(QWidget):
             if isinstance(item_model_type, TextTagWidget):
                 model_type = ModelType.__members__.get(item_model_type.text(), None)
                 if model_type:
-                    item_model_type.set_color(model_type.color)
+                    item_model_type.set_color(*model_type.color)
 
             item_dataset_status = self.tb_dataset.cellWidget(row, 4)
             if isinstance(item_dataset_status, TextTagWidget):
                 dataset_status = DatasetStatus.__members__.get(item_dataset_status.text(), None)
                 if dataset_status:
-                    item_dataset_status.set_color(dataset_status.color)
+                    item_dataset_status.set_color(*dataset_status.color)
 
     def _load_dataset_data(self):
         self.tb_dataset.clearContents()
@@ -219,11 +217,11 @@ class DatasetListWidget(QWidget):
             for i, dataset in enumerate(datasets):
                 item0 = QTableWidgetItem(dataset.dataset_id)
                 item1 = QTableWidgetItem(dataset.dataset_name)
-                item2 = TextTagWidget(ModelType(dataset.model_type).name, ModelType(dataset.model_type).color)
+                item2 = TextTagWidget(ModelType(dataset.model_type).name, *ModelType(dataset.model_type).color)
 
                 item3 = QTableWidgetItem(format_datatime(dataset.create_time))
                 item4 = TextTagWidget(DatasetStatus(dataset.dataset_status).name,
-                                      DatasetStatus(dataset.dataset_status).color)
+                                      *DatasetStatus(dataset.dataset_status).color)
                 item5 = OperationWidget(dataset.dataset_id)
 
                 item5.dataset_deleted.connect(self._on_delete_dataset)

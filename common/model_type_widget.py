@@ -1,9 +1,12 @@
 import enum
 
-from qfluentwidgets import themeColor, BodyLabel, SimpleCardWidget, isDarkTheme
+from qfluentwidgets import themeColor, BodyLabel, SimpleCardWidget, isDarkTheme, FluentIcon
 from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QCursor, QImage, QColor
 from PySide6.QtCore import Qt, QPoint, Signal, Slot, QLine
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
+
+from common.custom_icon import CustomFluentIcon
+from common.utils import CustomColor
 
 
 class ModelType(enum.Enum):
@@ -16,22 +19,24 @@ class ModelType(enum.Enum):
     @property
     def color(self):
         _color_map = {
-            ModelType.CLASSIFY: QColor("#FF0000"),
-            ModelType.DETECT: QColor("#e65c00"),
-            ModelType.SEGMENT: QColor("#042AFF"),
-            ModelType.OBB: QColor("#111F68"),
-            ModelType.POSE: QColor("#BD00FF"),
+            ModelType.CLASSIFY: CustomColor.BLUE.value,
+            ModelType.DETECT: CustomColor.BROWN.value,
+            ModelType.SEGMENT: CustomColor.YELLOW.value,
+            ModelType.OBB: CustomColor.GRAY.value,
+            ModelType.POSE: CustomColor.PURPLE.value
         }
-        if isDarkTheme():
-            _color_map = {
-                # 青色
-                ModelType.CLASSIFY: QColor("#0BDBEB"),
-                ModelType.DETECT: QColor("#66ff66"),
-                ModelType.SEGMENT: QColor("#4da6ff"),
-                ModelType.OBB: QColor("#ffb3d9"),
-                ModelType.POSE: QColor("#ffff80")
-            }
         return _color_map[self]
+
+    @property
+    def icon(self):
+        _icon_map = {
+            ModelType.CLASSIFY: CustomFluentIcon.CLASSIFY.colored(*self.color),
+            ModelType.DETECT: CustomFluentIcon.DETECT.colored(*self.color),
+            ModelType.SEGMENT: CustomFluentIcon.SEGMENT.colored(*self.color),
+            ModelType.OBB: CustomFluentIcon.OBB.colored(*self.color),
+            ModelType.POSE: CustomFluentIcon.POSE.colored(*self.color),
+        }
+        return _icon_map[self]
 
 
 class ModelTypeItemWidget(SimpleCardWidget):
