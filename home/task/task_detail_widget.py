@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QFormLayout, QVBoxLayout
 from qfluentwidgets import BodyLabel, ComboBox, themeColor
 from sqlalchemy import and_
 
-from common.collapsible_widget import CollapsibleWidget
+from common.collapsible_widget import CollapsibleWidgetItem, ToolBox
 from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
 from common.model_type_widget import ModelType
@@ -10,10 +10,11 @@ from dataset.types import DatasetStatus
 from models.models import Dataset, Task
 
 
-class DatasetSelectWidget(QWidget):
+class DatasetSelectWidget(CollapsibleWidgetItem):
     def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        self.fly_content = QFormLayout(self)
+        super().__init__(self.tr("Select Dataset"), parent=parent)
+        self.content_widget = QWidget(self)
+
         self.lbl_select_dataset = BodyLabel(self.tr("Select dataset: "), self)
         self.cmb_select_dataset = ComboBox()
         self.cmb_select_dataset.setPlaceholderText(self.tr(f"Please select a dataset"))
@@ -30,12 +31,12 @@ class DatasetSelectWidget(QWidget):
         self.fly.addRow(BodyLabel(self.tr("training set: "), self), self.lbl_train_set_num)
         self.fly.addRow(BodyLabel(self.tr("validation set: "), self), self.lbl_val_set_num)
         self.fly.addRow(BodyLabel(self.tr("test set: "), self), self.lbl_test_set_num)
-
+        self.fly_content = QFormLayout(self.content_widget)
         self.fly_content.addRow(self.lbl_select_dataset, self.cmb_select_dataset)
         self.fly_content.addRow("", self.dataset_detail)
-
         self._connect_signals_and_slots()
         self._task_id = ""
+        self.set_content_widget(self.content_widget)
 
     def set_task_id(self, task_id):
         self.cmb_select_dataset.clear()
@@ -57,10 +58,9 @@ class DatasetSelectWidget(QWidget):
             self._load_current_dataset_info()
             return
         with db_session() as session:
-            datasets: list[Dataset] = session.query(Dataset) \
-                .filter(and_(Dataset.model_type == model_type.value,
-                             Dataset.dataset_status == DatasetStatus.CHECKED.value)) \
-                .all()
+            datasets: list[Dataset] = session.query(Dataset).filter(
+                and_(Dataset.model_type == model_type.value,
+                     Dataset.dataset_status == DatasetStatus.CHECKED.value)).all()
             for index, dataset in enumerate(datasets):
                 self.cmb_select_dataset.addItem(dataset.dataset_id,
                                                 model_type.icon.icon(color=themeColor()),
@@ -69,7 +69,6 @@ class DatasetSelectWidget(QWidget):
         self.cmb_select_dataset.currentIndexChanged.connect(self._on_select_dataset_text_changed)
 
     def _connect_signals_and_slots(self):
-        # self.cmb_select_dataset.currentIndexChanged.connect(self._on_select_dataset_text_changed)
         pass
 
     def _load_current_dataset_info(self):
@@ -98,17 +97,14 @@ class TaskDetailWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("task_detail")
-        self.csp_select_dataset = CollapsibleWidget(self.tr("Select Dataset"))
+        self.tool_box = ToolBox()
         self.dataset_select_widget = DatasetSelectWidget()
-        self.csp_select_dataset.set_content_widget(self.dataset_select_widget)
+        self.tool_box.add_item(self.dataset_select_widget)
         self.vly = QVBoxLayout(self)
-        self.vly.addWidget(self.csp_select_dataset)
+        self.vly.setContentsMargins(0, 0, 0, 0)
+        self.vly.addWidget(self.tool_box)
         self.vly.addStretch(1)
         self._task_id = ""
 
     def update_data(self, task_id):
-        # self._task_id = task_id
-        # ccc = BodyLabel(task_id, self)
-        # ccc.move(100, 100)
         self.dataset_select_widget.set_task_id(task_id)
-        self.csp_select_dataset.set_collapsed(True)

@@ -17,6 +17,7 @@ class HomeWidget(InterfaceBase):
         super(HomeWidget, self).__init__(parent=parent)
         self.setObjectName("home_widget")
         self.vly = QVBoxLayout(self)
+        self.vly.setContentsMargins(10, 10, 10, 10)
         self.vly.setSpacing(9)
         self.breadcrumbBar = BreadcrumbBar(self)
         self.stackedWidget = QStackedWidget(self)
@@ -37,20 +38,13 @@ class HomeWidget(InterfaceBase):
     def _on_connect_signals_and_slots(self):
         self.project_widget.project_detail_clicked.connect(self._on_project_detail_clicked, )
         self.breadcrumbBar.currentItemChanged.connect(self._on_bread_bar_item_changed)
-        self.task_widget.create_task_clicked.connect(self._on_create_task_clicked)
         self.task_widget.view_task_clicked.connect(self._on_view_task_clicked)
-
 
     @Slot(ProjectInfo)
     def _on_project_detail_clicked(self, project_info: ProjectInfo):
         self.stackedWidget.setCurrentWidget(self.task_widget)
         self.breadcrumbBar.addItem(self.task_widget.objectName(), project_info.project_name)
         self.task_widget.set_data(project_info.project_id)
-
-    @Slot()
-    def _on_create_task_clicked(self):
-        self.stackedWidget.setCurrentWidget(self.task_detail_widget)
-        self.breadcrumbBar.addItem(self.task_detail_widget.objectName(), self.tr("Create Task"))
 
     @Slot(str)
     def _on_view_task_clicked(self, task_id):

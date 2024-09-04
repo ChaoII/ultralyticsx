@@ -7,9 +7,9 @@ from pathlib import Path
 from PySide6.QtCore import Signal, QModelIndex, Slot
 from PySide6.QtGui import Qt, QColor, QPalette
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
-    QStyleOptionViewItem, QTableWidgetItem, QWidget, QAbstractItemView
-from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, HyperlinkLabel, \
-    setCustomStyleSheet, PrimaryPushButton, PopupTeachingTip, TeachingTipTailPosition
+    QStyleOptionViewItem, QTableWidgetItem, QWidget
+from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, PrimaryPushButton, \
+    PopupTeachingTip, TeachingTipTailPosition
 
 from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
@@ -156,7 +156,6 @@ class TaskTableWidget(TableWidget):
 
 
 class TaskWidget(QWidget):
-    create_task_clicked = Signal()
     view_task_clicked = Signal(str)
 
     def __init__(self):
@@ -195,6 +194,7 @@ class TaskWidget(QWidget):
         self.project_id = project_id
         with db_session(auto_commit_exit=True) as session:
             tasks: list[Task] = session.query(Task).filter_by(project_id=project_id).all()
+            self.tb_task.setRowCount(len(tasks))
             for i, task in enumerate(tasks):
                 item0 = QTableWidgetItem(task.task_id)
                 item1 = QTableWidgetItem(task.project.project_name)
@@ -264,4 +264,3 @@ class TaskWidget(QWidget):
             )
             project.tasks.append(task)
         self.set_data(self.project_id)
-        self.create_task_clicked.emit()
