@@ -85,21 +85,21 @@ class DatasetFormatDocWidget(QWidget):
         self.pose_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.POSE))
 
     def _collapse_all_doc(self):
-        self.classify_doc.set_content_hidden(True)
-        self.detection_doc.set_content_hidden(True)
-        self.segmentation_doc.set_content_hidden(True)
-        self.OBB_doc.set_content_hidden(True)
-        self.pose_doc.set_content_hidden(True)
+        self.classify_doc.set_collapsed(True)
+        self.detection_doc.set_collapsed(True)
+        self.segmentation_doc.set_collapsed(True)
+        self.OBB_doc.set_collapsed(True)
+        self.pose_doc.set_collapsed(True)
 
     def set_current_model_type(self, model_type: ModelType):
         self._collapse_all_doc()
         if model_type == ModelType.CLASSIFY:
-            self.classify_doc.set_content_hidden(False)
+            self.classify_doc.set_collapsed(False)
         if model_type == ModelType.DETECT:
-            self.detection_doc.set_content_hidden(False)
+            self.detection_doc.set_collapsed(False)
         if model_type == ModelType.SEGMENT:
-            self.segmentation_doc.set_content_hidden(False)
+            self.segmentation_doc.set_collapsed(False)
         if model_type == ModelType.OBB:
-            self.OBB_doc.set_content_hidden(False)
+            self.OBB_doc.set_collapsed(False)
         if model_type == ModelType.POSE:
-            self.pose_doc.set_content_hidden(False)
+            self.pose_doc.set_collapsed(False)

@@ -40,6 +40,7 @@ class HomeWidget(InterfaceBase):
         self.task_widget.create_task_clicked.connect(self._on_create_task_clicked)
         self.task_widget.view_task_clicked.connect(self._on_view_task_clicked)
 
+
     @Slot(ProjectInfo)
     def _on_project_detail_clicked(self, project_info: ProjectInfo):
         self.stackedWidget.setCurrentWidget(self.task_widget)
@@ -53,9 +54,9 @@ class HomeWidget(InterfaceBase):
 
     @Slot(str)
     def _on_view_task_clicked(self, task_id):
+        self.task_detail_widget.update_data(task_id)
         self.stackedWidget.setCurrentWidget(self.task_detail_widget)
         self.breadcrumbBar.addItem(self.task_detail_widget.objectName(), task_id)
-        self.task_detail_widget.on_update_data(task_id)
 
     def update_widget(self):
         self.breadcrumbBar.setCurrentItem(self.project_widget.objectName())

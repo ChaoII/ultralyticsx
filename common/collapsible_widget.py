@@ -1,7 +1,8 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from qfluentwidgets import TransparentToolButton, FluentIcon, SimpleCardWidget, StrongBodyLabel
+from qfluentwidgets import TransparentToolButton, FluentIcon, SimpleCardWidget, StrongBodyLabel,BodyLabel
+from common.custom_icon import CustomFluentIcon
 
 
 class HeaderWidget(SimpleCardWidget):
@@ -12,7 +13,7 @@ class HeaderWidget(SimpleCardWidget):
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.header = StrongBodyLabel(title, self)
-        self.btn_collapse = TransparentToolButton(FluentIcon.CHEVRON_DOWN_MED, self)
+        self.btn_collapse = TransparentToolButton(CustomFluentIcon.UNFOLD, self)
         self.btn_collapse.setEnabled(False)
 
         self.hly_header = QHBoxLayout(self)
@@ -45,27 +46,25 @@ class CollapsibleWidget(QWidget):
 
     def set_content_widget(self, widget: QWidget):
         if self.content_widget:
-            self.content_widget = None
+            self.vly_content.removeWidget(self.content_widget)
         self.content_widget = widget
         self.content_widget.setHidden(True)
         self.vly_content.addWidget(self.content_widget)
 
-    def set_content_hidden(self, hidden: bool):
-
-        self._is_collapsed = hidden
-
+    def set_collapsed(self, collapsed: bool):
+        self._is_collapsed = collapsed
         if self._is_collapsed:
-            self.header.setIcon(FluentIcon.CHEVRON_DOWN_MED)
+            self.header.setIcon(CustomFluentIcon.UNFOLD)
         else:
-            self.header.setIcon(FluentIcon.UP)
+            self.header.setIcon(CustomFluentIcon.FOLD)
         if not self.content_widget:
             return
-        self.content_widget.setHidden(hidden)
+        self.content_widget.setHidden(collapsed)
 
     def _connect_signals_and_slots(self):
         self.header.collapse_clicked.connect(self._on_collapse_clicked)
 
     def _on_collapse_clicked(self):
         # 如果是折叠，那么展开
-        self.set_content_hidden(not self._is_collapsed)
+        self.set_collapsed(not self._is_collapsed)
         self.collapse_clicked.emit()
