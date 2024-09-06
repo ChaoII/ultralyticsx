@@ -1,7 +1,9 @@
 import enum
+from pathlib import Path
 
+import yaml
 from PySide6.QtCore import Slot, Signal
-from PySide6.QtGui import Qt
+from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QWidget, QGridLayout, QFormLayout, QVBoxLayout, QHBoxLayout
 from qfluentwidgets import BodyLabel, ComboBox, themeColor, CompactSpinBox, CompactDoubleSpinBox, SwitchButton, \
     CheckBox, LineEdit, StrongBodyLabel, SubtitleLabel, PushButton, PrimaryPushButton, FluentIcon, StateToolTip, \
@@ -152,7 +154,7 @@ class BatchWidget(QWidget):
         self.btn_batch.checkedChanged.connect(self._on_batch_status_changed)
         self.spb_batch.valueChanged.connect(self._on_batch_value_changed)
         self._is_auto_batch = True
-        self._batch_size = 0
+        self._batch_size = -1
 
     def set_status(self, status: BatchStatus):
         if status == BatchStatus.AUTO:
@@ -162,25 +164,21 @@ class BatchWidget(QWidget):
             self.btn_batch.setChecked(False)
             self._is_auto_batch = False
 
-    def get_current_batch(self):
-        return [self._is_auto_batch, self._batch_size]
+    def value(self):
+        return self._batch_size
 
     @Slot(bool)
     def _on_batch_status_changed(self, is_auto_batch: bool):
         # 自动batch
         if is_auto_batch:
+            self._batch_size = -1
             self.spb_batch.setHidden(True)
         else:
             self.spb_batch.setHidden(False)
-        self._is_auto_batch = is_auto_batch
-
-        self.batch_changed.emit(self._is_auto_batch, self._batch_size)
 
     @Slot(int)
     def _on_batch_value_changed(self, value: int):
         self._batch_size = value
-
-        self.batch_changed.emit(self._is_auto_batch, self._batch_size)
 
 
 class FixWidthBodyLabel(BodyLabel):
@@ -195,7 +193,6 @@ class TrainParameterWidget(CollapsibleWidgetItem):
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Parameter configuration"), parent=parent)
         # ------------------------训练参数-------------------------
-        self.setParent(parent)
         self.cmb_model_name = ComboBox()
         self.cmb_model_name.setFixedWidth(300)
 
@@ -209,16 +206,16 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.btn_pre_trained.setChecked(True)
 
         self.spb_epochs = CompactSpinBox()
-        self.spb_epochs.setValue(100)
         self.spb_epochs.setRange(0, 10000)
+        self.spb_epochs.setValue(100)
         self.spb_epochs.setFixedWidth(300)
 
         self.spb_time = CompactDoubleSpinBox()
         self.spb_time.setFixedWidth(300)
 
         self.spb_patience = CompactSpinBox()
-        self.spb_patience.setValue(100)
         self.spb_patience.setRange(0, 1000)
+        self.spb_patience.setValue(100)
         self.spb_patience.setFixedWidth(300)
 
         self.cus_batch = BatchWidget()
@@ -226,13 +223,13 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.cus_batch.setFixedHeight(33)
 
         self.spb_image_size = CompactSpinBox()
-        self.spb_image_size.setValue(640)
         self.spb_image_size.setRange(32, 4860)
+        self.spb_image_size.setValue(640)
         self.spb_image_size.setFixedWidth(300)
 
         self.spb_workers = CompactSpinBox()
-        self.spb_workers.setValue(8)
         self.spb_workers.setRange(0, 8)
+        self.spb_workers.setValue(8)
         self.spb_workers.setFixedWidth(300)
 
         self.cmb_optimizer = ComboBox()
@@ -338,7 +335,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
         self.vly_train_setting = QVBoxLayout()
         self.vly_train_setting.setSpacing(15)
-        self.vly_train_setting.setContentsMargins(0, 0, 0, 0)
+        self.vly_train_setting.setContentsMargins(20, 0, 20, 0)
 
         self.hly_train_setting = QHBoxLayout()
         self.hly_train_setting.setSpacing(40)
@@ -375,9 +372,9 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.spb_warmup_momentum.setValue(0.8)
         self.spb_warmup_momentum.setFixedWidth(300)
 
-        self.spb_warmup_lr = CompactDoubleSpinBox()
-        self.spb_warmup_lr.setValue(0.1)
-        self.spb_warmup_lr.setFixedWidth(300)
+        self.spb_warmup_bias_lr = CompactDoubleSpinBox()
+        self.spb_warmup_bias_lr.setValue(0.1)
+        self.spb_warmup_bias_lr.setFixedWidth(300)
 
         self.spb_box = CompactDoubleSpinBox()
         self.spb_box.setValue(7.5)
@@ -424,7 +421,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_hyperparameters1.addRow(FixWidthBodyLabel(self.tr("warmup_epochs: "), self), self.spb_warmup_epochs)
         self.fly_hyperparameters1.addRow(FixWidthBodyLabel(self.tr("warmup_momentum: "), self),
                                          self.spb_warmup_momentum)
-        self.fly_hyperparameters1.addRow(FixWidthBodyLabel(self.tr("warmup_lr: "), self), self.spb_warmup_lr)
+        self.fly_hyperparameters1.addRow(FixWidthBodyLabel(self.tr("warmup_lr: "), self), self.spb_warmup_bias_lr)
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("box: "), self), self.spb_box)
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("cls: "), self), self.spb_cls)
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("dfl: "), self), self.spb_dfl)
@@ -435,6 +432,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("nbs: "), self), self.spb_nbs)
 
         self.hly_hyperparameters = QHBoxLayout()
+        self.hly_hyperparameters.setContentsMargins(20, 0, 20, 0)
         self.hly_hyperparameters.setSpacing(40)
         self.hly_hyperparameters.addLayout(self.fly_hyperparameters1)
         self.hly_hyperparameters.addLayout(self.fly_hyperparameters2)
@@ -539,6 +537,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_data_augment2.addRow(FixWidthBodyLabel(self.tr("crop_fraction: "), self), self.spb_crop_fraction)
 
         self.hly_data_augment = QHBoxLayout()
+        self.hly_data_augment.setContentsMargins(20, 0, 20, 0)
         self.hly_data_augment.setSpacing(40)
         self.hly_data_augment.addLayout(self.fly_data_augment1)
         self.hly_data_augment.addLayout(self.fly_data_augment2)
@@ -548,6 +547,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.layout().addWidget(self.content_widget)
 
         self.vly_content = QVBoxLayout(self.content_widget)
+        self.vly_content.setContentsMargins(20, 0, 20, 0)
         self.vly_content.setSpacing(30)
         self.title_train_settings = StrongBodyLabel(self.tr("▶ Train settings"), self)
         self.title_train_settings.setTextColor(themeColor(), themeColor())
@@ -575,6 +575,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
         self.set_content_widget(self.content_widget)
         self._task_id = ""
+        self._task_path: Path | None = None
         self.stateTooltip = None
         self._connect_signals_and_slots()
 
@@ -588,6 +589,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             task: Task = session.query(Task).filter_by(task_id=self._task_id).first()
             model_type = ModelType(task.project.model_type)
             self.cmb_model_name.addItems(model_type_list_map[model_type])
+            self._task_path = Path(task.project.project_dir) / self._task_id
 
     def _on_train_clicked(self):
         if self.stateTooltip:
@@ -602,12 +604,84 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             self.stateTooltip.show()
 
     def _on_save_clicked(self):
+
+        freeze = None
+        if self.le_freeze.text():
+            freeze = self.le_freeze.text()
+
+        if self.cus_device.get_current_device()[0] != Devices.GPU:
+            device = self.cus_device.get_current_device()[0].value
+        else:
+            device = self.cus_device.get_current_device()[1]
+
+        parameter = dict(
+            model=self.cmb_model_name.currentText(),
+            epochs=self.spb_epochs.value(),
+            time=self.spb_time.value(),
+            patience=self.spb_patience.value(),
+            batch=self.cus_batch.value(),
+            imgsz=self.spb_image_size.value(),
+            device=device,
+            workers=self.spb_workers.value(),
+            pretrained=self.btn_pre_trained.isChecked(),
+            optimizer=self.cmb_optimizer.currentText(),
+            verbose=self.btn_verbose.isChecked(),
+            seed=self.spb_seed.value(),
+            rect=self.btn_rect.isChecked(),
+            cos_lr=self.btn_cos_lr.isChecked(),
+            close_mosaic=self.spb_close_mosaic.value(),
+            resume=self.btn_resume.isChecked(),
+            amp=self.btn_amp.isChecked(),
+            fraction=self.spb_fraction.value(),
+            profile=self.btn_profile.isChecked(),
+            freeze=freeze,
+            multi_scale=self.btn_multi_scale.isChecked(),
+            overlap_mask=self.btn_overlap_mask.isChecked(),
+            mask_ratio=self.spb_mask_ratio.value(),
+            dropout=self.spb_dropout.value(),
+
+            lr0=self.spb_lr0.value(),
+            lrf=self.spb_lrf.value(),
+            momentum=self.spb_momentum.value(),
+            weight_decay=self.spb_weight_decay.value(),
+            warmup_epochs=self.spb_warmup_epochs.value(),
+            warmup_momentum=self.spb_warmup_momentum.value(),
+            warmup_bias_lr=self.spb_warmup_bias_lr.value(),
+            box=self.spb_box.value(),
+            cls=self.spb_cls.value(),
+            dfl=self.spb_dfl.value(),
+            pose=self.spb_pose.value(),
+            kobj=self.spb_kobj.value(),
+            label_smoothing=self.spb_label_smoothing.value(),
+            nbs=self.spb_nbs.value(),
+
+            hsv_h=self.spb_hsv_h.value(),
+            hsv_s=self.spb_hsv_s.value(),
+            hsv_v=self.spb_hsv_v.value(),
+            degrees=self.spb_degrees.value(),
+            translate=self.spb_translate.value(),
+            scale=self.spb_scale.value(),
+            shear=self.spb_shear.value(),
+            perspective=self.spb_perspective.value(),
+            flipud=self.spb_flipud.value(),
+            fliplr=self.spb_fliplr.value(),
+            bgr=self.spb_bgr.value(),
+            mosaic=self.spb_mosaic.value(),
+            mixup=self.spb_mixup.value(),
+            copy_paste=self.spb_copy_paste.value(),
+            auto_augment=self.cmb_auto_augment.currentText(),
+            erasing=self.spb_erasing.value(),
+            crop_fraction=self.spb_crop_fraction.value()
+        )
+        with open(self._task_path / "train_config.yaml", 'w', encoding="utf8") as file:
+            yaml.dump(parameter, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
         InfoBar.success(
             title='',
-            content="参数保存成功",
+            content=self.tr("Parameter saved successfully"),
             orient=Qt.Orientation.Horizontal,
             isClosable=False,
-            position=InfoBarPosition.NONE,
+            position=InfoBarPosition.TOP_RIGHT,
             duration=2000,
             parent=self.parent().parent()
         )

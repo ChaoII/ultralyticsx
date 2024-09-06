@@ -9,6 +9,7 @@ from common.custom_scroll_widget import CustomScrollWidget
 from common.db_helper import db_session
 from common.model_type_widget import ModelType
 from dataset.types import DatasetStatus
+from home.task.model_train_widget import ModelTrainWidget
 from home.task.train_setting_widget import TrainParameterWidget
 from models.models import Dataset, Task
 
@@ -108,9 +109,11 @@ class TaskDetailWidget(QWidget):
         self.tool_box = ToolBox()
 
         self.dataset_select_widget = DatasetSelectWidget()
-        self.train_parameter_widget = TrainParameterWidget(parent=self)
+        self.train_parameter_widget = TrainParameterWidget()
+        self.model_train_widget = ModelTrainWidget()
         self.tool_box.add_item(self.dataset_select_widget)
         self.tool_box.add_item(self.train_parameter_widget)
+        self.tool_box.add_item(self.model_train_widget)
 
         self.vly = QVBoxLayout()
         self.vly.setContentsMargins(0, 0, 0, 0)

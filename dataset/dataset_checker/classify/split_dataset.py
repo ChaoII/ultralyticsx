@@ -1,5 +1,6 @@
 import pickle
 import random
+import shutil
 from pathlib import Path
 import pandas as pd
 
@@ -65,6 +66,16 @@ def split_dataset(dataset_dir: Path, split_rates: list):
     return all_df
 
 
+def split_dataset1(dataset_dir: Path):
+    dataset_df: pd.DataFrame = pickle.load(open(dataset_dir / "dataset_cache", "rb"))
+    for key, group in dataset_df.groupby(["type", "label"]).groups.items():
+        dir = dataset_dir / "split" / key[0] / key[1]
+        dir.mkdir(parents=True, exist_ok=True)
+        file_names = dataset_df.loc[group, "image_path"]
+        for file_name in file_names:
+            shutil.move(file_name, dir)
+
+
 if __name__ == '__main__':
     # split_dataset(Path(r"C:\Users\AC\Desktop\1231\dataset\D000000"), [70, 20, 10])
-    load_split_dataset(Path(r"C:\Users\AC\Desktop\1231\dataset\D000000"))
+    split_dataset1(Path(r"C:\Users\AC\Desktop\1231\dataset\D000001"))

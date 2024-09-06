@@ -1,6 +1,6 @@
-from PySide6.QtCore import Qt, Signal, Slot, QPropertyAnimation, QRect, QTimer
+from PySide6.QtCore import Qt, Signal, Slot, QPropertyAnimation, QRect, QTimer, QObject
 from PySide6.QtGui import QMouseEvent, QIcon, QPaintEvent, QPainter
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame
 from qfluentwidgets import TransparentToolButton, FluentIcon, SimpleCardWidget, StrongBodyLabel, BodyLabel, ComboBox
 from typing_extensions import overload
 
@@ -23,7 +23,10 @@ class HeaderWidget(SimpleCardWidget):
         self.hly_header.addStretch(1)
         self.hly_header.addWidget(self.btn_collapse)
 
-    def setIcon(self, icon):
+    def set_title(self, title: str):
+        self.header.setText(title)
+
+    def set_icon(self, icon):
         self.btn_collapse.setIcon(icon)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -55,9 +58,9 @@ class CollapsibleWidgetItem(QWidget):
     def set_collapsed(self, collapsed: bool):
         self._is_collapsed = collapsed
         if self._is_collapsed:
-            self.header.setIcon(CustomFluentIcon.UNFOLD)
+            self.header.set_icon(CustomFluentIcon.UNFOLD)
         else:
-            self.header.setIcon(CustomFluentIcon.FOLD)
+            self.header.set_icon(CustomFluentIcon.FOLD)
         if not self.content_widget:
             return
         self.content_widget.setHidden(collapsed)
