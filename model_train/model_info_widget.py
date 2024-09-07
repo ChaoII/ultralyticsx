@@ -1,7 +1,7 @@
 from qfluentwidgets import HeaderCardWidget, BodyLabel, ComboBox, CheckBox
 from PySide6.QtWidgets import QFormLayout, QHBoxLayout
 from PySide6.QtCore import Slot, Signal, Qt
-from .options import *
+
 
 
 class ModelInfoCard(HeaderCardWidget):
@@ -16,7 +16,7 @@ class ModelInfoCard(HeaderCardWidget):
         # model type
         self.lbl_model_type = BodyLabel(self.tr('model type: '), self)
         self.cmb_model_type = ComboBox()
-        self.cmb_model_type.addItems(model_type_option)
+        # self.cmb_model_type.addItems(model_type_option)
         self.cmb_model_type.setPlaceholderText(self.tr("select a model type"))
         self.cmb_model_type.setCurrentIndex(-1)
         self.cmb_model_type.setMinimumWidth(200)
@@ -60,10 +60,10 @@ class ModelInfoCard(HeaderCardWidget):
 
     @Slot(str)
     def _on_model_type_changed(self, model_type: str):
-        model_names = type_model_mapping.get(model_type, [])
+        # model_names = type_model_mapping.get(model_type, [])
         self.cmb_model_name.clear()
-        for model_name in model_names:
-            self.cmb_model_name.addItem(model_name)
+        # for model_name in model_names:
+        #     self.cmb_model_name.addItem(model_name)
 
     @Slot(str)
     def _on_model_name_changed(self, model_name: str):

@@ -13,11 +13,13 @@ class CustomFluentIcon(FluentIconBase, Enum):
     DETAIL1 = "detail1"
     DETECT = "detect"
     FILL_DIRECTORY = "fill_directory"
+    FOLD = "fold"
     IMPORT = "import"
     IMPORT1 = "import1"
     OBB = "obb"
     POSE = "pose"
     SEGMENT = "segment"
+    UNFOLD = "unfold"
 
     def path(self, theme=Theme.AUTO):
         # getIconColor() 根据主题返回字符串 "white" 或者 "black"

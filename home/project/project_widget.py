@@ -61,6 +61,7 @@ class ProjectWidget(QWidget):
 
         self.scroll_area = CustomScrollWidget(orient=Qt.Orientation.Vertical)
         self.layout = FlowLayout(needAni=False)  # 启用动画
+        self.layout.setContentsMargins(0, 9, 0, 9)
         self.layout.setAnimation(250, QEasingCurve.Type.OutQuad)
         self.scroll_area.setLayout(self.layout)
 

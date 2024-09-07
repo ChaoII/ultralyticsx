@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from qfluentwidgets import BodyLabel, TextWrap, ImageLabel
-from common.collapsible_widget import CollapsibleWidget
+from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_scroll_widget import CustomScrollWidget
 from common.model_type_widget import ModelType
 
@@ -52,13 +52,13 @@ class DatasetFormatDocWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.classify_doc = CollapsibleWidget(self.tr("▌Classify"))
+        self.classify_doc = CollapsibleWidgetItem(self.tr("▌Classify"))
         self.classify_doc.set_content_widget(ClassifyDocWidget())
 
-        self.detection_doc = CollapsibleWidget(self.tr("▌Detection"))
-        self.segmentation_doc = CollapsibleWidget(self.tr("▌Segmentation"))
-        self.OBB_doc = CollapsibleWidget(self.tr("▌OBB"))
-        self.pose_doc = CollapsibleWidget(self.tr("▌Pose"))
+        self.detection_doc = CollapsibleWidgetItem(self.tr("▌Detection"))
+        self.segmentation_doc = CollapsibleWidgetItem(self.tr("▌Segmentation"))
+        self.OBB_doc = CollapsibleWidgetItem(self.tr("▌OBB"))
+        self.pose_doc = CollapsibleWidgetItem(self.tr("▌Pose"))
         self.vly_dataset_info = QVBoxLayout(self)
         self.vly_dataset_info.setSpacing(0)
 
@@ -85,21 +85,21 @@ class DatasetFormatDocWidget(QWidget):
         self.pose_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.POSE))
 
     def _collapse_all_doc(self):
-        self.classify_doc.set_content_hidden(True)
-        self.detection_doc.set_content_hidden(True)
-        self.segmentation_doc.set_content_hidden(True)
-        self.OBB_doc.set_content_hidden(True)
-        self.pose_doc.set_content_hidden(True)
+        self.classify_doc.set_collapsed(True)
+        self.detection_doc.set_collapsed(True)
+        self.segmentation_doc.set_collapsed(True)
+        self.OBB_doc.set_collapsed(True)
+        self.pose_doc.set_collapsed(True)
 
     def set_current_model_type(self, model_type: ModelType):
         self._collapse_all_doc()
         if model_type == ModelType.CLASSIFY:
-            self.classify_doc.set_content_hidden(False)
+            self.classify_doc.set_collapsed(False)
         if model_type == ModelType.DETECT:
-            self.detection_doc.set_content_hidden(False)
+            self.detection_doc.set_collapsed(False)
         if model_type == ModelType.SEGMENT:
-            self.segmentation_doc.set_content_hidden(False)
+            self.segmentation_doc.set_collapsed(False)
         if model_type == ModelType.OBB:
-            self.OBB_doc.set_content_hidden(False)
+            self.OBB_doc.set_collapsed(False)
         if model_type == ModelType.POSE:
-            self.pose_doc.set_content_hidden(False)
+            self.pose_doc.set_collapsed(False)
