@@ -111,6 +111,12 @@ class ToolBox(QWidget):
         self._current_index = index
         self.current_index_changed.emit(index)
 
+    def set_current_item(self, item: CollapsibleWidgetItem):
+        self.collapse_all()
+        item.set_collapsed(False)
+        self._current_index = self.index_of(item)
+        self.current_index_changed.emit(self._current_index)
+
     def current_widget(self):
         return self._items[self._current_index]
 

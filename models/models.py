@@ -58,7 +58,7 @@ class Task(Base):
     project_id = Column(String, ForeignKey('tb_projects.project_id'))
     dataset_id = Column(String, ForeignKey("tb_datasets.dataset_id"))
     comment = Column(String)
-    task_status = Column(Integer, default="")
+    task_status = Column(Integer, default=0)
     create_time = Column(DateTime, default=datetime.now())
     project = relationship("Project", back_populates="tasks")
     dataset = relationship("Dataset", back_populates="tasks")

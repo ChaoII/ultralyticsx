@@ -14,17 +14,12 @@ from sqlalchemy.orm import Query
 from common.db_helper import db_session
 from common.file_select_widget import FileSelectWidget
 from common.model_type_widget import ModelTypeGroupWidget, ModelType
+from home.types import ProjectInfo
 from models.models import Project
 from settings import cfg
 
 
-class ProjectInfo:
-    project_name: str
-    project_id: str
-    project_description: str
-    model_type: ModelType = ModelType.CLASSIFY
-    project_dir: str
-    create_time: str
+
 
 
 class NewProjectDialog(FramelessDialog):

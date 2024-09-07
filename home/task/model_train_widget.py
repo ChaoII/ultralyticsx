@@ -87,7 +87,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._use_pretrain = use_pretrain
 
     def _initial_model(self):
-        with open(r"C:\Users\AC\Desktop\1231\project\P000003\T000001\train_config.yaml", "r", encoding="utf8") as f:
+        with open(r"C:\Users\84945\Desktop\ultralytics_workspace\project\P000000\T000000\train_config.yaml", "r", encoding="utf8") as f:
             s = yaml.safe_load(f)
         self.model_thread = ModelTrainThread(**s)
         self._train_finished = False

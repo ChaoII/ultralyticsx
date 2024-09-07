@@ -16,6 +16,7 @@ from common.db_helper import db_session
 from common.model_type_widget import ModelType
 from dataset.types import DatasetStatus
 from home.options import model_type_list_map
+from home.types import TaskInfo, TaskStatus
 from models.models import Dataset, Task
 
 
@@ -229,7 +230,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
         self.spb_workers = CompactSpinBox()
         self.spb_workers.setRange(0, 8)
-        self.spb_workers.setValue(8)
+        self.spb_workers.setValue(0)
         self.spb_workers.setFixedWidth(300)
 
         self.cmb_optimizer = ComboBox()
@@ -574,8 +575,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.vly_content.addLayout(self.hly_btn)
 
         self.set_content_widget(self.content_widget)
-        self._task_id = ""
-        self._task_path: Path | None = None
+        self._task_info: TaskInfo | None = None
         self.stateTooltip = None
         self._connect_signals_and_slots()
 
@@ -585,11 +585,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
     def _init_data(self):
         self.cmb_model_name.clear()
-        with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_id).first()
-            model_type = ModelType(task.project.model_type)
-            self.cmb_model_name.addItems(model_type_list_map[model_type])
-            self._task_path = Path(task.project.project_dir) / self._task_id
+        self.cmb_model_name.addItems(model_type_list_map[self._task_info.model_type])
 
     def _on_train_clicked(self):
         if self.stateTooltip:
@@ -604,7 +600,6 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             self.stateTooltip.show()
 
     def _on_save_clicked(self):
-
         freeze = None
         if self.le_freeze.text():
             freeze = self.le_freeze.text()
@@ -614,8 +609,13 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         else:
             device = self.cus_device.get_current_device()[1]
 
+        with db_session() as session:
+            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            data = (Path(task.dataset.dataset_dir) / "split").resolve().as_posix()
+
         parameter = dict(
             model=self.cmb_model_name.currentText(),
+            data=data,
             epochs=self.spb_epochs.value(),
             time=self.spb_time.value(),
             patience=self.spb_patience.value(),
@@ -673,8 +673,12 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             erasing=self.spb_erasing.value(),
             crop_fraction=self.spb_crop_fraction.value()
         )
-        with open(self._task_path / "train_config.yaml", 'w', encoding="utf8") as file:
+        with open(self._task_info.task_dir / "train_config.yaml", 'w', encoding="utf8") as file:
             yaml.dump(parameter, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+        with db_session() as session:
+            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task.task_status = TaskStatus.INITIAL_FINISHED.value
 
         InfoBar.success(
             title='',
@@ -686,6 +690,6 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             parent=self.parent().parent()
         )
 
-    def set_task_id(self, task_id):
-        self._task_id = task_id
+    def set_task_info(self, task_info: TaskInfo):
+        self._task_info = task_info
         self._init_data()

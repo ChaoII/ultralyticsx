@@ -15,30 +15,14 @@ from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
+from common.model_type_widget import ModelType
 from common.tag_widget import TextTagWidget
-from common.utils import format_datatime, open_directory
+from common.utils import format_datatime, open_directory, CustomColor
+from home.types import TaskStatus
 from models.models import Task, Project
 
 
-class TaskStatus(Enum):
-    INITIALIZING = 0
-    TRAINING = 1
-    TRAIN_FAILED = 2
 
-    @property
-    def color(self):
-        _color_map = {
-            TaskStatus.INITIALIZING: QColor("#ff6600"),
-            TaskStatus.TRAINING: QColor("#0d5f07"),
-            TaskStatus.TRAIN_FAILED: QColor("#ff3333"),
-        }
-        if isDarkTheme():
-            _color_map = {
-                TaskStatus.INITIALIZING: QColor("#ffa366"),
-                TaskStatus.TRAINING: QColor("#66ff66"),
-                TaskStatus.TRAIN_FAILED: QColor("#ff9999"),
-            }
-        return _color_map[self]
 
 
 class OperationWidget(QWidget):
@@ -198,7 +182,7 @@ class TaskWidget(QWidget):
             for i, task in enumerate(tasks):
                 item0 = QTableWidgetItem(task.task_id)
                 item1 = QTableWidgetItem(task.project.project_name)
-                item2 = TextTagWidget(TaskStatus(task.task_status).name, TaskStatus(task.task_status).color)
+                item2 = TextTagWidget(TaskStatus(task.task_status).name, *TaskStatus(task.task_status).color)
                 item3 = QTableWidgetItem(task.comment)
                 item4 = QTableWidgetItem(format_datatime(task.create_time))
                 item5 = OperationWidget(task.task_id)
