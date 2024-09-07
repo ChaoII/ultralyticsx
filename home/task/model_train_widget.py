@@ -1,42 +1,21 @@
-import json
+from pathlib import Path
 
 import yaml
-from PySide6.QtCore import Slot, Signal, Qt, QCoreApplication
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSplitter)
-from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon, \
-    ProgressBar, TextEdit, StateToolTip
+from PySide6.QtCore import Slot, Signal, QCoreApplication
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout)
+from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
+    TextEdit, StateToolTip
 
 from common.collapsible_widget import CollapsibleWidgetItem
+from common.custom_process_bar import CustomProcessBar
 from common.utils import log_info, log_warning, format_log
+from home.task.model_trainer_thread.classify_trainer_thread import ModelTrainThread
+from home.types import TaskInfo, TaskStatus
 from model_train.train_parameter_widget import TrainParameter
-from model_train.trainer import ModelTrainThread
-
-
-class CustomProcessBar(QWidget):
-    def __init__(self, parent=None):
-        super(CustomProcessBar, self).__init__(parent=parent)
-        self.value = 0
-        self.max_value = 0
-
-        self.psb_hly = QHBoxLayout(self)
-        self.psb_train = ProgressBar()
-        self.lbl_train_process = BodyLabel(f"{self.value:>3} / {self.max_value:<3}", self)
-        self.psb_hly.addWidget(self.psb_train)
-        self.psb_hly.addWidget(self.lbl_train_process)
-
-    def set_value(self, value):
-        self.value = value
-        self.psb_train.setValue(value)
-        self.lbl_train_process.setText(f"{self.value:>3} / {self.max_value:<3}")
-
-    def set_max_value(self, max_value):
-        self.max_value = max_value
-        self.psb_train.setMaximum(max_value)
-        self.lbl_train_process.setText(f"{self.value:>3} / {self.max_value:<3}")
 
 
 class ModelTrainWidget(CollapsibleWidgetItem):
-    start_train_model_signal = Signal(str, int, int, float, int)
     stop_train_model_signal = Signal()
 
     def __init__(self, parent=None):
@@ -65,31 +44,27 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.btn_stop_train.setEnabled(False)
         self.state_tool_tip = None
 
-        self._train_param = TrainParameter()
         self._connect_signals_and_slot()
-
+        self._train_parameter: dict = dict()
+        self._train_config_file_path: Path | None = None
         self.model_thread = None
         self._train_finished = True
         self._resume = False
         self._last_model = ""
+        self._task_info: TaskInfo | None = None
 
     def _connect_signals_and_slot(self):
         self.btn_start_train.clicked.connect(self._on_start_train_clicked)
         self.btn_stop_train.clicked.connect(self._on_stop_train_clicked)
 
-    @Slot(TrainParameter)
-    def _on_train_param_changed(self, train_param: TrainParameter):
-        self._train_param = train_param
-        self.psb_train.set_max_value(int(self._train_param.epoch))
-
-    def _on_model_status_changed(self, model_name, use_pretrain):
-        self._current_model_name = model_name
-        self._use_pretrain = use_pretrain
+    def set_task_info(self, task_info: TaskInfo):
+        self._task_info = task_info
+        self._train_config_file_path = task_info.task_dir / "train_config.yaml"
+        with open(self._train_config_file_path, "r", encoding="utf8") as f:
+            self._train_parameter = yaml.safe_load(f)
 
     def _initial_model(self):
-        with open(r"C:\Users\84945\Desktop\ultralytics_workspace\project\P000000\T000000\train_config.yaml", "r", encoding="utf8") as f:
-            s = yaml.safe_load(f)
-        self.model_thread = ModelTrainThread(**s)
+        self.model_thread = ModelTrainThread(self._train_parameter)
         self._train_finished = False
         self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
         self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
@@ -100,21 +75,18 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.stop_train_model_signal.connect(self.model_thread.stop_train)
 
     def _turn_widget_enable_status(self):
-
-        # train interface
         self.btn_start_train.setEnabled(not self.btn_start_train.isEnabled())
         self.btn_stop_train.setEnabled(not self.btn_stop_train.isEnabled())
 
     @Slot()
     def _on_start_train_clicked(self):
-
-        if not self._train_finished:
-            self._resume = True
-        if self._resume and self._last_model:
-            self._current_model_name = self._last_model
+        if self._task_info.task_status == TaskStatus.TRAINING and not self._train_finished:
+            with open(self._train_config_file_path, "w", encoding="utf8") as f:
+                if self._last_model:
+                    self._train_parameter["resume"] = True
+                    self._train_parameter["model"] = self._last_model
+                    yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
             log_warning(f"{self.tr('model will resume to train, last model is: ')}{self._last_model}")
-        else:
-            self._resume = False
         self._initial_model()
         self._turn_widget_enable_status()
 
@@ -143,6 +115,20 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot(str)
     def on_handle_batch_end(self, metrics: str):
+
+        cursor = self.ted_train_log.textCursor()
+
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+
+        block = cursor.block()
+        if not block.isValid():
+            return
+
+        cursor.setPosition(block.position())
+
+        cursor.removeSelectedText()
+
+        self.ted_train_log.setTextCursor(cursor)
         self.ted_train_log.append(format_log(metrics, color="#0b80e0"))
 
     @Slot(int, str)
@@ -158,7 +144,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def on_handle_train_end(self, cur_epoch: int):
         self._turn_widget_enable_status()
         self._train_finished = True
-        if cur_epoch == int(self._train_param.epoch):
+        if cur_epoch == self._train_parameter["epochs"]:
             self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
         else:
             self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))

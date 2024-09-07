@@ -191,6 +191,8 @@ class FixWidthBodyLabel(BodyLabel):
 
 
 class TrainParameterWidget(CollapsibleWidgetItem):
+    parameter_config_finished = Signal(TaskInfo)
+
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Parameter configuration"), parent=parent)
         # ------------------------训练参数-------------------------
@@ -678,7 +680,9 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
-            task.task_status = TaskStatus.INITIAL_FINISHED.value
+            task.task_status = TaskStatus.CFG_FINISHED.value
+
+        self.parameter_config_finished.emit(self._task_info)
 
         InfoBar.success(
             title='',

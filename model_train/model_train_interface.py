@@ -7,7 +7,7 @@ from qfluentwidgets import BodyLabel, PushButton, PrimaryPushButton, FluentIcon,
 from common.utils import log_info, log_warning, format_log
 from .model_info_widget import ModelInfoCard
 from .train_parameter_widget import ModelTrainParamCard, TrainParameter
-from .trainer import ModelTrainThread
+# from .trainer import ModelTrainThread
 
 
 class CustomProcessBar(QWidget):
@@ -107,14 +107,14 @@ class ModelTrainWidget(QWidget):
         self._use_pretrain = use_pretrain
 
     def _initial_model(self):
-        self.model_thread = ModelTrainThread(self._current_model_name,
-                                             self._use_pretrain,
-                                             self._train_param.dataset_config,
-                                             self._train_param.epoch,
-                                             self._train_param.batch_size,
-                                             self._train_param.learning_rate,
-                                             self._train_param.workers,
-                                             self._resume)
+        # self.model_thread = ModelTrainThread(self._current_model_name,
+        #                                      self._use_pretrain,
+        #                                      self._train_param.dataset_config,
+        #                                      self._train_param.epoch,
+        #                                      self._train_param.batch_size,
+        #                                      self._train_param.learning_rate,
+        #                                      self._train_param.workers,
+        #                                      self._resume)
         self._train_finished = False
         self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
         self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
