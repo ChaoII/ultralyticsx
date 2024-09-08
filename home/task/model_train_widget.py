@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 from PySide6.QtCore import Slot, Signal, QCoreApplication
-from PySide6.QtGui import QTextCursor
+from PySide6.QtGui import QTextCursor, QFont
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout)
 from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
     TextEdit, StateToolTip
@@ -36,6 +36,12 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.hly_btn.addWidget(self.psb_train)
 
         self.ted_train_log = TextEdit()
+        font = QFont("Courier")  # "Courier" 是常见的等宽字体
+        font.setWeight(QFont.Weight.Normal)
+        font.setPixelSize(14)
+        font.setStyleHint(QFont.StyleHint.Monospace)  # 设置字体风格提示为 Monospace (等宽字体)
+        self.ted_train_log.setFont(font)
+        self.ted_train_log.setReadOnly(True)
         self.ted_train_log.setMinimumHeight(400)
 
         self.vly.addLayout(self.hly_btn)
@@ -62,6 +68,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._train_config_file_path = task_info.task_dir / "train_config.yaml"
         with open(self._train_config_file_path, "r", encoding="utf8") as f:
             self._train_parameter = yaml.safe_load(f)
+        self.psb_train.set_max_value(self._train_parameter["epochs"])
 
     def _initial_model(self):
         self.model_thread = ModelTrainThread(self._train_parameter)
@@ -118,15 +125,23 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
         cursor = self.ted_train_log.textCursor()
 
-        cursor.movePosition(QTextCursor.MoveOperation.End)
+        # 获取 QTextEdit 的文本内容
+        document = self.ted_train_log.document()
 
-        block = cursor.block()
-        if not block.isValid():
-            return
+        # 获取最后一行的行号
+        last_block = document.lastBlock()
 
-        cursor.setPosition(block.position())
+        # 获取最后一行的内容
+        last_line_text = last_block.text()
 
-        cursor.removeSelectedText()
+        # 如果最后一行有内容，则删除最后一行
+        if last_line_text:
+            cursor.movePosition(cursor.MoveOperation.End)  # 移动到文本末尾
+            cursor.movePosition(cursor.MoveOperation.StartOfLine, cursor.MoveMode.KeepAnchor)  # 选择最后一行
+            cursor.removeSelectedText()
+
+            # 删除末尾的换行符
+            cursor.deletePreviousChar()
 
         self.ted_train_log.setTextCursor(cursor)
         self.ted_train_log.append(format_log(metrics, color="#0b80e0"))
