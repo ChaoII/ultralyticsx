@@ -106,20 +106,21 @@ class DeviceWidget(QWidget):
         self.cb6.check_state_changed.connect(self._gpu_changed)
         self.cb7.check_state_changed.connect(self._gpu_changed)
 
-        self._gpus: list[str] = ["0"]
+        self._gpus: list[int] = [0]
         self._current_device = Devices.CPU
 
     def get_current_device(self):
-        return [self._current_device, ",".join(self._gpus)]
+        return [self._current_device, self._gpus]
 
     @Slot(Qt.CheckState, str)
     def _gpu_changed(self, status: Qt.CheckState, text: str):
+        gpu_index = int(text)
         if status == Qt.CheckState.Checked:
-            if text not in self._gpus:
-                self._gpus.append(text)
+            if gpu_index not in self._gpus:
+                self._gpus.append(gpu_index)
         if status == Qt.CheckState.Unchecked:
-            if text in self._gpus:
-                self._gpus.remove(text)
+            if gpu_index in self._gpus:
+                self._gpus.remove(gpu_index)
 
     @Slot(str)
     def _on_device_changed(self, text: str):

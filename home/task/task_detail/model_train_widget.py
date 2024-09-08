@@ -9,10 +9,12 @@ from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
 
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_process_bar import CustomProcessBar
+from common.db_helper import db_session
 from common.utils import log_info, log_warning, format_log
 from home.task.model_trainer_thread.classify_trainer_thread import ModelTrainThread
 from home.types import TaskInfo, TaskStatus
 from model_train.train_parameter_widget import TrainParameter
+from models.models import Task
 
 
 class ModelTrainWidget(CollapsibleWidgetItem):
@@ -65,10 +67,11 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def set_task_info(self, task_info: TaskInfo):
         self._task_info = task_info
-        self._train_config_file_path = task_info.task_dir / "train_config.yaml"
-        with open(self._train_config_file_path, "r", encoding="utf8") as f:
-            self._train_parameter = yaml.safe_load(f)
-        self.psb_train.set_max_value(self._train_parameter["epochs"])
+        if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
+            self._train_config_file_path = task_info.task_dir / "train_config.yaml"
+            with open(self._train_config_file_path, "r", encoding="utf8") as f:
+                self._train_parameter = yaml.safe_load(f)
+            self.psb_train.set_max_value(self._train_parameter["epochs"])
 
     def _initial_model(self):
         self.model_thread = ModelTrainThread(self._train_parameter)
@@ -104,6 +107,10 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.state_tool_tip.show()
 
         self.model_thread.start()
+        self._task_info.task_status = TaskStatus.TRAINING
+        with db_session() as session:
+            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task.task_status = self._task_info.task_status.value
 
     @Slot()
     def _on_stop_train_clicked(self):

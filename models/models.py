@@ -1,13 +1,9 @@
 from datetime import datetime
-from typing import List
 
-from common.db_helper import db_session
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table
+from sqlalchemy.orm import relationship
+
 from common.db_helper import Base, engine
-from contextlib import contextmanager
-
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, Table
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, Mapped
 
 projects_to_datasets = Table(
     "projects_to_datasets",
@@ -45,7 +41,7 @@ class Project(Base):
     project_dir = Column(String)
     create_time = Column(DateTime, default=datetime.now())
 
-    tasks = relationship("Task", back_populates="project")
+    tasks = relationship("Task", back_populates="project", cascade="all, delete")
 
     datasets = relationship("Dataset", secondary=projects_to_datasets, back_populates="projects")
 

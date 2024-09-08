@@ -18,14 +18,12 @@ from common.fill_tool_button import FillToolButton
 from common.model_type_widget import ModelType
 from common.tag_widget import TextTagWidget
 from common.utils import format_datatime, open_directory, CustomColor
+from core.content_widget_base import ContentWidgetBase
 from home.types import TaskStatus
 from models.models import Task, Project
 
 
-
-
-
-class OperationWidget(QWidget):
+class OperationWidget(ContentWidgetBase):
     task_deleted = Signal(str)
     task_detail = Signal(str)
     open_task_dir = Signal(str)
@@ -139,12 +137,12 @@ class TaskTableWidget(TableWidget):
                             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
 
 
-class TaskWidget(QWidget):
+class TaskListWidget(ContentWidgetBase):
     view_task_clicked = Signal(str)
 
     def __init__(self):
         super().__init__()
-        self.setObjectName("task_widget")
+        self.setObjectName("task_list_widget")
         self.vly = QVBoxLayout(self)
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
@@ -154,12 +152,10 @@ class TaskWidget(QWidget):
         self.tb_task = TaskTableWidget()
         self.vly.addLayout(self.hly_btn)
         self.vly.addWidget(self.tb_task)
-        self._connect_signals_and_slots()
         self.project_id = ""
+        self._connect_signals_and_slots()
 
-        self._connect_signale_and_slots()
-
-    def _connect_signale_and_slots(self):
+    def _connect_signals_and_slots(self):
         self.tb_task.itemChanged.connect(self._comment_item_changed)
 
     @Slot(QTableWidgetItem)
@@ -174,10 +170,13 @@ class TaskWidget(QWidget):
             task.comment = comment
 
     def set_data(self, project_id: str):
-        self.tb_task.clearContents()
         self.project_id = project_id
+        self.update_widget()
+
+    def update_widget(self):
+        self.tb_task.clearContents()
         with db_session(auto_commit_exit=True) as session:
-            tasks: list[Task] = session.query(Task).filter_by(project_id=project_id).all()
+            tasks: list[Task] = session.query(Task).filter_by(project_id=self.project_id).all()
             self.tb_task.setRowCount(len(tasks))
             for i, task in enumerate(tasks):
                 item0 = QTableWidgetItem(task.task_id)

@@ -8,7 +8,7 @@ from typing import ContextManager
 
 Base = declarative_base()
 # 创建数据库引擎
-engine = create_engine('sqlite:///db.sqlite3', echo=True)
+engine = create_engine('sqlite:///db.sqlite3', echo=False)
 Session = sessionmaker(bind=engine)
 
 

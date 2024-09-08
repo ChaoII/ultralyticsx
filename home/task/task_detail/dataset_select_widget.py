@@ -38,6 +38,7 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self.fly_content.setHorizontalSpacing(40)
         self.fly_content.addRow(self.lbl_select_dataset, self.cmb_select_dataset)
         self.fly_content.addRow("", self.dataset_detail)
+        self._is_select_dataset_connect_signal_and_slots = False
         self._connect_signals_and_slots()
         self._task_info: TaskInfo | None = None
         self.set_content_widget(self.content_widget)
@@ -60,15 +61,20 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
             self._load_current_dataset_info()
             return
         with db_session() as session:
+            self.cmb_select_dataset.clear()
             datasets: list[Dataset] = session.query(Dataset).filter(
                 and_(Dataset.model_type == self._task_info.model_type.value,
                      Dataset.dataset_status == DatasetStatus.CHECKED.value)).all()
+            if self._is_select_dataset_connect_signal_and_slots:
+                self.cmb_select_dataset.currentIndexChanged.disconnect(self._on_select_dataset_index_changed)
             for index, dataset in enumerate(datasets):
                 self.cmb_select_dataset.addItem(dataset.dataset_id,
                                                 self._task_info.model_type.icon.icon(color=themeColor()),
                                                 userData=dataset)
                 self.cmb_select_dataset.setCurrentIndex(-1)
-        self.cmb_select_dataset.currentIndexChanged.connect(self._on_select_dataset_index_changed)
+
+            self.cmb_select_dataset.currentIndexChanged.connect(self._on_select_dataset_index_changed)
+            self._is_select_dataset_connect_signal_and_slots = True
 
     def _connect_signals_and_slots(self):
         pass
@@ -89,6 +95,8 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
 
     @Slot(int)
     def _on_select_dataset_index_changed(self, index: int):
+        print(index)
+        print(self.cmb_select_dataset.isPressed)
         if index != -1:
             with db_session() as session:
                 task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()

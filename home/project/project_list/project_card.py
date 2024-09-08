@@ -7,7 +7,7 @@ from qfluentwidgets import ElevatedCardWidget, StrongBodyLabel, BodyLabel, theme
 
 from common.delete_ensure_widget import CustomFlyoutView
 from common.tag_widget import TagWidget
-from home.project.new_project_dialog import ProjectInfo
+from home.project.project_list.new_project_dialog import ProjectInfo
 
 
 class ProjectCard(ElevatedCardWidget):

@@ -13,19 +13,20 @@ from common.db_helper import db_session
 from common.model_type_widget import ModelType
 from common.page_widget import PipsPager, PipsScrollButtonDisplayMode
 from common.utils import str_to_datetime, format_datatime
+from core.content_widget_base import ContentWidgetBase
 from models.models import Project
 from settings.config import cfg
-from .new_project_dialog import NewProjectDialog, ProjectInfo
-from .project_card import ProjectCard
+from home.project.project_list.new_project_dialog import NewProjectDialog, ProjectInfo
+from home.project.project_list.project_card import ProjectCard
 
 
-class ProjectWidget(QWidget):
+class ProjectListWidget(ContentWidgetBase):
     stop_train_model_signal = Signal()
     project_detail_clicked = Signal(ProjectInfo)
 
     def __init__(self, parent=None):
-        super(ProjectWidget, self).__init__(parent=parent)
-        self.setObjectName("project_widget")
+        super(ProjectListWidget, self).__init__(parent=parent)
+        self.setObjectName("project_list_widget")
         self.vly = QVBoxLayout(self)
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
@@ -76,16 +77,16 @@ class ProjectWidget(QWidget):
         pager.setPreviousButtonDisplayMode(PipsScrollButtonDisplayMode.ALWAYS)
         self.vly.addWidget(pager)
 
-        self._load_projects()
+        self.update_widget()
         self._connect_signals_and_slot()
 
     def _connect_signals_and_slot(self):
-        cfg.themeChanged.connect(self._on_Theme_changed)
+        cfg.themeChanged.connect(self._on_theme_changed)
         self.btn_create_project.clicked.connect(self._on_clicked_create_project)
         self.cmb_sort.currentIndexChanged.connect(self._on_sorting_changed)
         self.cmb_type.currentIndexChanged.connect(self._on_sorting_changed)
 
-    def _on_Theme_changed(self):
+    def _on_theme_changed(self):
         for i in range(self.layout.count()):
             project_card = self.layout.itemAt(i).widget()
             if isinstance(project_card, ProjectCard):
@@ -104,9 +105,9 @@ class ProjectWidget(QWidget):
 
     @Slot(int)
     def _on_sorting_changed(self, index):
-        self._load_projects()
+        self.update_widget()
 
-    def _load_projects(self):
+    def update_widget(self):
         field = Project.project_name
         order = asc
         if self.cmb_sort.currentIndex() == 0:
@@ -154,7 +155,7 @@ class ProjectWidget(QWidget):
             record: Project = session.query(Project).filter_by(project_id=project_id).first()
             session.delete(record)
         shutil.rmtree(record.project_dir)
-        self._load_projects()
+        self.update_widget()
 
     @Slot(ProjectInfo)
     def _on_add_new_project(self, project_info: ProjectInfo):
