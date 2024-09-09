@@ -74,6 +74,16 @@ class DeviceWidget(QWidget):
         self.cb6.setCheckState(Qt.CheckState.Unchecked)
         self.cb7 = GPUCheckBox(text="7")
         self.cb7.setCheckState(Qt.CheckState.Unchecked)
+        self._cb_device_map: dict[int, GPUCheckBox] = {
+            0: self.cb0,
+            1: self.cb1,
+            2: self.cb2,
+            3: self.cb3,
+            4: self.cb4,
+            5: self.cb5,
+            6: self.cb6,
+            7: self.cb7,
+        }
 
         self.check_box_group = QWidget()
         self.hly_check_box = QHBoxLayout(self.check_box_group)
@@ -111,6 +121,23 @@ class DeviceWidget(QWidget):
 
     def get_current_device(self):
         return [self._current_device, self._gpus]
+
+    def set_value(self, value):
+        if isinstance(value, str):
+            self.cmb_devices.setText(value.upper())
+            self.check_box_group.setHidden(True)
+        elif isinstance(value, int | list):
+            self.check_box_group.setHidden(False)
+            if isinstance(value, int):
+                value = [value]
+            self.cmb_devices.setText("GPU")
+            for i in range(8):
+                if i in value:
+                    self._cb_device_map[i].setChecked(True)
+                else:
+                    self._cb_device_map[i].setChecked(False)
+        else:
+            raise ValueError(f"expect 'cpu','mps',0,[0,1,2...],but get value{value}")
 
     @Slot(Qt.CheckState, str)
     def _gpu_changed(self, status: Qt.CheckState, text: str):
@@ -169,6 +196,15 @@ class BatchWidget(QWidget):
     def value(self):
         return self._batch_size
 
+    def set_value(self, value: int):
+        if value == -1:
+            self.btn_batch.setChecked(True)
+            self.spb_batch.setHidden(True)
+        else:
+            self.btn_batch.setChecked(False)
+            self.spb_batch.setValue(value)
+            self.spb_batch.setHidden(False)
+
     @Slot(bool)
     def _on_batch_status_changed(self, is_auto_batch: bool):
         # 自动batch
@@ -193,6 +229,7 @@ class FixWidthBodyLabel(BodyLabel):
 
 class TrainParameterWidget(CollapsibleWidgetItem):
     parameter_config_finished = Signal(TaskInfo)
+    start_training_clicked = Signal(TaskInfo)
 
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Parameter configuration"), parent=parent)
@@ -586,23 +623,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.btn_start_train.clicked.connect(self._on_train_clicked)
         self.btn_save.clicked.connect(self._on_save_clicked)
 
-    def _init_data(self):
-        self.cmb_model_name.clear()
-        self.cmb_model_name.addItems(model_type_list_map[self._task_info.model_type])
-
-    def _on_train_clicked(self):
-        if self.stateTooltip:
-            self.stateTooltip.setContent(
-                self.tr('The model training is complete!') + ' 😆')
-            self.stateTooltip.setState(True)
-            self.stateTooltip = None
-        else:
-            self.stateTooltip = StateToolTip(
-                self.tr('Training model'), self.tr('Please wait patiently'), self.window())
-            self.stateTooltip.move(self.stateTooltip.getSuitablePos())
-            self.stateTooltip.show()
-
-    def _on_save_clicked(self):
+    def _save_config(self):
         freeze = None
         if self.le_freeze.text():
             freeze = self.le_freeze.text()
@@ -678,13 +699,18 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         )
         with open(self._task_info.task_dir / "train_config.yaml", 'w', encoding="utf8") as file:
             yaml.dump(parameter, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
-
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = TaskStatus.CFG_FINISHED.value
+        self._task_info.task_status = TaskStatus.CFG_FINISHED
 
+    def _on_train_clicked(self):
+        self._save_config()
+        self.start_training_clicked.emit(self._task_info)
+
+    def _on_save_clicked(self):
+        self._save_config()
         self.parameter_config_finished.emit(self._task_info)
-
         InfoBar.success(
             title='',
             content=self.tr("Parameter saved successfully"),
@@ -697,4 +723,69 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
     def set_task_info(self, task_info: TaskInfo):
         self._task_info = task_info
-        self._init_data()
+        self._init_parameter_on_widget()
+
+    def _init_parameter_on_widget(self):
+        self.cmb_model_name.clear()
+        self.cmb_model_name.addItems(model_type_list_map[self._task_info.model_type])
+        if self._task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
+            with open(self._task_info.task_dir / "train_config.yaml", 'r', encoding="utf8") as file:
+                parameter = yaml.safe_load(file)
+            self.cmb_model_name.setCurrentText(parameter["model"]),
+
+            self.spb_epochs.setValue(parameter["epochs"])
+            self.spb_time.setValue(parameter["time"])
+            self.spb_patience.setValue(parameter["patience"])
+            self.cus_batch.set_value(parameter["batch"])
+            self.spb_image_size.setValue(parameter["imgsz"])
+            self.cus_device.set_value(parameter["device"])
+            self.spb_workers.setValue(parameter["workers"])
+            self.btn_pre_trained.setChecked(parameter["pretrained"])
+            self.cmb_optimizer.setCurrentText(parameter["optimizer"])
+            self.btn_verbose.setChecked(parameter["verbose"])
+            self.spb_seed.setValue(parameter["seed"])
+            self.btn_rect.setChecked(parameter["rect"])
+            self.btn_cos_lr.setChecked(parameter["cos_lr"])
+            self.spb_close_mosaic.setValue(parameter["close_mosaic"])
+            self.btn_resume.setChecked(parameter["resume"])
+            self.btn_amp.setChecked(parameter["amp"])
+            self.spb_fraction.setValue(parameter["fraction"])
+            self.btn_profile.setChecked(parameter["profile"])
+            self.le_freeze.setText(parameter["freeze"])
+            self.btn_multi_scale.setChecked(parameter["multi_scale"])
+            self.btn_overlap_mask.setChecked(parameter["overlap_mask"])
+            self.spb_mask_ratio.setValue(parameter["mask_ratio"])
+            self.spb_dropout.setValue(parameter["dropout"])
+
+            self.spb_lr0.setValue(parameter["lr0"])
+            self.spb_lrf.setValue(parameter["lrf"])
+            self.spb_momentum.setValue(parameter["momentum"])
+            self.spb_weight_decay.setValue(parameter["weight_decay"])
+            self.spb_warmup_epochs.setValue(parameter["warmup_epochs"])
+            self.spb_warmup_momentum.setValue(parameter["warmup_momentum"])
+            self.spb_warmup_bias_lr.setValue(parameter["warmup_bias_lr"])
+            self.spb_box.setValue(parameter["box"])
+            self.spb_cls.setValue(parameter["cls"])
+            self.spb_dfl.setValue(parameter["dfl"])
+            self.spb_pose.setValue(parameter["pose"])
+            self.spb_kobj.setValue(parameter["kobj"])
+            self.spb_label_smoothing.setValue(parameter["label_smoothing"])
+            self.spb_nbs.setValue(parameter["nbs"])
+
+            self.spb_hsv_h.setValue(parameter["hsv_h"])
+            self.spb_hsv_s.setValue(parameter["hsv_s"])
+            self.spb_hsv_v.setValue(parameter["hsv_v"])
+            self.spb_degrees.setValue(parameter["degrees"])
+            self.spb_translate.setValue(parameter["translate"])
+            self.spb_scale.setValue(parameter["scale"])
+            self.spb_shear.setValue(parameter["shear"])
+            self.spb_perspective.setValue(parameter["perspective"])
+            self.spb_flipud.setValue(parameter["flipud"])
+            self.spb_fliplr.setValue(parameter["fliplr"])
+            self.spb_bgr.setValue(parameter["bgr"])
+            self.spb_mosaic.setValue(parameter["mosaic"])
+            self.spb_mixup.setValue(parameter["mixup"])
+            self.spb_copy_paste.setValue(parameter["copy_paste"])
+            self.cmb_auto_augment.setCurrentText(parameter["auto_augment"])
+            self.spb_erasing.setValue(parameter["erasing"])
+            self.spb_crop_fraction.setValue(parameter["crop_fraction"])

@@ -41,11 +41,12 @@ class ModelTrainThread(QThread):
 
     def _on_fit_epoch_end(self, trainer):
         metrics = trainer.metrics
-        if 0 < self.metrics_num != len(metrics):
-            return
-        self.metrics_num = len(metrics)
         metrics_info = f"{self.tr('val result: ')} \n"
         metrics_info += "Epoch\t"
+        if 0 < self.metrics_num != len(metrics):
+            metrics_info = f"{self.tr('test result: ')} \n"
+        self.metrics_num = len(metrics)
+
         for metric_name in metrics.keys():
             metric_name = metric_name.split("/")[1]
             metrics_info += f"{metric_name}\t"
@@ -68,7 +69,7 @@ class ModelTrainThread(QThread):
                 progress_bar_length - int(progress_bar_length * progress_percent))
 
         # 生成进度条文本（这里使用简单的文本表示，你可以根据需要自定义）
-        r_align = f"{progress_percent:.2f}%".rjust(8)
+        r_align = f"{progress_percent * 100:.2f}%".rjust(8)
         progress_bar_text = f"{r_align} |{bar}| {cur_batch}/{total_batch} "
         batch_info = f"{trainer.epoch + 1}/{trainer.epochs}\t"
         loss_items = trainer.loss_items.cpu().numpy()

@@ -44,7 +44,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         font.setStyleHint(QFont.StyleHint.Monospace)  # 设置字体风格提示为 Monospace (等宽字体)
         self.ted_train_log.setFont(font)
         self.ted_train_log.setReadOnly(True)
-        self.ted_train_log.setMinimumHeight(400)
+        self.ted_train_log.setMinimumHeight(450)
 
         self.vly.addLayout(self.hly_btn)
         self.vly.addWidget(self.ted_train_log)
@@ -81,25 +81,17 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
         self.model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
         self.model_thread.train_end_signal.connect(self.on_handle_train_end)
-
         self.stop_train_model_signal.connect(self.model_thread.stop_train)
 
     def _turn_widget_enable_status(self):
         self.btn_start_train.setEnabled(not self.btn_start_train.isEnabled())
         self.btn_stop_train.setEnabled(not self.btn_stop_train.isEnabled())
 
-    @Slot()
-    def _on_start_train_clicked(self):
-        if self._task_info.task_status == TaskStatus.TRAINING and not self._train_finished:
-            with open(self._train_config_file_path, "w", encoding="utf8") as f:
-                if self._last_model:
-                    self._train_parameter["resume"] = True
-                    self._train_parameter["model"] = self._last_model
-                    yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-            log_warning(f"{self.tr('model will resume to train, last model is: ')}{self._last_model}")
+    def start_train(self):
+        with open(self._train_config_file_path, "r", encoding="utf8") as f:
+            self._train_parameter = yaml.safe_load(f)
         self._initial_model()
         self._turn_widget_enable_status()
-
         # 设置状态工具栏并显示
         self.state_tool_tip = StateToolTip(
             self.tr('The model is currently being trained '), self.tr('Please wait patiently'), self.window())
@@ -111,6 +103,17 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
+
+    @Slot()
+    def _on_start_train_clicked(self):
+        if self._task_info.task_status == TaskStatus.TRAINING and not self._train_finished:
+            with open(self._train_config_file_path, "w", encoding="utf8") as f:
+                if self._last_model:
+                    self._train_parameter["resume"] = True
+                    self._train_parameter["model"] = self._last_model
+                    yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            log_warning(f"{self.tr('model will resume to train, last model is: ')}{self._last_model}")
+        self.start_train()
 
     @Slot()
     def _on_stop_train_clicked(self):
@@ -129,27 +132,20 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot(str)
     def on_handle_batch_end(self, metrics: str):
-
         cursor = self.ted_train_log.textCursor()
-
         # 获取 QTextEdit 的文本内容
         document = self.ted_train_log.document()
-
         # 获取最后一行的行号
         last_block = document.lastBlock()
-
         # 获取最后一行的内容
         last_line_text = last_block.text()
-
         # 如果最后一行有内容，则删除最后一行
         if last_line_text:
             cursor.movePosition(cursor.MoveOperation.End)  # 移动到文本末尾
             cursor.movePosition(cursor.MoveOperation.StartOfLine, cursor.MoveMode.KeepAnchor)  # 选择最后一行
             cursor.removeSelectedText()
-
             # 删除末尾的换行符
             cursor.deletePreviousChar()
-
         self.ted_train_log.setTextCursor(cursor)
         self.ted_train_log.append(format_log(metrics, color="#0b80e0"))
 
@@ -170,6 +166,10 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
         else:
             self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
+        self._task_info.task_status = TaskStatus.TRN_FINISHED
+        with db_session() as session:
+            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task.task_status = self._task_info.task_status.value
         # 数据转换完成，显示状态信息
         self.state_tool_tip.setContent(
             self.tr('Model training is completed!') + ' 😆')
