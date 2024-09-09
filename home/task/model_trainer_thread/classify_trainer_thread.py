@@ -11,21 +11,27 @@ class ModelTrainThread(QThread):
     train_epoch_end_signal = Signal(int, str)
     fit_epoch_end_signal = Signal(str)
     train_end_signal = Signal(int)
+    model_train_failed = Signal(str)
 
     def __init__(self, train_parameters: dict):
         super(ModelTrainThread, self).__init__()
 
-        self.trainer = ClassificationTrainer(overrides=train_parameters)
-
-        self.trainer.add_callback("on_train_batch_start", self._on_train_batch_start)
-        self.trainer.add_callback("on_train_batch_end", self._on_train_batch_end)
-        self.trainer.add_callback("on_train_epoch_start", self._on_train_epoch_start)
-        self.trainer.add_callback("on_train_epoch_end", self._on_train_epoch_end)
-        self.trainer.add_callback("on_fit_epoch_end", self._on_fit_epoch_end)
-        self.trainer.add_callback("on_train_end", self._on_train_end)
-
+        self.trainer: ClassificationTrainer | None = None
+        self._train_parameters = train_parameters
         self._stop = False
-        self.metrics_num = -1
+        self._metrics_num = -1
+
+    def init_model_trainer(self):
+        try:
+            self.trainer = ClassificationTrainer(overrides=self._train_parameters)
+            self.trainer.add_callback("on_train_batch_start", self._on_train_batch_start)
+            self.trainer.add_callback("on_train_batch_end", self._on_train_batch_end)
+            self.trainer.add_callback("on_train_epoch_start", self._on_train_epoch_start)
+            self.trainer.add_callback("on_train_epoch_end", self._on_train_epoch_end)
+            self.trainer.add_callback("on_fit_epoch_end", self._on_fit_epoch_end)
+            self.trainer.add_callback("on_train_end", self._on_train_end)
+        except Exception as e:
+            self.model_train_failed.emit(e)
 
     def _on_train_epoch_start(self, trainer):
         loss_names = trainer.loss_names
@@ -44,7 +50,7 @@ class ModelTrainThread(QThread):
         metrics = trainer.metrics
         metrics_info = f"{self.tr('val result: ')}\n"
         metrics_info += f"{'Epoch':<10}"
-        if 0 < self.metrics_num != len(metrics):
+        if 0 < self._metrics_num != len(metrics):
             metrics_info = f"{self.tr('test result: ')}\n"
         self.metrics_num = len(metrics)
         for metric_name in metrics.keys():
@@ -91,7 +97,10 @@ class ModelTrainThread(QThread):
         self.train_end_signal.emit(trainer.epoch + 1)
 
     def run(self):
-        self.trainer.train()
+        try:
+            self.trainer.train()
+        except Exception as e:
+            self.model_train_failed.emit(e)
 
     @Slot()
     def stop_train(self):

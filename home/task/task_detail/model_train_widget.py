@@ -28,11 +28,11 @@ class RichTextLogWidget(TextEdit):
 
     def save_to_log(self, save_file_path: Path | None = None):
         if save_file_path:
-            with open(self._save_file_path, "a", encoding="utf8") as f:
+            with open(self._save_file_path, "w", encoding="utf8") as f:
                 f.write(self.toPlainText())
         else:
             if self._save_file_path:
-                with open(self._save_file_path, "a", encoding="utf8") as f:
+                with open(self._save_file_path, "w", encoding="utf8") as f:
                     f.write(self.toPlainText())
             else:
                 raise EOFError(self.tr("save to log must point a file path"))
@@ -88,18 +88,20 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def set_task_info(self, task_info: TaskInfo):
         self._task_info = task_info
-        self.ted_train_log.set_log_path(self._task_info.task_dir / "train_log.html")
+        self.ted_train_log.set_log_path(self._task_info.task_dir / "train_log.txt")
         if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             self._train_config_file_path = task_info.task_dir / "train_config.yaml"
             with open(self._train_config_file_path, "r", encoding="utf8") as f:
                 self._train_parameter = yaml.safe_load(f)
             self.psb_train.set_max_value(self._train_parameter["epochs"])
-        if task_info.task_status.value >= TaskStatus.TRAINING.value:
-            log_file_path = self._task_info.task_dir / "train_log.html"
+        if task_info.task_status.value > TaskStatus.TRAINING.value:
+            log_file_path = self._task_info.task_dir / "train_log.txt"
             if not log_file_path.exists():
                 return
             with open(log_file_path, "r", encoding="utf8") as f:
                 self.ted_train_log.setPlainText(f.read())
+                v_scroll_bar = self.ted_train_log.verticalScrollBar()
+                v_scroll_bar.setValue(v_scroll_bar.maximum())
 
         if task_info.task_status == TaskStatus.TRAINING:
             self.btn_start_train.setEnabled(False)
@@ -114,12 +116,14 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def _initial_model(self):
         self.model_thread = ModelTrainThread(self._train_parameter)
+        self.model_thread.init_model_trainer()
         self._train_finished = False
         self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
         self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
         self.model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
         self.model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
         self.model_thread.train_end_signal.connect(self.on_handle_train_end)
+        self.model_thread.model_train_failed.connect(self._on_model_train_failed)
         self.stop_train_model_signal.connect(self.model_thread.stop_train)
 
     def _turn_widget_enable_status(self):
@@ -146,7 +150,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot()
     def _on_start_train_clicked(self):
-        if self._task_info.task_status >= TaskStatus.TRAINING and not self._train_finished:
+        if self._task_info.task_status.value >= TaskStatus.TRAINING.value and not self._train_finished:
             with open(self._train_config_file_path, "w", encoding="utf8") as f:
                 if self._last_model:
                     self._train_parameter["resume"] = self._last_model
@@ -193,6 +197,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         else:
             self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
             self._task_info.task_status = TaskStatus.TRN_PAUSE
+            self._train_finished = False
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
@@ -201,4 +206,10 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.tr('Model training is completed!') + ' 😆')
         self.state_tool_tip.setState(True)
         self.state_tool_tip = None
+        self.ted_train_log.save_to_log()
+
+    @Slot(str)
+    def _on_model_train_failed(self, error_info: str):
+        self._on_stop_train_clicked()
+        self.ted_train_log.append(log_error(error_info))
         self.ted_train_log.save_to_log()
