@@ -18,17 +18,17 @@ LIGHT_BG = "rgb(249, 249, 249)"
 
 
 class CustomColor(enum.Enum):
-    RED = [QColor("#FF0000"), QColor("#FF6347")]        # 红色
-    BLUE = [QColor("#003366"), QColor("#007BFF")]       # 蓝色（深蓝色）（亮蓝色）
-    PURPLE = [QColor("#6A0DAD"), QColor("#BF77F6")]     # 紫色（深紫色）（亮紫色）
-    CYAN = [QColor("#006400"), QColor("#00FFBF")]       # 青色（深绿色，接近青色）（亮青色）
-    CYAN1 = [QColor("#004080"), QColor("#87CEEB")]      # 青色1（海军蓝，接近青色）（天青色）
-    ORANGE = [QColor("#FF4500"), QColor("#FFA500")]     # 橙色（橙色红）（纯橙色）
-    YELLOW = [QColor("#968911"), QColor("#FFFF00")]     # 黄色（金色，接近黄色）（纯黄色）
-    PINK = [QColor("#FF69B4"), QColor("#FFC0CB")]       # 粉色（深粉色）（粉红色）
-    GRAY = [QColor("#606060"), QColor("#C0C0C0")]       # 灰色（深灰色）（浅灰色）
-    BROWN = [QColor("#A52A2A"), QColor("#D2691E")]      # 棕色（深棕色）（浅棕色）
-    GREEN = [QColor("#1E9000"), QColor("#2ECC71")]      # 绿色（深绿色）（亮绿色）
+    RED = [QColor("#FF0000"), QColor("#FF6347")]  # 红色
+    BLUE = [QColor("#003366"), QColor("#007BFF")]  # 蓝色（深蓝色）（亮蓝色）
+    PURPLE = [QColor("#6A0DAD"), QColor("#BF77F6")]  # 紫色（深紫色）（亮紫色）
+    CYAN = [QColor("#006400"), QColor("#00FFBF")]  # 青色（深绿色，接近青色）（亮青色）
+    CYAN1 = [QColor("#004080"), QColor("#87CEEB")]  # 青色1（海军蓝，接近青色）（天青色）
+    ORANGE = [QColor("#FF4500"), QColor("#FFA500")]  # 橙色（橙色红）（纯橙色）
+    YELLOW = [QColor("#968911"), QColor("#FFFF00")]  # 黄色（金色，接近黄色）（纯黄色）
+    PINK = [QColor("#FF69B4"), QColor("#FFC0CB")]  # 粉色（深粉色）（粉红色）
+    GRAY = [QColor("#606060"), QColor("#C0C0C0")]  # 灰色（深灰色）（浅灰色）
+    BROWN = [QColor("#A52A2A"), QColor("#D2691E")]  # 棕色（深棕色）（浅棕色）
+    GREEN = [QColor("#1E9000"), QColor("#2ECC71")]  # 绿色（深绿色）（亮绿色）
 
     def light_color(self):
         return self.value[0]
@@ -56,8 +56,11 @@ def str_to_datetime(datetime_str: str, fmt="%Y-%m-%d %H:%M:%S"):
     return datetime.strptime(datetime_str, fmt)
 
 
-def log_info(message: str, color: str = "green") -> str:
-    format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'INFO':<8} | {message}</span>"
+def log_info(message: str, color: str = "green", apply_rich_text=False) -> str:
+    if apply_rich_text:
+        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'INFO':<8} | {message}</span>"
+    else:
+        format_str = f"{NOW} | {'INFO':<8} | {message}"
     logger.info(message)
     return format_str
 

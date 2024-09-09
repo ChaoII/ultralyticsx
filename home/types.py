@@ -15,6 +15,7 @@ class TaskStatus(Enum):
     TRAINING = 3
     TRAIN_FAILED = 4
     TRN_FINISHED = 5
+    TRN_PAUSE = 6
 
     @property
     def color(self):
@@ -24,7 +25,8 @@ class TaskStatus(Enum):
             TaskStatus.CFG_FINISHED: CustomColor.YELLOW.value,
             TaskStatus.TRAINING: CustomColor.GRAY.value,
             TaskStatus.TRAIN_FAILED: CustomColor.PURPLE.value,
-            TaskStatus.TRN_FINISHED: CustomColor.GREEN.value
+            TaskStatus.TRN_FINISHED: CustomColor.GREEN.value,
+            TaskStatus.TRN_PAUSE: CustomColor.RED.value
         }
         return _color_map[self]
 

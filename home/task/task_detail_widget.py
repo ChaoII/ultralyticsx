@@ -44,8 +44,14 @@ class TaskDetailWidget(ContentWidgetBase):
         self._connect_signals_and_slots()
 
     def _connect_signals_and_slots(self):
+        self.dataset_select_widget.dataset_selected_clicked.connect(self._on_dataset_selected_clicked)
         self.train_parameter_widget.parameter_config_finished.connect(self._on_parameter_config_finished)
         self.train_parameter_widget.start_training_clicked.connect(self._on_start_training_clicked)
+
+    def _on_dataset_selected_clicked(self, task_info):
+        self.tool_box.set_current_item(self.train_parameter_widget)
+        self.train_parameter_widget.setEnabled(True)
+        self.model_train_widget.set_task_info(task_info)
 
     def _on_parameter_config_finished(self, task_info: TaskInfo):
         self.tool_box.set_current_item(self.model_train_widget)
@@ -87,7 +93,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(True)
             self.model_train_widget.setEnabled(False)
-        if task_info.task_status == TaskStatus.CFG_FINISHED or task_info.task_status == TaskStatus.TRAINING:
+        if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             self.tool_box.set_current_item(self.model_train_widget)
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(True)

@@ -1,6 +1,6 @@
-from PySide6.QtCore import Slot, Qt
+from PySide6.QtCore import Slot, Qt, Signal
 from PySide6.QtWidgets import QWidget, QFormLayout
-from qfluentwidgets import BodyLabel, ComboBox, themeColor
+from qfluentwidgets import BodyLabel, ComboBox, themeColor, PrimaryPushButton, FluentIcon
 from sqlalchemy import and_
 
 from common.collapsible_widget import CollapsibleWidgetItem
@@ -11,6 +11,8 @@ from models.models import Dataset, Task
 
 
 class DatasetSelectWidget(CollapsibleWidgetItem):
+    dataset_selected_clicked = Signal(TaskInfo)
+
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Select Dataset"), parent=parent)
         self.content_widget = QWidget(self)
@@ -24,7 +26,8 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self.lbl_train_set_num = BodyLabel()
         self.lbl_val_set_num = BodyLabel()
         self.lbl_test_set_num = BodyLabel()
-
+        self.btn_next = PrimaryPushButton(icon=FluentIcon.RIGHT_ARROW, text=self.tr("Next"))
+        self.btn_next.setFixedWidth(150)
         self.dataset_detail = QWidget(self)
         self.fly = QFormLayout(self.dataset_detail)
         self.fly.setHorizontalSpacing(40)
@@ -33,6 +36,7 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self.fly.addRow(BodyLabel(self.tr("training set: "), self), self.lbl_train_set_num)
         self.fly.addRow(BodyLabel(self.tr("validation set: "), self), self.lbl_val_set_num)
         self.fly.addRow(BodyLabel(self.tr("test set: "), self), self.lbl_test_set_num)
+        self.fly.addRow("", self.btn_next)
         self.fly_content = QFormLayout(self.content_widget)
         self.fly_content.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.fly_content.setHorizontalSpacing(40)
@@ -77,7 +81,10 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
             self._is_select_dataset_connect_signal_and_slots = True
 
     def _connect_signals_and_slots(self):
-        pass
+        self.btn_next.clicked.connect(self._on_next_btn_clicked)
+
+    def _on_next_btn_clicked(self):
+        self.dataset_selected_clicked.emit(self._task_info)
 
     def _load_current_dataset_info(self):
         self.dataset_detail.setVisible(True)
@@ -95,8 +102,6 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
 
     @Slot(int)
     def _on_select_dataset_index_changed(self, index: int):
-        print(index)
-        print(self.cmb_select_dataset.isPressed)
         if index != -1:
             with db_session() as session:
                 task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()

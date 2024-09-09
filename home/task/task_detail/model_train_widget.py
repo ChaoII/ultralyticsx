@@ -10,11 +10,32 @@ from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_process_bar import CustomProcessBar
 from common.db_helper import db_session
-from common.utils import log_info, log_warning, format_log
+from common.utils import log_info, log_warning, format_log, log_error
 from home.task.model_trainer_thread.classify_trainer_thread import ModelTrainThread
 from home.types import TaskInfo, TaskStatus
 from model_train.train_parameter_widget import TrainParameter
 from models.models import Task
+from common.utils import logger
+
+
+class RichTextLogWidget(TextEdit):
+    def __init__(self, save_file_path: Path | None = None, parent=None):
+        super().__init__(parent=parent)
+        self._save_file_path = save_file_path
+
+    def set_log_path(self, log_path: Path):
+        self._save_file_path = log_path
+
+    def save_to_log(self, save_file_path: Path | None = None):
+        if save_file_path:
+            with open(self._save_file_path, "a", encoding="utf8") as f:
+                f.write(self.toPlainText())
+        else:
+            if self._save_file_path:
+                with open(self._save_file_path, "a", encoding="utf8") as f:
+                    f.write(self.toPlainText())
+            else:
+                raise EOFError(self.tr("save to log must point a file path"))
 
 
 class ModelTrainWidget(CollapsibleWidgetItem):
@@ -37,7 +58,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.hly_btn.addWidget(self.btn_stop_train)
         self.hly_btn.addWidget(self.psb_train)
 
-        self.ted_train_log = TextEdit()
+        self.ted_train_log = RichTextLogWidget()
         font = QFont("Courier")  # "Courier" 是常见的等宽字体
         font.setWeight(QFont.Weight.Normal)
         font.setPixelSize(14)
@@ -67,11 +88,29 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def set_task_info(self, task_info: TaskInfo):
         self._task_info = task_info
+        self.ted_train_log.set_log_path(self._task_info.task_dir / "train_log.html")
         if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             self._train_config_file_path = task_info.task_dir / "train_config.yaml"
             with open(self._train_config_file_path, "r", encoding="utf8") as f:
                 self._train_parameter = yaml.safe_load(f)
             self.psb_train.set_max_value(self._train_parameter["epochs"])
+        if task_info.task_status.value >= TaskStatus.TRAINING.value:
+            log_file_path = self._task_info.task_dir / "train_log.html"
+            if not log_file_path.exists():
+                return
+            with open(log_file_path, "r", encoding="utf8") as f:
+                self.ted_train_log.setPlainText(f.read())
+
+        if task_info.task_status == TaskStatus.TRAINING:
+            self.btn_start_train.setEnabled(False)
+            self.btn_stop_train.setEnabled(True)
+        # 如果
+        if task_info.task_status.value > TaskStatus.TRAINING.value:
+            self.btn_start_train.setEnabled(True)
+            self.btn_stop_train.setEnabled(False)
+            self.btn_start_train.setText(self.tr("Resume train"))
+        if task_info.task_status == TaskStatus.TRN_FINISHED:
+            self.btn_start_train.setText(self.tr("Retrain"))
 
     def _initial_model(self):
         self.model_thread = ModelTrainThread(self._train_parameter)
@@ -90,6 +129,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def start_train(self):
         with open(self._train_config_file_path, "r", encoding="utf8") as f:
             self._train_parameter = yaml.safe_load(f)
+        self.ted_train_log.clear()
         self._initial_model()
         self._turn_widget_enable_status()
         # 设置状态工具栏并显示
@@ -106,67 +146,53 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot()
     def _on_start_train_clicked(self):
-        if self._task_info.task_status == TaskStatus.TRAINING and not self._train_finished:
+        if self._task_info.task_status >= TaskStatus.TRAINING and not self._train_finished:
             with open(self._train_config_file_path, "w", encoding="utf8") as f:
                 if self._last_model:
-                    self._train_parameter["resume"] = True
-                    self._train_parameter["model"] = self._last_model
+                    self._train_parameter["resume"] = self._last_model
                     yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
             log_warning(f"{self.tr('model will resume to train, last model is: ')}{self._last_model}")
         self.start_train()
 
     @Slot()
     def _on_stop_train_clicked(self):
-        self.stop_train_model_signal.emit()
+        self.model_thread.stop_train()
         self.model_thread.quit()
         self.model_thread.wait()
-        self._turn_widget_enable_status()
         # 立即刷新界面
         QCoreApplication.processEvents()
         self.ted_train_log.append(
-            log_warning(f"model training stopped by user, click start training to resume training process"))
+            log_warning(self.tr("model training stopped by user, click start training to resume training process")))
 
     @Slot(str)
     def on_handle_epoch_start(self, split: str):
-        self.ted_train_log.append(format_log(split, color="#0b80e0"))
+        self.ted_train_log.append(split)
 
     @Slot(str)
     def on_handle_batch_end(self, metrics: str):
-        cursor = self.ted_train_log.textCursor()
-        # 获取 QTextEdit 的文本内容
-        document = self.ted_train_log.document()
-        # 获取最后一行的行号
-        last_block = document.lastBlock()
-        # 获取最后一行的内容
-        last_line_text = last_block.text()
-        # 如果最后一行有内容，则删除最后一行
-        if last_line_text:
-            cursor.movePosition(cursor.MoveOperation.End)  # 移动到文本末尾
-            cursor.movePosition(cursor.MoveOperation.StartOfLine, cursor.MoveMode.KeepAnchor)  # 选择最后一行
-            cursor.removeSelectedText()
-            # 删除末尾的换行符
-            cursor.deletePreviousChar()
-        self.ted_train_log.setTextCursor(cursor)
-        self.ted_train_log.append(format_log(metrics, color="#0b80e0"))
+        self.ted_train_log.append(metrics)
 
     @Slot(int, str)
     def on_handle_epoch_end(self, epoch: int, last_model: str):
         self._last_model = last_model
         self.psb_train.set_value(epoch)
+        self.ted_train_log.save_to_log()
 
     @Slot(str)
     def on_handle_fit_epoch_end(self, format_metrics: str):
-        self.ted_train_log.append(format_log(format_metrics, color="#0b80e0"))
+        self.ted_train_log.append(format_metrics)
 
     @Slot(int)
     def on_handle_train_end(self, cur_epoch: int):
         self._turn_widget_enable_status()
         self._train_finished = True
+        log_error(str(cur_epoch))
         if cur_epoch == self._train_parameter["epochs"]:
             self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
+            self._task_info.task_status = TaskStatus.TRN_FINISHED
         else:
             self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
-        self._task_info.task_status = TaskStatus.TRN_FINISHED
+            self._task_info.task_status = TaskStatus.TRN_PAUSE
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
@@ -175,3 +201,4 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.tr('Model training is completed!') + ' 😆')
         self.state_tool_tip.setState(True)
         self.state_tool_tip = None
+        self.ted_train_log.save_to_log()

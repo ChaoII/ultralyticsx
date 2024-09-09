@@ -13,6 +13,7 @@ from sqlalchemy import and_
 from common.collapsible_widget import CollapsibleWidgetItem, ToolBox
 from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
+from common.file_select_widget import FileSelectWidget
 from common.model_type_widget import ModelType
 from dataset.types import DatasetStatus
 from home.options import model_type_list_map
@@ -298,13 +299,11 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.spb_close_mosaic.setValue(10)
         self.spb_close_mosaic.setFixedWidth(300)
 
-        self.btn_resume = SwitchButton()
-        self.btn_resume.setChecked(False)
-        self.btn_resume.setFixedHeight(33)
+        self.cus_resume = FileSelectWidget()
 
         self.btn_amp = SwitchButton()
         self.btn_amp.setChecked(True)
-        self.btn_resume.setFixedHeight(33)
+        self.btn_amp.setFixedHeight(33)
 
         self.spb_fraction = CompactDoubleSpinBox()
         self.spb_fraction.setValue(1.0)
@@ -356,7 +355,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("rect: "), self, ), self.btn_rect)
         self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("cos_lr: "), self, ), self.btn_cos_lr)
         self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("close_mosaic: "), self, ), self.spb_close_mosaic)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("resume: "), self, ), self.btn_resume)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("resume: "), self, ), self.cus_resume)
         self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("amp: "), self, ), self.btn_amp)
         self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("fraction: "), self, ), self.spb_fraction)
         self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("profile: "), self, ), self.btn_profile)
@@ -654,7 +653,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             rect=self.btn_rect.isChecked(),
             cos_lr=self.btn_cos_lr.isChecked(),
             close_mosaic=self.spb_close_mosaic.value(),
-            resume=self.btn_resume.isChecked(),
+            resume=self.cus_resume.text(),
             amp=self.btn_amp.isChecked(),
             fraction=self.spb_fraction.value(),
             profile=self.btn_profile.isChecked(),
@@ -747,7 +746,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             self.btn_rect.setChecked(parameter["rect"])
             self.btn_cos_lr.setChecked(parameter["cos_lr"])
             self.spb_close_mosaic.setValue(parameter["close_mosaic"])
-            self.btn_resume.setChecked(parameter["resume"])
+            self.cus_resume.setText(parameter["resume"])
             self.btn_amp.setChecked(parameter["amp"])
             self.spb_fraction.setValue(parameter["fraction"])
             self.btn_profile.setChecked(parameter["profile"])
