@@ -1,23 +1,48 @@
+import pickle
 from pathlib import Path
 
+import pyqtgraph as pg
 import yaml
-from PySide6.QtCore import Slot, Signal, QCoreApplication
-from PySide6.QtGui import QTextCursor, QFont, QColor
+from PySide6.QtCore import Slot, QCoreApplication
+from PySide6.QtGui import QFont, QColor, Qt
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy)
 from pyqtgraph import PlotItem
 from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
-    TextEdit, StateToolTip, FluentStyleSheet
-import pyqtgraph as pg
+    TextEdit, StateToolTip, isDarkTheme, InfoBar, InfoBarPosition
 
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_process_bar import CustomProcessBar
 from common.db_helper import db_session
-from common.utils import log_info, log_warning, format_log, log_error
+from common.utils import log_info, log_warning, log_error
 from home.task.model_trainer_thread.classify_trainer_thread import ModelTrainThread
 from home.types import TaskInfo, TaskStatus
-from model_train.train_parameter_widget import TrainParameter
 from models.models import Task
-from common.utils import logger
+from settings import cfg
+
+
+class GraphicsLayoutWidget(pg.GraphicsLayoutWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cfg.themeChanged.connect(self._on_theme_changed)
+        self._background_colors: list[QColor] = [QColor("#ffffff"), QColor("#2f3441")]
+
+    def set_background(self, light_color, dark_color):
+        self._background_colors = [light_color, dark_color]
+
+    def _on_theme_changed(self):
+        if isDarkTheme():
+            self.setBackground(self._background_colors[1])
+        else:
+            self.setBackground(self._background_colors[0])
+
+    def addPlot(self, *args, **kwargs) -> PlotItem:
+        return super().addPlot(*args, **kwargs)
+
+    def nextRow(self, *args, **kwargs):
+        super().nextRow(*args, **kwargs)
+
+    def clear(self):
+        super().clear()
 
 
 class RichTextLogWidget(TextEdit):
@@ -41,7 +66,6 @@ class RichTextLogWidget(TextEdit):
 
 
 class ModelTrainWidget(CollapsibleWidgetItem):
-    stop_train_model_signal = Signal()
 
     def __init__(self, parent=None):
         super(ModelTrainWidget, self).__init__(self.tr("▌Model training"), parent=parent)
@@ -61,10 +85,9 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.hly_btn.addWidget(self.psb_train)
 
         pg.setConfigOptions(antialias=True)
-        self.pg_widget = pg.GraphicsLayoutWidget(show=False)
+        self.pg_widget = GraphicsLayoutWidget(show=False)
         self.pg_widget.setBackground(QColor("#2f3441"))
-        self.pg_widget.setFixedHeight(300)
-
+        self.pg_widget.setFixedHeight(600)
         self._loss_plots = dict()
         self._metric_plots = dict()
 
@@ -88,36 +111,44 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._train_parameter: dict = dict()
         self._train_config_file_path: Path | None = None
         self.model_thread = None
-        self._train_finished = True
-        self._resume = False
         self._last_model = ""
         self._task_info: TaskInfo | None = None
 
         self._loss_data = dict()
         self._metric_data = dict()
 
-        self._train_step = 0
+        self._is_resume = False
 
     def _connect_signals_and_slot(self):
         self.btn_start_train.clicked.connect(self._on_start_train_clicked)
         self.btn_stop_train.clicked.connect(self._on_stop_train_clicked)
 
     def set_task_info(self, task_info: TaskInfo):
+        self.ted_train_log.clear()
+        self._loss_data = dict()
+        self._metric_data = dict()
         self._task_info = task_info
         self.ted_train_log.set_log_path(self._task_info.task_dir / "train_log.txt")
         if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             self._train_config_file_path = task_info.task_dir / "train_config.yaml"
             with open(self._train_config_file_path, "r", encoding="utf8") as f:
                 self._train_parameter = yaml.safe_load(f)
+                if self._train_parameter["resume"]:
+                    self._is_resume = True
             self.psb_train.set_max_value(self._train_parameter["epochs"])
         if task_info.task_status.value > TaskStatus.TRAINING.value:
             log_file_path = self._task_info.task_dir / "train_log.txt"
-            if not log_file_path.exists():
-                return
-            with open(log_file_path, "r", encoding="utf8") as f:
-                self.ted_train_log.setPlainText(f.read())
-                v_scroll_bar = self.ted_train_log.verticalScrollBar()
-                v_scroll_bar.setValue(v_scroll_bar.maximum())
+            if log_file_path.exists():
+                with open(log_file_path, "r", encoding="utf8") as f:
+                    self.ted_train_log.setPlainText(f.read())
+                    v_scroll_bar = self.ted_train_log.verticalScrollBar()
+                    v_scroll_bar.setValue(v_scroll_bar.maximum())
+            # 加载训练历史数据
+            train_history_path = self._task_info.task_dir / "train_history"
+            if train_history_path.exists():
+                train_history = pickle.load(open(train_history_path, "rb"))
+                self._loss_data, self._metric_data = train_history
+                self.load_graph()
 
         if task_info.task_status == TaskStatus.TRAINING:
             self.btn_start_train.setEnabled(False)
@@ -130,9 +161,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         if task_info.task_status == TaskStatus.TRN_FINISHED:
             self.btn_start_train.setText(self.tr("Retrain"))
 
-    def _initial_model(self):
+    def _initial_model(self) -> bool:
         self.model_thread = ModelTrainThread(self._train_parameter)
-
         self.model_thread.train_start_signal.connect(self.on_handle_train_start)
         self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
         self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
@@ -140,9 +170,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
         self.model_thread.train_end_signal.connect(self.on_handle_train_end)
         self.model_thread.model_train_failed.connect(self._on_model_train_failed)
-        self.stop_train_model_signal.connect(self.model_thread.stop_train)
-        self.model_thread.init_model_trainer()
-        self._train_finished = False
+        return self.model_thread.init_model_trainer()
 
     def _enable_btn_to_train_status(self):
         self.btn_start_train.setEnabled(True)
@@ -153,12 +181,11 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.btn_stop_train.setEnabled(True)
 
     def start_train(self):
-        with open(self._train_config_file_path, "r", encoding="utf8") as f:
-            self._train_parameter = yaml.safe_load(f)
-
-        # todo 清空graphics
-        self.ted_train_log.clear()
-        self._initial_model()
+        self.set_task_info(self._task_info)
+        init_status = self._initial_model()
+        if not init_status:
+            return
+        print("------------------------", init_status)
         self._disable_btn_to_train_status()
         # 设置状态工具栏并显示
         self.state_tool_tip = StateToolTip(
@@ -174,12 +201,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot()
     def _on_start_train_clicked(self):
-        if self._task_info.task_status.value >= TaskStatus.TRAINING.value and not self._train_finished:
-            with open(self._train_config_file_path, "w", encoding="utf8") as f:
-                if self._last_model:
-                    self._train_parameter["resume"] = self._last_model
-                    yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-            log_warning(f"{self.tr('model will resume to train, last model is: ')}{self._last_model}")
         self.start_train()
 
     @Slot()
@@ -192,23 +213,30 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.ted_train_log.append(
             log_warning(self.tr("model training stopped by user, click start training to resume training process")))
 
-    @Slot(dict)
-    def on_handle_train_start(self, metrics: dict, loss_names: list):
-
-        for loss_name in loss_names:
-            self._loss_data[loss_name] = []
-            self._loss_plots[loss_name] = self.pg_widget.addPlot(title=loss_name)
-            self._loss_plots[loss_name].showGrid(x=False, y=False)
-            # self._loss_plots[loss_name].setLabel("left", "loss")
-            self._loss_plots[loss_name].showAxes(True, showValues=(True, False, False, True))
-            self._loss_plots[loss_name].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-
-        for key, value in metrics.items():
-            self._metric_data[key] = []
+    def load_graph(self):
+        self.pg_widget.clear()
+        for key, value in self._loss_data.items():
+            self._loss_plots[key] = self.pg_widget.addPlot(title=key)
+            self._loss_plots[key].showGrid(x=False, y=False)
+            self._loss_plots[key].showAxes(True, showValues=(True, False, False, True))
+            self._loss_plots[key].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+            self._loss_plots[key].plot(self._loss_data[key], name=key)
+        self.pg_widget.nextRow()
+        for key, value in self._metric_data.items():
             self._metric_plots[key] = self.pg_widget.addPlot(title=key)
             self._metric_plots[key].showGrid(x=False, y=False)
             self._metric_plots[key].showAxes(True, showValues=(True, False, False, True))
             self._metric_plots[key].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+            self._metric_plots[key].plot(self._metric_data[key], name=key)
+
+    @Slot(dict)
+    def on_handle_train_start(self, metrics: dict, loss_names: list):
+        if self._task_info.task_status.value <= TaskStatus.TRAINING.value and not self._loss_data:
+            for loss_name in loss_names:
+                self._loss_data[loss_name] = []
+            for key, value in metrics.items():
+                self._metric_data[key] = []
+        self.load_graph()
 
     @Slot(str)
     def on_handle_epoch_start(self, split: str):
@@ -218,7 +246,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def on_handle_batch_end(self, metrics: str, loss_items: dict):
         for key, value in loss_items.items():
             self._loss_data[key].append(value)
-            self._loss_plots[key].plot(self._loss_data[key], pen=(255, 0, 0), name=key)
+            self._loss_plots[key].plot(self._loss_data[key], name=key)
         self.ted_train_log.append(metrics)
 
     @Slot(int, str)
@@ -226,25 +254,29 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._last_model = last_model
         self.psb_train.set_value(epoch)
         self.ted_train_log.save_to_log()
+        # 保存训练历史记录（loss,metrics）
+        pickle.dump([self._loss_data, self._metric_data], open(self._task_info.task_dir / "train_history", "wb"))
 
     @Slot(str, dict)
     def on_handle_fit_epoch_end(self, format_metrics: str, metrics: dict):
         self.ted_train_log.append(format_metrics)
         for key, value in metrics.items():
             self._metric_data[key].append(value)
-            self._metric_plots[key].plot(self._metric_data[key], pen=(255, 0, 0), name=key)
+            self._metric_plots[key].plot(self._metric_data[key], name=key)
 
     @Slot(int)
     def on_handle_train_end(self, cur_epoch: int):
         self._enable_btn_to_train_status()
-        self._train_finished = True
         if cur_epoch == self._train_parameter["epochs"]:
             self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
             self._task_info.task_status = TaskStatus.TRN_FINISHED
         else:
             self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
             self._task_info.task_status = TaskStatus.TRN_PAUSE
-            self._train_finished = False
+        with open(self._train_config_file_path, "w", encoding="utf8") as f:
+            if self._last_model:
+                self._train_parameter["resume"] = self._last_model
+                yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
@@ -259,3 +291,20 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def _on_model_train_failed(self, error_info: str):
         self.ted_train_log.append(log_error(error_info))
         self.ted_train_log.save_to_log()
+        self._enable_btn_to_train_status()
+        self.state_tool_tip.setState(True)
+        self.state_tool_tip = None
+        self._task_info.task_status = TaskStatus.TRAIN_FAILED
+        with db_session() as session:
+            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task.task_status = self._task_info.task_status.value
+
+        InfoBar.error(
+            title='',
+            content=self.tr("Model train failed"),
+            orient=Qt.Orientation.Vertical,  # 内容太长时可使用垂直布局
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=-1,
+            parent=self.parent().parent()
+        )

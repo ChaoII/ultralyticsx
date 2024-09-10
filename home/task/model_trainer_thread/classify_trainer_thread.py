@@ -22,7 +22,7 @@ class ModelTrainThread(QThread):
         self._stop = False
         self._metrics_num = -1
 
-    def init_model_trainer(self):
+    def init_model_trainer(self) -> bool:
         try:
             self.trainer = ClassificationTrainer(overrides=self._train_parameters)
             self.trainer.add_callback("on_train_start", self._on_train_start)
@@ -32,10 +32,12 @@ class ModelTrainThread(QThread):
             self.trainer.add_callback("on_train_epoch_end", self._on_train_epoch_end)
             self.trainer.add_callback("on_fit_epoch_end", self._on_fit_epoch_end)
             self.trainer.add_callback("on_train_end", self._on_train_end)
+            return True
         except FileNotFoundError as e:
             error_msg = self.tr(
                 "Resume checkpoint not found. Please pass a valid checkpoint to resume from,i.e model=path/to/last.pt")
             self.model_train_failed.emit(error_msg)
+            return False
 
     def _on_train_start(self, trainer):
         metrics = trainer.metrics

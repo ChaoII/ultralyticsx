@@ -159,7 +159,6 @@ class DeviceWidget(QWidget):
 
 
 class BatchWidget(QWidget):
-    batch_changed = Signal(bool, int)
 
     def __init__(self, parent=None):
 
@@ -219,6 +218,59 @@ class BatchWidget(QWidget):
         self._batch_size = value
 
 
+class PretrainWidget(QWidget):
+
+    def __init__(self, parent=None):
+
+        super().__init__(parent=parent)
+
+        self.hly_content = QHBoxLayout(self)
+        self.hly_content.setContentsMargins(0, 0, 0, 0)
+        self.btn_pretrain = SwitchButton()
+        self.btn_pretrain.setOnText(self.tr("Yes"))
+        self.btn_pretrain.setOffText(self.tr("No"))
+        self.btn_pretrain.setChecked(False)
+
+        self.fs_model_path = FileSelectWidget(is_dir=False)
+        self.fs_model_path.setFixedWidth(600)
+        self.fs_model_path.setHidden(True)
+
+        self.hly_content.addWidget(self.btn_pretrain)
+        self.hly_content.addWidget(self.fs_model_path)
+        self.hly_content.addStretch(1)
+
+        self.btn_pretrain.checkedChanged.connect(self._on_pretrain_status_changed)
+        self.fs_model_path.path_selected.connect(self._on_path_selected)
+        self._is_use_pretrain = False
+        self._pretrain_model_path: Path | None = None
+
+    def get_value(self):
+        return [self._is_use_pretrain, self._pretrain_model_path]
+
+    def set_value(self, use_status: bool, file_path: Path):
+        if use_status:
+            self.btn_pretrain.setChecked(True)
+            self.fs_model_path.setText(file_path.resolve().as_posix())
+            self.fs_model_path.setHidden(False)
+        else:
+            self.btn_pretrain.setChecked(False)
+            self.fs_model_path.setText("")
+            self.fs_model_path.setHidden(True)
+
+    @Slot(bool)
+    def _on_pretrain_status_changed(self, use_pretrain: bool):
+        # 自动batch
+        if use_pretrain:
+            self.fs_model_path.setHidden(False)
+        else:
+            self.fs_model_path.setHidden(True)
+        self._is_use_pretrain = use_pretrain
+
+    @Slot(str)
+    def _on_path_selected(self, file_path: str):
+        self._pretrain_model_path = Path(file_path)
+
+
 class FixWidthBodyLabel(BodyLabel):
     def __init__(self, text: str, parent=None):
         super().__init__(parent=parent)
@@ -239,12 +291,8 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
         self.cus_device = DeviceWidget()
 
-        self.btn_pre_trained = SwitchButton()
-        self.btn_pre_trained.setOffText(self.tr("Close"))
-        self.btn_pre_trained.setOnText("Open")
-        self.btn_pre_trained.setFixedWidth(200)
-        self.btn_pre_trained.setFixedHeight(33)
-        self.btn_pre_trained.setChecked(True)
+        self.cus_pretrained = PretrainWidget()
+        self.cus_pretrained.setFixedHeight(33)
 
         self.spb_epochs = CompactSpinBox()
         self.spb_epochs.setRange(0, 10000)
@@ -341,7 +389,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_train_setting2.setHorizontalSpacing(40)
         self.fly_train_setting2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("Pre-trained: "), self), self.btn_pre_trained)
+        # self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("Pre-trained: "), self), self.btn_pre_trained)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("epochs: "), self, ), self.spb_epochs)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("time: "), self, ), self.spb_time)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("patience: "), self, ), self.spb_patience)
@@ -368,6 +416,10 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_model_name.setHorizontalSpacing(40)
         self.fly_model_name.addRow(FixWidthBodyLabel(self.tr("model name: "), self), self.cmb_model_name)
 
+        self.fly_use_pretrain = QFormLayout()
+        self.fly_use_pretrain.setHorizontalSpacing(40)
+        self.fly_use_pretrain.addRow(FixWidthBodyLabel(self.tr("use pretrain: "), self), self.cus_pretrained)
+
         self.fly_device = QFormLayout()
         self.fly_device.setHorizontalSpacing(40)
         self.fly_device.addRow(FixWidthBodyLabel(self.tr("device: "), self), self.cus_device)
@@ -383,6 +435,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.hly_train_setting.addStretch(1)
 
         self.vly_train_setting.addLayout(self.fly_model_name)
+        self.vly_train_setting.addLayout(self.fly_use_pretrain)
         self.vly_train_setting.addLayout(self.fly_device)
         self.vly_train_setting.addLayout(self.hly_train_setting)
 
@@ -635,8 +688,15 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             data = (Path(task.dataset.dataset_dir) / "split").resolve().as_posix()
 
+        model = self.cmb_model_name.currentText()
+        pretrained = False
+        if self.cus_pretrained.get_value()[0]:
+            pretrained = True
+            if self.cus_pretrained.get_value()[1]:
+                model = self.cus_pretrained.get_value()[1].resolve().as_posix()
+
         parameter = dict(
-            model=self.cmb_model_name.currentText(),
+            model=model,
             data=data,
             epochs=self.spb_epochs.value(),
             time=self.spb_time.value(),
@@ -645,7 +705,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             imgsz=self.spb_image_size.value(),
             device=device,
             workers=self.spb_workers.value(),
-            pretrained=self.btn_pre_trained.isChecked(),
+            pretrained=pretrained,
             optimizer=self.cmb_optimizer.currentText(),
             verbose=self.btn_verbose.isChecked(),
             seed=self.spb_seed.value(),
@@ -738,7 +798,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             self.spb_image_size.setValue(parameter["imgsz"])
             self.cus_device.set_value(parameter["device"])
             self.spb_workers.setValue(parameter["workers"])
-            self.btn_pre_trained.setChecked(parameter["pretrained"])
+            self.cus_pretrained.set_value(parameter["pretrained"], parameter["model"])
             self.cmb_optimizer.setCurrentText(parameter["optimizer"])
             self.btn_verbose.setChecked(parameter["verbose"])
             self.spb_seed.setValue(parameter["seed"])
