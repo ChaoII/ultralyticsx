@@ -118,27 +118,26 @@ class DeviceWidget(QWidget):
         self.cb7.check_state_changed.connect(self._gpu_changed)
 
         self._gpus: list[int] = [0]
-        self._current_device = Devices.CPU
 
     def get_current_device(self):
-        return [self._current_device, self._gpus]
+        return [self.cmb_devices.currentData(), self._gpus]
 
     def set_value(self, value):
         if isinstance(value, str):
-            self.cmb_devices.setText(value.upper())
+            self.cmb_devices.setText(Devices(value).name)
             self.check_box_group.setHidden(True)
         elif isinstance(value, int | list):
             self.check_box_group.setHidden(False)
             if isinstance(value, int):
                 value = [value]
-            self.cmb_devices.setText("GPU")
+            self.cmb_devices.setCurrentIndex(1)
             for i in range(8):
                 if i in value:
                     self._cb_device_map[i].setChecked(True)
                 else:
                     self._cb_device_map[i].setChecked(False)
         else:
-            raise ValueError(f"expect 'cpu','mps',0,[0,1,2...],but get value{value}")
+            raise ValueError(self.tr(f"expect 'cpu','mps',0,[0,1,2...], but get value{value}"))
 
     @Slot(Qt.CheckState, str)
     def _gpu_changed(self, status: Qt.CheckState, text: str):

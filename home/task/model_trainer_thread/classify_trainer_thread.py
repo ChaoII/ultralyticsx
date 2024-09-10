@@ -30,8 +30,10 @@ class ModelTrainThread(QThread):
             self.trainer.add_callback("on_train_epoch_end", self._on_train_epoch_end)
             self.trainer.add_callback("on_fit_epoch_end", self._on_fit_epoch_end)
             self.trainer.add_callback("on_train_end", self._on_train_end)
-        except Exception as e:
-            self.model_train_failed.emit(e)
+        except FileNotFoundError as e:
+            error_msg = self.tr(
+                "Resume checkpoint not found. Please pass a valid checkpoint to resume from,i.e model=path/to/last.pt")
+            self.model_train_failed.emit(error_msg)
 
     def _on_train_epoch_start(self, trainer):
         loss_names = trainer.loss_names
@@ -97,10 +99,11 @@ class ModelTrainThread(QThread):
         self.train_end_signal.emit(trainer.epoch + 1)
 
     def run(self):
-        try:
-            self.trainer.train()
-        except Exception as e:
-            self.model_train_failed.emit(e)
+        if self.trainer:
+            try:
+                self.trainer.train()
+            except Exception as e:
+                self.model_train_failed.emit(str(e))
 
     @Slot()
     def stop_train(self):

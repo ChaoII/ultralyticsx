@@ -81,7 +81,7 @@ class FileSelectWidget(LineEdit):
             current_text = filename
 
         self._is_hovered = False
-        if not current_text:
-            return
+        # if not current_text:
+        #     return
         self.path_selected.emit(current_text)
         self.setText(current_text)

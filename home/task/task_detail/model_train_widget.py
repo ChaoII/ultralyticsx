@@ -116,8 +116,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def _initial_model(self):
         self.model_thread = ModelTrainThread(self._train_parameter)
-        self.model_thread.init_model_trainer()
-        self._train_finished = False
+
         self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
         self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
         self.model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
@@ -125,17 +124,23 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.model_thread.train_end_signal.connect(self.on_handle_train_end)
         self.model_thread.model_train_failed.connect(self._on_model_train_failed)
         self.stop_train_model_signal.connect(self.model_thread.stop_train)
+        self.model_thread.init_model_trainer()
+        self._train_finished = False
 
-    def _turn_widget_enable_status(self):
-        self.btn_start_train.setEnabled(not self.btn_start_train.isEnabled())
-        self.btn_stop_train.setEnabled(not self.btn_stop_train.isEnabled())
+    def _enable_btn_to_train_status(self):
+        self.btn_start_train.setEnabled(True)
+        self.btn_stop_train.setEnabled(False)
+
+    def _disable_btn_to_train_status(self):
+        self.btn_start_train.setEnabled(False)
+        self.btn_stop_train.setEnabled(True)
 
     def start_train(self):
         with open(self._train_config_file_path, "r", encoding="utf8") as f:
             self._train_parameter = yaml.safe_load(f)
         self.ted_train_log.clear()
         self._initial_model()
-        self._turn_widget_enable_status()
+        self._disable_btn_to_train_status()
         # 设置状态工具栏并显示
         self.state_tool_tip = StateToolTip(
             self.tr('The model is currently being trained '), self.tr('Please wait patiently'), self.window())
@@ -188,9 +193,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot(int)
     def on_handle_train_end(self, cur_epoch: int):
-        self._turn_widget_enable_status()
+        self._enable_btn_to_train_status()
         self._train_finished = True
-        log_error(str(cur_epoch))
         if cur_epoch == self._train_parameter["epochs"]:
             self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
             self._task_info.task_status = TaskStatus.TRN_FINISHED
@@ -210,6 +214,5 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot(str)
     def _on_model_train_failed(self, error_info: str):
-        self._on_stop_train_clicked()
         self.ted_train_log.append(log_error(error_info))
         self.ted_train_log.save_to_log()

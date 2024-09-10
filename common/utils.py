@@ -65,14 +65,20 @@ def log_info(message: str, color: str = "green", apply_rich_text=False) -> str:
     return format_str
 
 
-def log_warning(message: str, color: str = "yellow") -> str:
-    format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'WARNING':<8} | {message}</span>"
+def log_warning(message: str, color: str = "yellow", apply_rich_text=False) -> str:
+    if apply_rich_text:
+        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'WARNING':<8} | {message}</span>"
+    else:
+        format_str = f"{NOW} | {'WARNING':<8} | {message}"
     logger.warning(message)
     return format_str
 
 
-def log_error(message: str, color: str = "red") -> str:
-    format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'ERROR':<8} | {message}</span>"
+def log_error(message: str, color: str = "red", apply_rich_text=False) -> str:
+    if apply_rich_text:
+        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'ERROR':<8} | {message}</span>"
+    else:
+        format_str = f"{NOW} | {'ERROR':<8} | {message}"
     logger.error(message)
     return format_str
 
