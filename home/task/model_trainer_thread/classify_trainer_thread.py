@@ -6,10 +6,11 @@ from common.utils import log_info
 
 
 class ModelTrainThread(QThread):
+    train_start_signal = Signal(dict, list)
     train_epoch_start_signal = Signal(str)
-    train_batch_end_signal = Signal(str)
+    train_batch_end_signal = Signal(str, dict)
     train_epoch_end_signal = Signal(int, str)
-    fit_epoch_end_signal = Signal(str)
+    fit_epoch_end_signal = Signal(str, dict)
     train_end_signal = Signal(int)
     model_train_failed = Signal(str)
 
@@ -24,6 +25,7 @@ class ModelTrainThread(QThread):
     def init_model_trainer(self):
         try:
             self.trainer = ClassificationTrainer(overrides=self._train_parameters)
+            self.trainer.add_callback("on_train_start", self._on_train_start)
             self.trainer.add_callback("on_train_batch_start", self._on_train_batch_start)
             self.trainer.add_callback("on_train_batch_end", self._on_train_batch_end)
             self.trainer.add_callback("on_train_epoch_start", self._on_train_epoch_start)
@@ -34,6 +36,11 @@ class ModelTrainThread(QThread):
             error_msg = self.tr(
                 "Resume checkpoint not found. Please pass a valid checkpoint to resume from,i.e model=path/to/last.pt")
             self.model_train_failed.emit(error_msg)
+
+    def _on_train_start(self, trainer):
+        metrics = trainer.metrics
+        loss_names = trainer.loss_names
+        self.train_start_signal.emit(metrics, loss_names)
 
     def _on_train_epoch_start(self, trainer):
         loss_names = trainer.loss_names
@@ -65,7 +72,7 @@ class ModelTrainThread(QThread):
             metric_value = f"{metric_value: .4f}"
             metrics_info += f"{metric_value:<15}"
         metrics_info += "\n"
-        self.fit_epoch_end_signal.emit(metrics_info)
+        self.fit_epoch_end_signal.emit(metrics_info, metrics)
 
     def _on_train_batch_start(self, trainer):
         trainer.interrupt = self._stop
@@ -93,7 +100,12 @@ class ModelTrainThread(QThread):
                 loss_item_value = f"{loss_item:.4f}"
                 batch_info += f"{loss_item_value:<10}"
         batch_info += f"{progress_bar_text}"
-        self.train_batch_end_signal.emit(batch_info)
+        loss_names = trainer.loss_names
+        if loss_items.ndim == 0:
+            result_dict = {loss_names[0]: loss_items}
+        else:
+            result_dict = {k: k for k, v in zip(loss_names, loss_items)}
+        self.train_batch_end_signal.emit(batch_info, result_dict)
 
     def _on_train_end(self, trainer):
         self.train_end_signal.emit(trainer.epoch + 1)

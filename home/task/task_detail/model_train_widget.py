@@ -2,10 +2,12 @@ from pathlib import Path
 
 import yaml
 from PySide6.QtCore import Slot, Signal, QCoreApplication
-from PySide6.QtGui import QTextCursor, QFont
-from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout)
+from PySide6.QtGui import QTextCursor, QFont, QColor
+from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy)
+from pyqtgraph import PlotItem
 from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
-    TextEdit, StateToolTip
+    TextEdit, StateToolTip, FluentStyleSheet
+import pyqtgraph as pg
 
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_process_bar import CustomProcessBar
@@ -58,6 +60,14 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.hly_btn.addWidget(self.btn_stop_train)
         self.hly_btn.addWidget(self.psb_train)
 
+        pg.setConfigOptions(antialias=True)
+        self.pg_widget = pg.GraphicsLayoutWidget(show=False)
+        self.pg_widget.setBackground(QColor("#2f3441"))
+        self.pg_widget.setFixedHeight(300)
+
+        self._loss_plots = dict()
+        self._metric_plots = dict()
+
         self.ted_train_log = RichTextLogWidget()
         font = QFont("Courier")  # "Courier" 是常见的等宽字体
         font.setWeight(QFont.Weight.Normal)
@@ -68,6 +78,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.ted_train_log.setMinimumHeight(450)
 
         self.vly.addLayout(self.hly_btn)
+        self.vly.addWidget(self.pg_widget)
         self.vly.addWidget(self.ted_train_log)
 
         self.btn_stop_train.setEnabled(False)
@@ -81,6 +92,11 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._resume = False
         self._last_model = ""
         self._task_info: TaskInfo | None = None
+
+        self._loss_data = dict()
+        self._metric_data = dict()
+
+        self._train_step = 0
 
     def _connect_signals_and_slot(self):
         self.btn_start_train.clicked.connect(self._on_start_train_clicked)
@@ -117,6 +133,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def _initial_model(self):
         self.model_thread = ModelTrainThread(self._train_parameter)
 
+        self.model_thread.train_start_signal.connect(self.on_handle_train_start)
         self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
         self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
         self.model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
@@ -138,6 +155,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def start_train(self):
         with open(self._train_config_file_path, "r", encoding="utf8") as f:
             self._train_parameter = yaml.safe_load(f)
+
+        # todo 清空graphics
         self.ted_train_log.clear()
         self._initial_model()
         self._disable_btn_to_train_status()
@@ -173,12 +192,33 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.ted_train_log.append(
             log_warning(self.tr("model training stopped by user, click start training to resume training process")))
 
+    @Slot(dict)
+    def on_handle_train_start(self, metrics: dict, loss_names: list):
+
+        for loss_name in loss_names:
+            self._loss_data[loss_name] = []
+            self._loss_plots[loss_name] = self.pg_widget.addPlot(title=loss_name)
+            self._loss_plots[loss_name].showGrid(x=False, y=False)
+            # self._loss_plots[loss_name].setLabel("left", "loss")
+            self._loss_plots[loss_name].showAxes(True, showValues=(True, False, False, True))
+            self._loss_plots[loss_name].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+
+        for key, value in metrics.items():
+            self._metric_data[key] = []
+            self._metric_plots[key] = self.pg_widget.addPlot(title=key)
+            self._metric_plots[key].showGrid(x=False, y=False)
+            self._metric_plots[key].showAxes(True, showValues=(True, False, False, True))
+            self._metric_plots[key].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+
     @Slot(str)
     def on_handle_epoch_start(self, split: str):
         self.ted_train_log.append(split)
 
-    @Slot(str)
-    def on_handle_batch_end(self, metrics: str):
+    @Slot(str, float)
+    def on_handle_batch_end(self, metrics: str, loss_items: dict):
+        for key, value in loss_items.items():
+            self._loss_data[key].append(value)
+            self._loss_plots[key].plot(self._loss_data[key], pen=(255, 0, 0), name=key)
         self.ted_train_log.append(metrics)
 
     @Slot(int, str)
@@ -187,9 +227,12 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.psb_train.set_value(epoch)
         self.ted_train_log.save_to_log()
 
-    @Slot(str)
-    def on_handle_fit_epoch_end(self, format_metrics: str):
+    @Slot(str, dict)
+    def on_handle_fit_epoch_end(self, format_metrics: str, metrics: dict):
         self.ted_train_log.append(format_metrics)
+        for key, value in metrics.items():
+            self._metric_data[key].append(value)
+            self._metric_plots[key].plot(self._metric_data[key], pen=(255, 0, 0), name=key)
 
     @Slot(int)
     def on_handle_train_end(self, cur_epoch: int):
