@@ -11,7 +11,7 @@ class ModelTrainThread(QThread):
     train_batch_end_signal = Signal(str, dict)
     train_epoch_end_signal = Signal(int, str)
     fit_epoch_end_signal = Signal(str, dict)
-    train_end_signal = Signal(int)
+    train_end_signal = Signal(int,bool)
     model_train_failed = Signal(str)
 
     def __init__(self, train_parameters: dict):
@@ -110,7 +110,7 @@ class ModelTrainThread(QThread):
         self.train_batch_end_signal.emit(batch_info, result_dict)
 
     def _on_train_end(self, trainer):
-        self.train_end_signal.emit(trainer.epoch + 1)
+        self.train_end_signal.emit(trainer.epoch + 1, self._stop)
 
     def run(self):
         if self.trainer:

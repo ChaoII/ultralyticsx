@@ -250,7 +250,7 @@ class PretrainWidget(QWidget):
     def set_value(self, use_status: bool, file_path: Path):
         if use_status:
             self.btn_pretrain.setChecked(True)
-            self.fs_model_path.setText(file_path.resolve().as_posix())
+            self.fs_model_path.setText(file_path)
             self.fs_model_path.setHidden(False)
         else:
             self.btn_pretrain.setChecked(False)

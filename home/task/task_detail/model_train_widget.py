@@ -23,6 +23,7 @@ from settings import cfg
 class GraphicsLayoutWidget(pg.GraphicsLayoutWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        pg.setConfigOptions(antialias=True)
         cfg.themeChanged.connect(self._on_theme_changed)
         self._background_colors: list[QColor] = [QColor("#ffffff"), QColor("#2f3441")]
 
@@ -125,6 +126,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def set_task_info(self, task_info: TaskInfo):
         self.ted_train_log.clear()
+        self.pg_widget.clear()
         self._loss_data = dict()
         self._metric_data = dict()
         self._task_info = task_info
@@ -133,10 +135,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self._train_config_file_path = task_info.task_dir / "train_config.yaml"
             with open(self._train_config_file_path, "r", encoding="utf8") as f:
                 self._train_parameter = yaml.safe_load(f)
-                if self._train_parameter["resume"]:
-                    self._is_resume = True
             self.psb_train.set_max_value(self._train_parameter["epochs"])
-        if task_info.task_status.value > TaskStatus.TRAINING.value:
+        if TaskStatus.TRAINING.value < task_info.task_status.value != TaskStatus.TRN_FINISHED.value:
             log_file_path = self._task_info.task_dir / "train_log.txt"
             if log_file_path.exists():
                 with open(log_file_path, "r", encoding="utf8") as f:
@@ -185,7 +185,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         init_status = self._initial_model()
         if not init_status:
             return
-        print("------------------------", init_status)
         self._disable_btn_to_train_status()
         # 设置状态工具栏并显示
         self.state_tool_tip = StateToolTip(
@@ -217,14 +216,14 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.pg_widget.clear()
         for key, value in self._loss_data.items():
             self._loss_plots[key] = self.pg_widget.addPlot(title=key)
-            self._loss_plots[key].showGrid(x=False, y=False)
+            self._loss_plots[key].showGrid(x=True, y=True)
             self._loss_plots[key].showAxes(True, showValues=(True, False, False, True))
             self._loss_plots[key].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
             self._loss_plots[key].plot(self._loss_data[key], name=key)
         self.pg_widget.nextRow()
         for key, value in self._metric_data.items():
             self._metric_plots[key] = self.pg_widget.addPlot(title=key)
-            self._metric_plots[key].showGrid(x=False, y=False)
+            self._metric_plots[key].showGrid(x=True, y=True)
             self._metric_plots[key].showAxes(True, showValues=(True, False, False, True))
             self._metric_plots[key].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
             self._metric_plots[key].plot(self._metric_data[key], name=key)
@@ -264,19 +263,21 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self._metric_data[key].append(value)
             self._metric_plots[key].plot(self._metric_data[key], name=key)
 
-    @Slot(int)
-    def on_handle_train_end(self, cur_epoch: int):
+    @Slot(int, bool)
+    def on_handle_train_end(self, cur_epoch: int, manual_stop: bool):
         self._enable_btn_to_train_status()
-        if cur_epoch == self._train_parameter["epochs"]:
+        if cur_epoch == self._train_parameter["epochs"] and not manual_stop:
             self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
             self._task_info.task_status = TaskStatus.TRN_FINISHED
+            self._train_parameter["resume"] = ""
+            self.btn_start_train.setText(self.tr("Retrain"))
         else:
             self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
             self._task_info.task_status = TaskStatus.TRN_PAUSE
-        with open(self._train_config_file_path, "w", encoding="utf8") as f:
             if self._last_model:
                 self._train_parameter["resume"] = self._last_model
-                yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        with open(self._train_config_file_path, "w", encoding="utf8") as f:
+            yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
