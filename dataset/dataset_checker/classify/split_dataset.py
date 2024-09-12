@@ -28,7 +28,7 @@ def load_split_dataset(dataset_dir: Path):
 def split_dataset(dataset_dir: Path, split_rates: list):
     dataset_map = dict()
     label_list = []
-    for item in dataset_dir.iterdir():
+    for item in (dataset_dir / "src").iterdir():
         if item.is_dir():
             if item.name == "split":
                 continue

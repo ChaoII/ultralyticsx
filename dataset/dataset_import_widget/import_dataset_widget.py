@@ -89,7 +89,7 @@ class ImportDatasetWidget(QWidget):
                           duration=2000, parent=self)
             return False
         else:
-            copy_tree(self._selected_dataset_dir, self._dataset_info.dataset_dir)
+            copy_tree(self._selected_dataset_dir, Path(self._dataset_info.dataset_dir) / "src")
             # 跳转拆分界面并且显示数据
             return True
 

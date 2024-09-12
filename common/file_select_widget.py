@@ -21,7 +21,8 @@ class FileSelectWidget(LineEdit):
         self._icon_rect = None
         self._text_rect = None
         self._is_hovered = False
-        self.is_dir = is_dir
+        self._is_dir = is_dir
+        self._cur_path = ""
         self.setReadOnly(True)
 
     def setIconSize(self, size: QSize):
@@ -71,17 +72,27 @@ class FileSelectWidget(LineEdit):
             self._open_directory()
 
     def _open_directory(self):
-        current_text = ""
-        if self.is_dir:
-            directory = QFileDialog.getExistingDirectory(self, self.tr("Select a directory"), Path.home().as_posix())
-            if directory:
-                current_text = directory
+        if Path(self._cur_path).exists():
+            if Path(self._cur_path).is_dir():
+                _dir = self._cur_path
+                self._is_dir = True
+            elif Path(self._cur_path).is_file():
+                _dir = Path(self._cur_path).parent.resolve().as_posix()
+                self._is_dir = False
+            else:
+                _dir = Path.home().as_posix()
         else:
-            filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), ".")
-            current_text = filename
+            _dir = Path.home().as_posix()
+        if self._is_dir:
+            directory = QFileDialog.getExistingDirectory(self, self.tr("Select a directory"), _dir)
+            if directory:
+                self._cur_path = directory
+        else:
+            filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir)
+            self._cur_path = filename
 
         self._is_hovered = False
         # if not current_text:
         #     return
-        self.path_selected.emit(current_text)
-        self.setText(current_text)
+        self.path_selected.emit(self._cur_path)
+        self.setText(self._cur_path)

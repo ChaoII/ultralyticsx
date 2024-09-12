@@ -26,8 +26,8 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self.lbl_train_set_num = BodyLabel()
         self.lbl_val_set_num = BodyLabel()
         self.lbl_test_set_num = BodyLabel()
-        self.btn_next = PrimaryPushButton(icon=FluentIcon.RIGHT_ARROW, text=self.tr("Next"))
-        self.btn_next.setFixedWidth(150)
+        self.btn_next_step = PrimaryPushButton(icon=FluentIcon.RIGHT_ARROW, text=self.tr("Next"))
+        self.btn_next_step.setFixedWidth(100)
         self.dataset_detail = QWidget(self)
         self.fly = QFormLayout(self.dataset_detail)
         self.fly.setHorizontalSpacing(40)
@@ -36,7 +36,7 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self.fly.addRow(BodyLabel(self.tr("training set: "), self), self.lbl_train_set_num)
         self.fly.addRow(BodyLabel(self.tr("validation set: "), self), self.lbl_val_set_num)
         self.fly.addRow(BodyLabel(self.tr("test set: "), self), self.lbl_test_set_num)
-        self.fly.addRow("", self.btn_next)
+        self.fly.addRow("", self.btn_next_step)
         self.fly_content = QFormLayout(self.content_widget)
         self.fly_content.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.fly_content.setHorizontalSpacing(40)
@@ -81,9 +81,9 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
             self._is_select_dataset_connect_signal_and_slots = True
 
     def _connect_signals_and_slots(self):
-        self.btn_next.clicked.connect(self._on_next_btn_clicked)
+        self.btn_next_step.clicked.connect(self._on_next_step_clicked)
 
-    def _on_next_btn_clicked(self):
+    def _on_next_step_clicked(self):
         self.dataset_selected_clicked.emit(self._task_info)
 
     def _load_current_dataset_info(self):

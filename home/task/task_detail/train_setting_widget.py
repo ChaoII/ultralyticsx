@@ -316,6 +316,14 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.spb_image_size.setValue(640)
         self.spb_image_size.setFixedWidth(300)
 
+        self.spb_save_period = CompactSpinBox()
+        self.spb_save_period.setRange(-100, 100)
+        self.spb_save_period.setValue(-1)
+        self.spb_save_period.setFixedWidth(300)
+
+        self.fs_save_dir = FileSelectWidget()
+        self.fs_save_dir.setFixedWidth(300)
+
         self.spb_workers = CompactSpinBox()
         self.spb_workers.setRange(0, 8)
         self.spb_workers.setValue(0)
@@ -395,6 +403,8 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("patience: "), self, ), self.spb_patience)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("batch: "), self, ), self.cus_batch)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("image_size: "), self, ), self.spb_image_size)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("save_period: "), self, ), self.spb_save_period)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("save_dir: "), self, ), self.fs_save_dir)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("workers: "), self, ), self.spb_workers)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("optimizer: "), self, ), self.cmb_optimizer)
         self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("verbose: "), self, ), self.btn_verbose)
@@ -639,7 +649,7 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.layout().addWidget(self.content_widget)
 
         self.vly_content = QVBoxLayout(self.content_widget)
-        self.vly_content.setContentsMargins(20, 0, 20, 0)
+        self.vly_content.setContentsMargins(20, 0, 20, 20)
         self.vly_content.setSpacing(30)
         self.title_train_settings = StrongBodyLabel(self.tr("▶ Train settings"), self)
         self.title_train_settings.setTextColor(themeColor(), themeColor())
@@ -654,10 +664,8 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.vly_content.addWidget(self.title_data_augment)
         self.vly_content.addLayout(self.hly_data_augment)
 
-        self.btn_start_train = PrimaryPushButton(FluentIcon.PLAY, self.tr("Start training"))
-        self.btn_start_train.setFixedWidth(150)
+        self.btn_start_train = PrimaryPushButton(FluentIcon.PLAY, self.tr("train"))
         self.btn_save = PushButton(FluentIcon.SAVE, self.tr("Save"))
-        self.btn_save.setFixedWidth(150)
         self.hly_btn = QHBoxLayout()
         self.hly_btn.addWidget(self.btn_start_train)
         self.hly_btn.addWidget(self.btn_save)
@@ -703,6 +711,8 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             patience=self.spb_patience.value(),
             batch=self.cus_batch.value(),
             imgsz=self.spb_image_size.value(),
+            save_period=self.spb_save_period.value(),  # (int) Save checkpoint every x epochs (disabled if < 1)
+            save_dir=self.fs_save_dir.text(),
             device=device,
             workers=self.spb_workers.value(),
             pretrained=pretrained,
@@ -783,19 +793,32 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self._task_info = task_info
         self._init_parameter_on_widget()
 
+    @Slot(bool)
+    def update_train_btn_status(self, is_training: bool):
+        if is_training:
+            self.btn_start_train.setEnabled(False)
+            self.btn_save.setEnabled(False)
+        else:
+            self.btn_start_train.setEnabled(True)
+            self.btn_save.setEnabled(True)
+
     def _init_parameter_on_widget(self):
         self.cmb_model_name.clear()
         self.cmb_model_name.addItems(model_type_list_map[self._task_info.model_type])
         if self._task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             with open(self._task_info.task_dir / "train_config.yaml", 'r', encoding="utf8") as file:
                 parameter = yaml.safe_load(file)
-            self.cmb_model_name.setCurrentText(parameter["model"]),
 
+            self.cmb_model_name.setCurrentText(parameter["model"]),
             self.spb_epochs.setValue(parameter["epochs"])
             self.spb_time.setValue(parameter["time"])
             self.spb_patience.setValue(parameter["patience"])
             self.cus_batch.set_value(parameter["batch"])
             self.spb_image_size.setValue(parameter["imgsz"])
+            self.spb_save_period.setValue(parameter["save_period"]),
+            self.fs_save_dir.setText(parameter["save_dir"]),
+            if parameter["save_dir"]:
+                self.fs_save_dir.setText(self._task_info.task_dir.resolve().as_posix())
             self.cus_device.set_value(parameter["device"])
             self.spb_workers.setValue(parameter["workers"])
             self.cus_pretrained.set_value(parameter["pretrained"], parameter["model"])

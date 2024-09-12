@@ -14,8 +14,8 @@ class TaskStatus(Enum):
     # training
     TRAINING = 3
     TRAIN_FAILED = 4
-    TRN_FINISHED = 5
-    TRN_PAUSE = 6
+    TRN_PAUSE = 5
+    TRN_FINISHED = 6
 
     @property
     def color(self):

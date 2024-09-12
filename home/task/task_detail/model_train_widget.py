@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pyqtgraph as pg
 import yaml
-from PySide6.QtCore import Slot, QCoreApplication
+from PySide6.QtCore import Slot, QCoreApplication, Signal
 from PySide6.QtGui import QFont, QColor, Qt
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy)
 from pyqtgraph import PlotItem
@@ -21,6 +21,7 @@ from settings import cfg
 
 
 class GraphicsLayoutWidget(pg.GraphicsLayoutWidget):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         pg.setConfigOptions(antialias=True)
@@ -67,6 +68,8 @@ class RichTextLogWidget(TextEdit):
 
 
 class ModelTrainWidget(CollapsibleWidgetItem):
+    is_training_signal = Signal(bool)
+    next_step_clicked = Signal(TaskInfo)
 
     def __init__(self, parent=None):
         super(ModelTrainWidget, self).__init__(self.tr("▌Model training"), parent=parent)
@@ -76,13 +79,17 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.vly.setContentsMargins(20, 0, 20, 0)
         self.set_content_widget(self.content_widget)
 
-        self.btn_start_train = PrimaryPushButton(FluentIcon.PLAY, self.tr("start train"))
-        self.btn_stop_train = PushButton(FluentIcon.PAUSE, self.tr("stop train"))
+        self.btn_start_train = PrimaryPushButton(FluentIcon.PLAY, self.tr("Start train"))
+        self.btn_stop_train = PushButton(FluentIcon.PAUSE, self.tr("Stop train"))
+        self.btn_next_step = PushButton(FluentIcon.RINGER, self.tr("Next step"))
+        self.btn_next_step.setVisible(False)
+        self.btn_stop_train.setEnabled(False)
         self.psb_train = CustomProcessBar()
         self.psb_train.set_value(0)
         self.hly_btn = QHBoxLayout()
         self.hly_btn.addWidget(self.btn_start_train)
         self.hly_btn.addWidget(self.btn_stop_train)
+        self.hly_btn.addWidget(self.btn_next_step)
         self.hly_btn.addWidget(self.psb_train)
 
         pg.setConfigOptions(antialias=True)
@@ -105,7 +112,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.vly.addWidget(self.pg_widget)
         self.vly.addWidget(self.ted_train_log)
 
-        self.btn_stop_train.setEnabled(False)
         self.state_tool_tip = None
 
         self._connect_signals_and_slot()
@@ -123,10 +129,12 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def _connect_signals_and_slot(self):
         self.btn_start_train.clicked.connect(self._on_start_train_clicked)
         self.btn_stop_train.clicked.connect(self._on_stop_train_clicked)
+        self.btn_next_step.clicked.connect(self._on_next_step_clicked)
 
     def set_task_info(self, task_info: TaskInfo):
         self.ted_train_log.clear()
         self.pg_widget.clear()
+        self.btn_next_step.setVisible(False)
         self._loss_data = dict()
         self._metric_data = dict()
         self._task_info = task_info
@@ -136,7 +144,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             with open(self._train_config_file_path, "r", encoding="utf8") as f:
                 self._train_parameter = yaml.safe_load(f)
             self.psb_train.set_max_value(self._train_parameter["epochs"])
-        if TaskStatus.TRAINING.value < task_info.task_status.value != TaskStatus.TRN_FINISHED.value:
+        if TaskStatus.TRAINING.value <= task_info.task_status.value != TaskStatus.TRN_FINISHED.value:
             log_file_path = self._task_info.task_dir / "train_log.txt"
             if log_file_path.exists():
                 with open(log_file_path, "r", encoding="utf8") as f:
@@ -160,6 +168,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.btn_start_train.setText(self.tr("Resume train"))
         if task_info.task_status == TaskStatus.TRN_FINISHED:
             self.btn_start_train.setText(self.tr("Retrain"))
+            self.btn_next_step.setVisible(True)
 
     def _initial_model(self) -> bool:
         self.model_thread = ModelTrainThread(self._train_parameter)
@@ -197,6 +206,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
+        if self._task_info.task_status != TaskStatus.TRN_FINISHED:
+            self.btn_next_step.setVisible(False)
 
     @Slot()
     def _on_start_train_clicked(self):
@@ -211,6 +222,10 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         QCoreApplication.processEvents()
         self.ted_train_log.append(
             log_warning(self.tr("model training stopped by user, click start training to resume training process")))
+
+    @Slot()
+    def _on_next_step_clicked(self):
+        self.next_step_clicked.emit(self._task_info)
 
     def load_graph(self):
         self.pg_widget.clear()
@@ -236,6 +251,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             for key, value in metrics.items():
                 self._metric_data[key] = []
         self.load_graph()
+        self.is_training_signal.emit(True)
 
     @Slot(str)
     def on_handle_epoch_start(self, split: str):
@@ -288,6 +304,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.state_tool_tip = None
         self.ted_train_log.save_to_log()
 
+        self.is_training_signal.emit(False)
+
     @Slot(str)
     def _on_model_train_failed(self, error_info: str):
         self.ted_train_log.append(log_error(error_info))
@@ -309,3 +327,4 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             duration=-1,
             parent=self.parent().parent()
         )
+        self.is_training_signal.emit(False)

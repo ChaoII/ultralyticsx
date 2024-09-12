@@ -1,6 +1,8 @@
 import pandas as pd
 import pickle
 
+import ultralytics
+
 df_path = r"C:\Users\84945\Desktop\ultralytics_workspace\dataset\D000000\split_cache1"
 
 dataset_frame: pd.DataFrame = pickle.load(open(df_path, "rb"))
@@ -16,3 +18,9 @@ simples = df_mode.loc[:, ["image_path", "label"]].to_records(index=False)
 pickle.dump(dataset_frame, open(df_path, "wb"))
 
 print(simples)
+
+ultralytics.cfg.get_save_dir = lambda: print("========================")
+
+from ultralytics.cfg import get_save_dir
+
+get_save_dir()
