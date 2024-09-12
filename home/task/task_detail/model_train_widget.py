@@ -1,5 +1,6 @@
 import pickle
 from pathlib import Path
+from typing import Optional
 
 import pyqtgraph as pg
 import yaml
@@ -15,6 +16,7 @@ from common.custom_process_bar import CustomProcessBar
 from common.db_helper import db_session
 from common.utils import log_info, log_warning, log_error
 from home.task.model_trainer_thread.classify_trainer_thread import ModelTrainThread
+from home.task.task_threads import TaskThreadMap
 from home.types import TaskInfo, TaskStatus
 from models.models import Task
 from settings import cfg
@@ -117,12 +119,13 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._connect_signals_and_slot()
         self._train_parameter: dict = dict()
         self._train_config_file_path: Path | None = None
-        self.model_thread = None
         self._last_model = ""
         self._task_info: TaskInfo | None = None
 
         self._loss_data = dict()
         self._metric_data = dict()
+
+        self._task_thread_map = TaskThreadMap()
 
         self._is_resume = False
 
@@ -170,16 +173,33 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.btn_start_train.setText(self.tr("Retrain"))
             self.btn_next_step.setVisible(True)
 
-    def _initial_model(self) -> bool:
-        self.model_thread = ModelTrainThread(self._train_parameter)
-        self.model_thread.train_start_signal.connect(self.on_handle_train_start)
-        self.model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
-        self.model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
-        self.model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
-        self.model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
-        self.model_thread.train_end_signal.connect(self.on_handle_train_end)
-        self.model_thread.model_train_failed.connect(self._on_model_train_failed)
-        return self.model_thread.init_model_trainer()
+        if task_info.task_status == TaskStatus.TRAINING:
+            if task_info.task_id in self._task_thread_map.get_thread_map():
+                if not self._task_thread_map.get_thread_by_task_id(task_info.task_id).isRunning():
+                    task_thread = self._initial_model_thread()
+                    if task_thread:
+                        self._task_thread_map.update_thread({task_info.task_id: task_thread})
+            else:
+                log_error("TaskStatus is TRAINING, but task thread not existed")
+        else:
+            if task_info.task_id not in self._task_thread_map.get_thread_map():
+                task_thread = self._initial_model_thread()
+                if task_thread:
+                    self._task_thread_map.update_thread({task_info.task_id: task_thread})
+
+    def _initial_model_thread(self) -> Optional[ModelTrainThread]:
+        model_thread = ModelTrainThread(self._train_parameter)
+        model_thread.train_start_signal.connect(self.on_handle_train_start)
+        model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
+        model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
+        model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
+        model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
+        model_thread.train_end_signal.connect(self.on_handle_train_end)
+        model_thread.model_train_failed.connect(self._on_model_train_failed)
+        if model_thread.init_model_trainer():
+            return model_thread
+        else:
+            return None
 
     def _enable_btn_to_train_status(self):
         self.btn_start_train.setEnabled(True)
@@ -191,9 +211,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def start_train(self):
         self.set_task_info(self._task_info)
-        init_status = self._initial_model()
-        if not init_status:
-            return
+
         self._disable_btn_to_train_status()
         # 设置状态工具栏并显示
         self.state_tool_tip = StateToolTip(
@@ -201,7 +219,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.state_tool_tip.move(self.state_tool_tip.getSuitablePos())
         self.state_tool_tip.show()
 
-        self.model_thread.start()
+        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).start()
         self._task_info.task_status = TaskStatus.TRAINING
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
@@ -215,9 +233,9 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     @Slot()
     def _on_stop_train_clicked(self):
-        self.model_thread.stop_train()
-        self.model_thread.quit()
-        self.model_thread.wait()
+        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).stop_train()
+        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).quit()
+        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).wait()
         # 立即刷新界面
         QCoreApplication.processEvents()
         self.ted_train_log.append(
