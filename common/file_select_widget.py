@@ -65,6 +65,10 @@ class FileSelectWidget(LineEdit):
             self.setCursor(Qt.CursorShape.ArrowCursor)
         self.update()
 
+    def setText(self, text: str) -> None:
+        self._cur_path = text
+        super().setText(text)
+
     def mousePressEvent(self, event: QMouseEvent) -> None:
         super().mousePressEvent(event)
         mouse_pos = event.pos()

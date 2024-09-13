@@ -70,7 +70,7 @@ class RichTextLogWidget(TextEdit):
 
 
 class ModelTrainWidget(CollapsibleWidgetItem):
-    is_training_signal = Signal(bool)
+    is_training_signal = Signal(bool, str)
     next_step_clicked = Signal(TaskInfo)
 
     def __init__(self, parent=None):
@@ -122,12 +122,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._last_model = ""
         self._task_info: TaskInfo | None = None
 
-        self._loss_data = dict()
-        self._metric_data = dict()
-
         self._task_thread_map = TaskThreadMap()
-
-        self._is_resume = False
+        self._current_thread: ModelTrainThread | None = None
 
     def _connect_signals_and_slot(self):
         self.btn_start_train.clicked.connect(self._on_start_train_clicked)
@@ -135,35 +131,35 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.btn_next_step.clicked.connect(self._on_next_step_clicked)
 
     def set_task_info(self, task_info: TaskInfo):
+        self._task_info = task_info
+        if task_info.task_status.value < TaskStatus.CFG_FINISHED.value:
+            return
         self.ted_train_log.clear()
         self.pg_widget.clear()
         self.btn_next_step.setVisible(False)
-        self._loss_data = dict()
-        self._metric_data = dict()
-        self._task_info = task_info
-        self.ted_train_log.set_log_path(self._task_info.task_dir / "train_log.txt")
         if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             self._train_config_file_path = task_info.task_dir / "train_config.yaml"
-            with open(self._train_config_file_path, "r", encoding="utf8") as f:
-                self._train_parameter = yaml.safe_load(f)
+            self._train_parameter = yaml.safe_load(open(self._train_config_file_path, "r", encoding="utf8"))
             self.psb_train.set_max_value(self._train_parameter["epochs"])
-        if TaskStatus.TRAINING.value <= task_info.task_status.value != TaskStatus.TRN_FINISHED.value:
-            log_file_path = self._task_info.task_dir / "train_log.txt"
+            log_file_path = self._task_info.task_dir / "train.log"
             if log_file_path.exists():
-                with open(log_file_path, "r", encoding="utf8") as f:
-                    self.ted_train_log.setPlainText(f.read())
-                    v_scroll_bar = self.ted_train_log.verticalScrollBar()
-                    v_scroll_bar.setValue(v_scroll_bar.maximum())
+                self.ted_train_log.setPlainText(open(log_file_path, "r", encoding="utf8").read())
+                v_scroll_bar = self.ted_train_log.verticalScrollBar()
+                v_scroll_bar.setValue(v_scroll_bar.maximum())
             # 加载训练历史数据
-            train_history_path = self._task_info.task_dir / "train_history"
-            if train_history_path.exists():
-                train_history = pickle.load(open(train_history_path, "rb"))
-                self._loss_data, self._metric_data = train_history
-                self.load_graph()
+            train_loss_path = self._task_info.task_dir / "train_loss"
+            train_metric_path = self._task_info.task_dir / "train_metric"
+
+            if train_loss_path.exists() and train_metric_path.exists():
+                train_loss = pickle.load(open(train_loss_path, "rb"))
+                train_metric = pickle.load(open(train_metric_path, "rb"))
+                self.psb_train.set_value(len(list(train_metric.values())[1]))
+                self.load_graph(train_loss, train_metric)
 
         if task_info.task_status == TaskStatus.TRAINING:
             self.btn_start_train.setEnabled(False)
             self.btn_stop_train.setEnabled(True)
+
         # 如果
         if task_info.task_status.value > TaskStatus.TRAINING.value:
             self.btn_start_train.setEnabled(True)
@@ -173,30 +169,16 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.btn_start_train.setText(self.tr("Retrain"))
             self.btn_next_step.setVisible(True)
 
-        if task_info.task_status == TaskStatus.TRAINING:
-            if task_info.task_id in self._task_thread_map.get_thread_map():
-                if not self._task_thread_map.get_thread_by_task_id(task_info.task_id).isRunning():
-                    task_thread = self._initial_model_thread()
-                    if task_thread:
-                        self._task_thread_map.update_thread({task_info.task_id: task_thread})
-            else:
-                log_error("TaskStatus is TRAINING, but task thread not existed")
-        else:
-            if task_info.task_id not in self._task_thread_map.get_thread_map():
-                task_thread = self._initial_model_thread()
-                if task_thread:
-                    self._task_thread_map.update_thread({task_info.task_id: task_thread})
-
     def _initial_model_thread(self) -> Optional[ModelTrainThread]:
         model_thread = ModelTrainThread(self._train_parameter)
         model_thread.train_start_signal.connect(self.on_handle_train_start)
-        model_thread.train_epoch_start_signal.connect(self.on_handle_epoch_start)
-        model_thread.train_batch_end_signal.connect(self.on_handle_batch_end)
-        model_thread.train_epoch_end_signal.connect(self.on_handle_epoch_end)
-        model_thread.fit_epoch_end_signal.connect(self.on_handle_fit_epoch_end)
-        model_thread.train_end_signal.connect(self.on_handle_train_end)
+        model_thread.train_epoch_end.connect(self.on_handle_epoch_end)
+        model_thread.model_train_end.connect(self.on_handle_train_end)
         model_thread.model_train_failed.connect(self._on_model_train_failed)
-        if model_thread.init_model_trainer():
+        model_thread.log_changed_signal.connect(self._on_log_changed)
+        model_thread.loss_changed_signal.connect(self._on_loss_changed)
+        model_thread.metric_changed_signal.connect(self._on_metric_changed)
+        if model_thread.init_model_trainer(self._task_info):
             return model_thread
         else:
             return None
@@ -211,6 +193,18 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def start_train(self):
         self.set_task_info(self._task_info)
+        if self._task_info.task_status == TaskStatus.TRAINING:
+            if self._task_info.task_id in self._task_thread_map.get_thread_map():
+                self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
+            else:
+                log_error("status is training but not find the train thread")
+                return
+        else:
+            if self._task_info.task_id not in self._task_thread_map.get_thread_map():
+                task_thread = self._initial_model_thread()
+                if task_thread:
+                    self._task_thread_map.update_thread({self._task_info.task_id: task_thread})
+                    self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
 
         self._disable_btn_to_train_status()
         # 设置状态工具栏并显示
@@ -218,8 +212,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.tr('The model is currently being trained '), self.tr('Please wait patiently'), self.window())
         self.state_tool_tip.move(self.state_tool_tip.getSuitablePos())
         self.state_tool_tip.show()
-
-        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).start()
+        self._current_thread.start()
         self._task_info.task_status = TaskStatus.TRAINING
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
@@ -227,15 +220,35 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         if self._task_info.task_status != TaskStatus.TRN_FINISHED:
             self.btn_next_step.setVisible(False)
 
+    @Slot(str)
+    def _on_log_changed(self, message: str):
+        if self.sender() != self._current_thread:
+            return
+        self.ted_train_log.append(message)
+
+    @Slot(dict)
+    def _on_loss_changed(self, loss_data: dict):
+        if self.sender() != self._current_thread:
+            return
+        for key, value in loss_data.items():
+            self._loss_plots[key].plot(value, name=key)
+
+    @Slot(dict)
+    def _on_metric_changed(self, metric_data: dict):
+        if self.sender() != self._current_thread:
+            return
+        for key, value in metric_data.items():
+            self._metric_plots[key].plot(value, name=key)
+
     @Slot()
     def _on_start_train_clicked(self):
         self.start_train()
 
     @Slot()
     def _on_stop_train_clicked(self):
-        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).stop_train()
-        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).quit()
-        self._task_thread_map.get_thread_by_task_id(self._task_info.task_id).wait()
+        self._current_thread.stop_train()
+        self._current_thread.quit()
+        self._current_thread.wait()
         # 立即刷新界面
         QCoreApplication.processEvents()
         self.ted_train_log.append(
@@ -245,89 +258,65 @@ class ModelTrainWidget(CollapsibleWidgetItem):
     def _on_next_step_clicked(self):
         self.next_step_clicked.emit(self._task_info)
 
-    def load_graph(self):
+    def load_graph(self, loss_data: dict, metric_data: dict):
         self.pg_widget.clear()
-        for key, value in self._loss_data.items():
+        for key, value in loss_data.items():
             self._loss_plots[key] = self.pg_widget.addPlot(title=key)
             self._loss_plots[key].showGrid(x=True, y=True)
             self._loss_plots[key].showAxes(True, showValues=(True, False, False, True))
             self._loss_plots[key].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-            self._loss_plots[key].plot(self._loss_data[key], name=key)
+            self._loss_plots[key].plot(loss_data[key], name=key)
         self.pg_widget.nextRow()
-        for key, value in self._metric_data.items():
+        for key, value in metric_data.items():
             self._metric_plots[key] = self.pg_widget.addPlot(title=key)
             self._metric_plots[key].showGrid(x=True, y=True)
             self._metric_plots[key].showAxes(True, showValues=(True, False, False, True))
             self._metric_plots[key].setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-            self._metric_plots[key].plot(self._metric_data[key], name=key)
+            self._metric_plots[key].plot(metric_data[key], name=key)
 
     @Slot(dict)
-    def on_handle_train_start(self, metrics: dict, loss_names: list):
-        if self._task_info.task_status.value <= TaskStatus.TRAINING.value and not self._loss_data:
-            for loss_name in loss_names:
-                self._loss_data[loss_name] = []
-            for key, value in metrics.items():
-                self._metric_data[key] = []
-        self.load_graph()
-        self.is_training_signal.emit(True)
-
-    @Slot(str)
-    def on_handle_epoch_start(self, split: str):
-        self.ted_train_log.append(split)
-
-    @Slot(str, float)
-    def on_handle_batch_end(self, metrics: str, loss_items: dict):
-        for key, value in loss_items.items():
-            self._loss_data[key].append(value)
-            self._loss_plots[key].plot(self._loss_data[key], name=key)
-        self.ted_train_log.append(metrics)
+    def on_handle_train_start(self, loss_data: dict, metric_data: dict):
+        if self.sender() != self._current_thread:
+            return
+        self.load_graph(loss_data, metric_data)
+        self.is_training_signal.emit(True, self._task_info.task_id)
 
     @Slot(int, str)
-    def on_handle_epoch_end(self, epoch: int, last_model: str):
-        self._last_model = last_model
+    def on_handle_epoch_end(self, epoch: int):
+        if self.sender() != self._current_thread:
+            return
+        self._last_model = self._current_thread.get_last_model()
         self.psb_train.set_value(epoch)
-        self.ted_train_log.save_to_log()
         # 保存训练历史记录（loss,metrics）
-        pickle.dump([self._loss_data, self._metric_data], open(self._task_info.task_dir / "train_history", "wb"))
 
-    @Slot(str, dict)
-    def on_handle_fit_epoch_end(self, format_metrics: str, metrics: dict):
-        self.ted_train_log.append(format_metrics)
-        for key, value in metrics.items():
-            self._metric_data[key].append(value)
-            self._metric_plots[key].plot(self._metric_data[key], name=key)
+    @Slot(TaskInfo)
+    def on_handle_train_end(self, task_info: TaskInfo):
+        if self.sender() == self._current_thread:
+            self._enable_btn_to_train_status()
+            if task_info.task_status == TaskStatus.TRN_FINISHED:
+                self.btn_start_train.setText(self.tr("ReTrain"))
+            if task_info.task_status == TaskStatus.TRN_PAUSE:
+                self.btn_start_train.setText(self.tr("Resume"))
 
-    @Slot(int, bool)
-    def on_handle_train_end(self, cur_epoch: int, manual_stop: bool):
-        self._enable_btn_to_train_status()
-        if cur_epoch == self._train_parameter["epochs"] and not manual_stop:
-            self.ted_train_log.append(log_info(f"{self.tr('train finished')} epoch = {cur_epoch}"))
-            self._task_info.task_status = TaskStatus.TRN_FINISHED
-            self._train_parameter["resume"] = ""
-            self.btn_start_train.setText(self.tr("Retrain"))
-        else:
-            self.ted_train_log.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {cur_epoch}"))
-            self._task_info.task_status = TaskStatus.TRN_PAUSE
-            if self._last_model:
-                self._train_parameter["resume"] = self._last_model
-        with open(self._train_config_file_path, "w", encoding="utf8") as f:
-            yaml.dump(self._train_parameter, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            # 数据转换完成，显示状态信息
+            self.state_tool_tip.setContent(
+                self.tr('Model training is completed!') + ' 😆')
+            self.state_tool_tip.setState(True)
+            self.state_tool_tip = None
+            self.is_training_signal.emit(False, self._task_info.task_id)
+
+        with open(task_info.task_dir / "train_config.yaml", "w", encoding="utf8") as f:
+            yaml.dump(self.sender().get_train_parameters(), f, default_flow_style=False, allow_unicode=True,
+                      sort_keys=False)
         with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
-            task.task_status = self._task_info.task_status.value
-        # 数据转换完成，显示状态信息
-        self.state_tool_tip.setContent(
-            self.tr('Model training is completed!') + ' 😆')
-        self.state_tool_tip.setState(True)
-        self.state_tool_tip = None
-        self.ted_train_log.save_to_log()
-
-        self.is_training_signal.emit(False)
+            task: Task = session.query(Task).filter_by(task_id=task_info.task_id).first()
+            task.task_status = task_info.task_status.value
 
     @Slot(str)
     def _on_model_train_failed(self, error_info: str):
+        if self.sender() != self._current_thread:
+            return
         self.ted_train_log.append(log_error(error_info))
-        self.ted_train_log.save_to_log()
         self._enable_btn_to_train_status()
         self.state_tool_tip.setState(True)
         self.state_tool_tip = None
@@ -345,4 +334,4 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             duration=-1,
             parent=self.parent().parent()
         )
-        self.is_training_signal.emit(False)
+        self.is_training_signal.emit(False, self._task_info.task_id)

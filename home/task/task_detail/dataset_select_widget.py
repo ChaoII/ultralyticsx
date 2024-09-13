@@ -55,7 +55,9 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self._init_data()
 
     def _init_data(self):
-
+        if self._is_select_dataset_connect_signal_and_slots:
+            self.cmb_select_dataset.currentIndexChanged.disconnect(self._on_select_dataset_index_changed)
+            self._is_select_dataset_connect_signal_and_slots = False
         self.cmb_select_dataset.setIcon(self._task_info.model_type.icon.icon(color=themeColor()))
         if self._task_info.task_status.value >= TaskStatus.DS_SELECTED.value:
             self.cmb_select_dataset.addItem(self._task_info.dataset_id,
@@ -69,14 +71,12 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
             datasets: list[Dataset] = session.query(Dataset).filter(
                 and_(Dataset.model_type == self._task_info.model_type.value,
                      Dataset.dataset_status == DatasetStatus.CHECKED.value)).all()
-            if self._is_select_dataset_connect_signal_and_slots:
-                self.cmb_select_dataset.currentIndexChanged.disconnect(self._on_select_dataset_index_changed)
+
             for index, dataset in enumerate(datasets):
                 self.cmb_select_dataset.addItem(dataset.dataset_id,
                                                 self._task_info.model_type.icon.icon(color=themeColor()),
                                                 userData=dataset)
                 self.cmb_select_dataset.setCurrentIndex(-1)
-
             self.cmb_select_dataset.currentIndexChanged.connect(self._on_select_dataset_index_changed)
             self._is_select_dataset_connect_signal_and_slots = True
 

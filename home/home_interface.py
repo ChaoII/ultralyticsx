@@ -47,9 +47,6 @@ class HomeWidget(InterfaceBase):
 
     @Slot(str)
     def _on_view_task_clicked(self, task_id):
-        # self.stackedWidget.removeWidget(self.task_detail_widget)
-        # self.task_detail_widget = TaskDetailWidget()
-        # self.stackedWidget.addWidget(self.task_detail_widget)
         self.task_detail_widget.update_data(task_id)
         self.stackedWidget.setCurrentWidget(self.task_detail_widget)
         self.breadcrumbBar.addItem(self.task_detail_widget.objectName(), task_id)

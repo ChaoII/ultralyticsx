@@ -94,6 +94,9 @@ class TaskDetailWidget(ContentWidgetBase):
             task_info.model_type = ModelType(task.project.model_type)
             task_info.task_dir = Path(task.project.project_dir) / self._task_id
 
+        print("============================================================================================")
+        print(task_info.task_status)
+
         if task_info.task_status == TaskStatus.INITIALIZING:
             self.tool_box.set_current_item(self.dataset_select_widget)
             self.dataset_select_widget.setEnabled(True)
@@ -118,7 +121,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(True)
             self.model_train_widget.setEnabled(True)
-            self.model_export_widget.setEnabled(False)
+            self.model_export_widget.setEnabled(True)
 
         self.dataset_select_widget.set_task_info(task_info)
         self.train_parameter_widget.set_task_info(task_info)

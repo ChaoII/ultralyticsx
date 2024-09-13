@@ -16,11 +16,3 @@ df_mode: pd.DataFrame = dataset_frame[dataset_frame["type"] == "train"]
 simples = df_mode.loc[:, ["image_path", "label"]].to_records(index=False)
 
 pickle.dump(dataset_frame, open(df_path, "wb"))
-
-print(simples)
-
-ultralytics.cfg.get_save_dir = lambda: print("========================")
-
-from ultralytics.cfg import get_save_dir
-
-get_save_dir()

@@ -791,10 +791,14 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
     def set_task_info(self, task_info: TaskInfo):
         self._task_info = task_info
+        self.update_train_btn_status(False, self._task_info.task_id)
+        self.fs_save_dir.setText(self._task_info.task_dir.resolve().as_posix())
         self._init_parameter_on_widget()
 
-    @Slot(bool)
-    def update_train_btn_status(self, is_training: bool):
+    @Slot(bool, str)
+    def update_train_btn_status(self, is_training: bool, task_id: str):
+        if task_id != self._task_info.task_id:
+            return
         if is_training:
             self.btn_start_train.setEnabled(False)
             self.btn_save.setEnabled(False)
