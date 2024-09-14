@@ -11,10 +11,12 @@ from pyqtgraph import PlotItem
 from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
     TextEdit, StateToolTip, isDarkTheme, InfoBar, InfoBarPosition
 
+from loguru import logger
+
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_process_bar import CustomProcessBar
 from common.db_helper import db_session
-from common.utils import log_info, log_warning, log_error
+from common.utils import log_warning, log_error
 from home.task.model_trainer_thread.classify_trainer_thread import ModelTrainThread
 from home.task.task_threads import TaskThreadMap
 from home.types import TaskInfo, TaskStatus
@@ -78,7 +80,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.content_widget = QWidget(self)
         self.layout().addWidget(self.content_widget)
         self.vly = QVBoxLayout(self.content_widget)
-        self.vly.setContentsMargins(20, 0, 20, 0)
+        self.vly.setContentsMargins(20, 0, 20, 20)
         self.set_content_widget(self.content_widget)
 
         self.btn_start_train = PrimaryPushButton(FluentIcon.PLAY, self.tr("Start train"))
@@ -86,6 +88,9 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.btn_next_step = PushButton(FluentIcon.RINGER, self.tr("Next step"))
         self.btn_next_step.setVisible(False)
         self.btn_stop_train.setEnabled(False)
+        self.btn_start_train.setFixedWidth(120)
+        self.btn_stop_train.setFixedWidth(120)
+        self.btn_next_step.setFixedWidth(120)
         self.psb_train = CustomProcessBar()
         self.psb_train.set_value(0)
         self.hly_btn = QHBoxLayout()
@@ -121,6 +126,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._train_config_file_path: Path | None = None
         self._last_model = ""
         self._task_info: TaskInfo | None = None
+        # 继续训练还是重新训练
+        self._is_retrain = True
 
         self._task_thread_map = TaskThreadMap()
         self._current_thread: ModelTrainThread | None = None
@@ -134,10 +141,11 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._task_info = task_info
         if task_info.task_status.value < TaskStatus.CFG_FINISHED.value:
             return
-        self.ted_train_log.clear()
-        self.pg_widget.clear()
         self.btn_next_step.setVisible(False)
-        if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
+        if TaskStatus.TRAINING.value != task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
+            self.ted_train_log.clear()
+            self.pg_widget.clear()
+
             self._train_config_file_path = task_info.task_dir / "train_config.yaml"
             self._train_parameter = yaml.safe_load(open(self._train_config_file_path, "r", encoding="utf8"))
             self.psb_train.set_max_value(self._train_parameter["epochs"])
@@ -153,7 +161,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             if train_loss_path.exists() and train_metric_path.exists():
                 train_loss = pickle.load(open(train_loss_path, "rb"))
                 train_metric = pickle.load(open(train_metric_path, "rb"))
-                self.psb_train.set_value(len(list(train_metric.values())[1]))
+                self.psb_train.set_value(len(list(train_metric.values())[1]) - 1)
                 self.load_graph(train_loss, train_metric)
 
         if task_info.task_status == TaskStatus.TRAINING:
@@ -193,18 +201,27 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
     def start_train(self):
         self.set_task_info(self._task_info)
-        if self._task_info.task_status == TaskStatus.TRAINING:
-            if self._task_info.task_id in self._task_thread_map.get_thread_map():
-                self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
+        # if self._task_info.task_status == TaskStatus.TRAINING:
+        #     if self._task_info.task_id in self._task_thread_map.get_thread_map():
+        #         self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
+        #     else:
+        #         log_error("status is training but not find the train thread")
+        #         return
+        # else:
+        if self._task_info.task_status != TaskStatus.TRAINING:
+            if self._is_retrain:
+                self.ted_train_log.clear()
+                self.psb_train.set_value(0)
+                self.pg_widget.clear()
             else:
-                log_error("status is training but not find the train thread")
-                return
-        else:
-            if self._task_info.task_id not in self._task_thread_map.get_thread_map():
-                task_thread = self._initial_model_thread()
-                if task_thread:
-                    self._task_thread_map.update_thread({self._task_info.task_id: task_thread})
-                    self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
+                current_epoch = self._current_thread.get_current_epoch()
+
+                self.psb_train.set_value(current_epoch)
+
+            task_thread = self._initial_model_thread()
+            if task_thread:
+                self._task_thread_map.update_thread({self._task_info.task_id: task_thread})
+                self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
 
         self._disable_btn_to_train_status()
         # 设置状态工具栏并显示
@@ -251,6 +268,8 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._current_thread.wait()
         # 立即刷新界面
         QCoreApplication.processEvents()
+        logger.warning("12313")
+
         self.ted_train_log.append(
             log_warning(self.tr("model training stopped by user, click start training to resume training process")))
 
@@ -287,6 +306,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             return
         self._last_model = self._current_thread.get_last_model()
         self.psb_train.set_value(epoch)
+        self._current_epoch = epoch
         # 保存训练历史记录（loss,metrics）
 
     @Slot(TaskInfo)
@@ -295,9 +315,11 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self._enable_btn_to_train_status()
             if task_info.task_status == TaskStatus.TRN_FINISHED:
                 self.btn_start_train.setText(self.tr("ReTrain"))
+                self._is_retrain = True
             if task_info.task_status == TaskStatus.TRN_PAUSE:
                 self.btn_start_train.setText(self.tr("Resume"))
-
+                self._is_retrain = False
+            self._task_info.task_status = task_info.task_status
             # 数据转换完成，显示状态信息
             self.state_tool_tip.setContent(
                 self.tr('Model training is completed!') + ' 😆')

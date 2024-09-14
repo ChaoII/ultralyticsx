@@ -7,7 +7,7 @@ from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QWidget, QGridLayout, QFormLayout, QVBoxLayout, QHBoxLayout
 from qfluentwidgets import BodyLabel, ComboBox, themeColor, CompactSpinBox, CompactDoubleSpinBox, SwitchButton, \
     CheckBox, LineEdit, StrongBodyLabel, SubtitleLabel, PushButton, PrimaryPushButton, FluentIcon, StateToolTip, \
-    InfoBar, InfoBarPosition
+    InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition
 from sqlalchemy import and_
 
 from common.collapsible_widget import CollapsibleWidgetItem, ToolBox
@@ -247,7 +247,7 @@ class PretrainWidget(QWidget):
     def get_value(self):
         return [self._is_use_pretrain, self._pretrain_model_path]
 
-    def set_value(self, use_status: bool, file_path: Path):
+    def set_value(self, use_status: bool, file_path: str):
         if use_status:
             self.btn_pretrain.setChecked(True)
             self.fs_model_path.setText(file_path)
@@ -277,6 +277,7 @@ class FixWidthBodyLabel(BodyLabel):
         self.setFixedWidth(100)
         self.setText(text)
         self.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
+        self.installEventFilter(ToolTipFilter(self, showDelay=300, position=ToolTipPosition.TOP))
 
 
 class TrainParameterWidget(CollapsibleWidgetItem):
@@ -397,29 +398,28 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.fly_train_setting2.setHorizontalSpacing(40)
         self.fly_train_setting2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
-        # self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("Pre-trained: "), self), self.btn_pre_trained)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("epochs: "), self, ), self.spb_epochs)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("time: "), self, ), self.spb_time)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("patience: "), self, ), self.spb_patience)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("batch: "), self, ), self.cus_batch)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("image_size: "), self, ), self.spb_image_size)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("save_period: "), self, ), self.spb_save_period)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("save_dir: "), self, ), self.fs_save_dir)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("workers: "), self, ), self.spb_workers)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("optimizer: "), self, ), self.cmb_optimizer)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("verbose: "), self, ), self.btn_verbose)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("seed: "), self, ), self.spb_seed)
-        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("rect: "), self, ), self.btn_rect)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("cos_lr: "), self, ), self.btn_cos_lr)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("close_mosaic: "), self, ), self.spb_close_mosaic)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("resume: "), self, ), self.cus_resume)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("amp: "), self, ), self.btn_amp)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("fraction: "), self, ), self.spb_fraction)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("profile: "), self, ), self.btn_profile)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("freeze: "), self, ), self.le_freeze)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("multi_scale: "), self, ), self.btn_multi_scale)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("overlap_mask: "), self, ), self.btn_overlap_mask)
-        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("mask_ratio: "), self, ), self.spb_mask_ratio)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("epochs: "), self), self.spb_epochs)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("time: "), self), self.spb_time)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("patience: "), self), self.spb_patience)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("batch: "), self), self.cus_batch)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("image_size: "), self), self.spb_image_size)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("save_period: "), self), self.spb_save_period)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("save_dir: "), self), self.fs_save_dir)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("workers: "), self), self.spb_workers)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("optimizer: "), self), self.cmb_optimizer)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("verbose: "), self), self.btn_verbose)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("seed: "), self), self.spb_seed)
+        self.fly_train_setting1.addRow(FixWidthBodyLabel(self.tr("rect: "), self), self.btn_rect)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("cos_lr: "), self), self.btn_cos_lr)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("close_mosaic: "), self), self.spb_close_mosaic)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("resume: "), self), self.cus_resume)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("amp: "), self), self.btn_amp)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("fraction: "), self), self.spb_fraction)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("profile: "), self), self.btn_profile)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("freeze: "), self), self.le_freeze)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("multi_scale: "), self), self.btn_multi_scale)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("overlap_mask: "), self), self.btn_overlap_mask)
+        self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("mask_ratio: "), self), self.spb_mask_ratio)
         self.fly_train_setting2.addRow(FixWidthBodyLabel(self.tr("dropout: "), self), self.spb_dropout)
 
         self.fly_model_name = QFormLayout()
@@ -665,7 +665,10 @@ class TrainParameterWidget(CollapsibleWidgetItem):
         self.vly_content.addLayout(self.hly_data_augment)
 
         self.btn_start_train = PrimaryPushButton(FluentIcon.PLAY, self.tr("train"))
+        self.btn_start_train.setFixedWidth(120)
         self.btn_save = PushButton(FluentIcon.SAVE, self.tr("Save"))
+        self.btn_save.setFixedWidth(120)
+
         self.hly_btn = QHBoxLayout()
         self.hly_btn.addWidget(self.btn_start_train)
         self.hly_btn.addWidget(self.btn_save)

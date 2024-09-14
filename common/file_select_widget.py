@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PySide6.QtCore import QSize, QRect, Qt, Signal
-from PySide6.QtGui import QPainter, QMouseEvent
+from PySide6.QtGui import QPainter, QMouseEvent, QFontMetrics
 from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import themeColor, LineEdit
 from qfluentwidgets.common.icon import toQIcon, drawIcon, FluentIcon
@@ -54,6 +54,18 @@ class FileSelectWidget(LineEdit):
 
         drawIcon(self._icon, painter, self._icon_rect, fill=icon_color.name())
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # 更新文本以包含省略号
+        self.update_elided_text()
+
+    def update_elided_text(self):
+        # 使用当前字体和控件宽度来计算省略文本
+        fm = QFontMetrics(self.font())
+        elided_text = fm.elidedText(self._cur_path, Qt.TextElideMode.ElideRight, self.width() - 40)
+        super().setText(elided_text)
+        self.setToolTip(self._cur_path)
+
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         super().mouseMoveEvent(event)
         mouse_pos = event.pos()
@@ -67,7 +79,7 @@ class FileSelectWidget(LineEdit):
 
     def setText(self, text: str) -> None:
         self._cur_path = text
-        super().setText(text)
+        self.update_elided_text()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         super().mousePressEvent(event)

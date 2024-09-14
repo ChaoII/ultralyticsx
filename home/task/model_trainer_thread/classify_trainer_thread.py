@@ -32,6 +32,9 @@ class CustomLogs(QObject):
         with open(file_path, encoding="utf8") as f:
             self._logs = f.readlines()
 
+    def clear(self):
+        self._logs.clear()
+
 
 class CustomPlotData(QObject):
     plot_data_changed = Signal(dict)
@@ -50,15 +53,18 @@ class CustomPlotData(QObject):
         self._plot_data = plot_data
         self.plot_data_changed.emit(self._plot_data)
 
+    def clear_data(self):
+        self._plot_data = dict()
+
     def init_plot_data(self, init_data: list | dict):
         if isinstance(init_data, list):
             for loss_name in init_data:
                 self._plot_data[loss_name] = []
-        if isinstance(init_data, dict):
+        elif isinstance(init_data, dict):
             for key, value in init_data.items():
                 self._plot_data[key] = []
         else:
-            logger.error("unsupported type")
+            logger.error(f"unsupported type {type(init_data)}, only support list and dict")
             return
         # self.plot_data_changed.emit(self._plot_data)
 
@@ -92,7 +98,7 @@ class ModelTrainThread(QThread):
         self.trainer: ClassificationTrainer | None = None
         self._train_parameters = train_parameters
         self._stop = False
-        self._metric_num = -1
+        self._metric_num = 0
         self._task_info: TaskInfo | None = None
         self._loss_data = CustomPlotData()
         self._metric_data = CustomPlotData()
@@ -101,6 +107,7 @@ class ModelTrainThread(QThread):
         self._train_log_path: Path | None = None
         self._last_model = ""
         self._logs = CustomLogs()
+        self._current_epoch = 0
 
         self._connect_signals_and_slots()
 
@@ -125,12 +132,22 @@ class ModelTrainThread(QThread):
             self._train_metric_path = task_info.task_dir / "train_metric"
             self._train_log_path = task_info.task_dir / "train.log"
 
+            if self._train_log_path.exists() and self._train_parameters["resume"]:
+                self._logs.load_log_from_text(self._train_log_path)
+            else:
+                self._logs.clear()
+
             if self._train_loss_path.exists() and self._train_parameters["resume"]:
                 loss_data = pickle.load(open(self._train_loss_path, "rb"))
                 self._loss_data.set_plot_data(loss_data)
+            else:
+                self._loss_data.clear_data()
             if self._train_metric_path.exists() and self._train_parameters["resume"]:
                 metric_data = pickle.load(open(self._train_metric_path, "rb"))
                 self._metric_data.set_plot_data(metric_data)
+            else:
+                self._metric_data.clear_data()
+
             return True
         except FileNotFoundError as e:
             error_msg = self.tr(
@@ -144,6 +161,11 @@ class ModelTrainThread(QThread):
 
     def get_train_parameters(self):
         return self._train_parameters
+
+    def get_current_epoch(self) -> int:
+        if self.trainer:
+            return self.trainer.epoch
+        return 0
 
     def _on_train_start(self, trainer):
         metrics = trainer.metrics
@@ -167,24 +189,23 @@ class ModelTrainThread(QThread):
         # epoch 从0 开始
         self._last_model = trainer.last.resolve().as_posix()
         self.train_epoch_end.emit(trainer.epoch + 1)
-
-        self._loss_data.save_to_file(self._train_loss_path)
-        self._metric_data.save_to_file(self._train_metric_path)
-        self._logs.save_to_file(self._train_log_path)
+        self._current_epoch = trainer.epoch + 1
 
     def _on_fit_epoch_end(self, trainer):
         metrics = trainer.metrics
+        self._metric_num += 1
         metrics_info = f"{self.tr('val result: ')}\n"
         metrics_info += f"{'Epoch':<10}"
-        if 0 < self._metric_num != len(metrics):
+        if self._metric_num > trainer.epoch + 1:
             metrics_info = f"{self.tr('test result: ')}\n"
-        self.metrics_num = len(metrics)
         for metric_name in metrics.keys():
             metric_name = metric_name.split("/")[1]
             metrics_info += f"{metric_name:<15}"
-        if 0 < self.metrics_num == len(metrics):
+        if self._metric_num == trainer.epoch + 1:
             epoch_format = f"\n{trainer.epoch + 1}/{trainer.epochs}"
             metrics_info += f"{epoch_format:<10}"
+        else:
+            metrics_info += "\n"
         for metric_value in metrics.values():
             metric_value = f"{metric_value: .4f}"
             metrics_info += f"{metric_value:<15}"
@@ -192,6 +213,10 @@ class ModelTrainThread(QThread):
 
         self._metric_data.append(metrics)
         self._logs.append(metrics_info)
+
+        self._loss_data.save_to_file(self._train_loss_path)
+        self._metric_data.save_to_file(self._train_metric_path)
+        self._logs.save_to_file(self._train_log_path)
 
     def _on_train_batch_start(self, trainer):
         trainer.interrupt = self._stop
@@ -229,7 +254,6 @@ class ModelTrainThread(QThread):
         self._logs.append(batch_info)
 
     def _on_train_end(self, trainer):
-
         current_epoch = trainer.epoch + 1
         if current_epoch == self._train_parameters["epochs"] and not self._stop:
             self._train_parameters["resume"] = ""
@@ -239,7 +263,7 @@ class ModelTrainThread(QThread):
             if self._last_model:
                 self._train_parameters["resume"] = self._last_model
             self._task_info.task_status = TaskStatus.TRN_PAUSE
-            self._logs.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {_logs}"))
+            self._logs.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {current_epoch}"))
         self.model_train_end.emit(self._task_info)
 
     def run(self):

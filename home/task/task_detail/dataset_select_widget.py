@@ -4,6 +4,7 @@ from qfluentwidgets import BodyLabel, ComboBox, themeColor, PrimaryPushButton, F
 from sqlalchemy import and_
 
 from common.collapsible_widget import CollapsibleWidgetItem
+from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
 from dataset.types import DatasetStatus
 from home.types import TaskInfo, TaskStatus
@@ -26,8 +27,8 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self.lbl_train_set_num = BodyLabel()
         self.lbl_val_set_num = BodyLabel()
         self.lbl_test_set_num = BodyLabel()
-        self.btn_next_step = PrimaryPushButton(icon=FluentIcon.RIGHT_ARROW, text=self.tr("Next"))
-        self.btn_next_step.setFixedWidth(100)
+        self.btn_next_step = PrimaryPushButton(icon=CustomFluentIcon.NEXT, text=self.tr("Next"))
+        self.btn_next_step.setFixedWidth(120)
         self.dataset_detail = QWidget(self)
         self.fly = QFormLayout(self.dataset_detail)
         self.fly.setHorizontalSpacing(40)
