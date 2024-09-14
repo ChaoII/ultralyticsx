@@ -167,6 +167,19 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         if task_info.task_status == TaskStatus.TRAINING:
             self.btn_start_train.setEnabled(False)
             self.btn_stop_train.setEnabled(True)
+            if self._task_info.task_id in self._task_thread_map.get_thread_map():
+                self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
+            else:
+                log_error("status is training but not find the train thread")
+                return
+            self.ted_train_log.clear()
+            for log_line in self._current_thread.get_log_lines():
+                self.ted_train_log.append(log_line)
+            loss_data = self._current_thread.get_loss_data()
+            metric_data = self._current_thread.get_metric_data()
+            self.load_graph(loss_data, metric_data)
+        else:
+            self._current_thread = None
 
         # 如果
         if task_info.task_status.value > TaskStatus.TRAINING.value:
@@ -215,9 +228,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
                 self.pg_widget.clear()
             else:
                 current_epoch = self._current_thread.get_current_epoch()
-
                 self.psb_train.set_value(current_epoch)
-
             task_thread = self._initial_model_thread()
             if task_thread:
                 self._task_thread_map.update_thread({self._task_info.task_id: task_thread})
@@ -268,7 +279,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._current_thread.wait()
         # 立即刷新界面
         QCoreApplication.processEvents()
-        logger.warning("12313")
 
         self.ted_train_log.append(
             log_warning(self.tr("model training stopped by user, click start training to resume training process")))
@@ -306,8 +316,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             return
         self._last_model = self._current_thread.get_last_model()
         self.psb_train.set_value(epoch)
-        self._current_epoch = epoch
-        # 保存训练历史记录（loss,metrics）
 
     @Slot(TaskInfo)
     def on_handle_train_end(self, task_info: TaskInfo):

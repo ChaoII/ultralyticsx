@@ -1,7 +1,6 @@
 import os
 import re
 import shutil
-from enum import Enum
 from pathlib import Path
 
 from PySide6.QtCore import Signal, QModelIndex, Slot
@@ -15,15 +14,14 @@ from common.custom_icon import CustomFluentIcon
 from common.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
-from common.model_type_widget import ModelType
 from common.tag_widget import TextTagWidget
-from common.utils import format_datatime, open_directory, CustomColor
+from common.utils import format_datatime, open_directory
 from core.content_widget_base import ContentWidgetBase
 from home.types import TaskStatus
 from models.models import Task, Project
 
 
-class OperationWidget(ContentWidgetBase):
+class OperationWidget(QWidget):
     task_deleted = Signal(str)
     task_detail = Signal(str)
     open_task_dir = Signal(str)
@@ -157,6 +155,7 @@ class TaskListWidget(ContentWidgetBase):
 
     def _connect_signals_and_slots(self):
         self.tb_task.itemChanged.connect(self._comment_item_changed)
+        self.btn_create_task.clicked.connect(self._on_create_task)
 
     @Slot(QTableWidgetItem)
     def _comment_item_changed(self, item: QTableWidgetItem):
@@ -208,9 +207,6 @@ class TaskListWidget(ContentWidgetBase):
             if item.is_dir() and re.match(r'^T\d{6}$', item.name):
                 task_id = f"T{int(item.name[1:]) + 1:06d}"
         return task_id
-
-    def _connect_signals_and_slots(self):
-        self.btn_create_task.clicked.connect(self._on_create_task)
 
     @Slot(str)
     def _on_delete_task(self, task_id):

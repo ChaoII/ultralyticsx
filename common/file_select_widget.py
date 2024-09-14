@@ -4,7 +4,8 @@ from PySide6.QtCore import QSize, QRect, Qt, Signal
 from PySide6.QtGui import QPainter, QMouseEvent, QFontMetrics
 from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import themeColor, LineEdit
-from qfluentwidgets.common.icon import toQIcon, drawIcon, FluentIcon
+from qfluentwidgets.common.icon import toQIcon, drawIcon
+
 from common.custom_icon import CustomFluentIcon
 
 
@@ -77,6 +78,9 @@ class FileSelectWidget(LineEdit):
             self.setCursor(Qt.CursorShape.ArrowCursor)
         self.update()
 
+    def text(self) -> str:
+        return self._cur_path
+
     def setText(self, text: str) -> None:
         self._cur_path = text
         self.update_elided_text()
@@ -103,6 +107,8 @@ class FileSelectWidget(LineEdit):
             directory = QFileDialog.getExistingDirectory(self, self.tr("Select a directory"), _dir)
             if directory:
                 self._cur_path = directory
+            else:
+                self._cur_path = ""
         else:
             filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir)
             self._cur_path = filename

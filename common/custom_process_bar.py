@@ -23,3 +23,9 @@ class CustomProcessBar(QWidget):
         self.max_value = max_value
         self.psb_train.setMaximum(max_value)
         self.lbl_train_process.setText(f"{self.value:>3} / {self.max_value:<3}")
+
+    def set_error(self, is_error):
+        self.psb_train.setError(is_error)
+
+    def set_pause(self, is_paused):
+        self.psb_train.setPaused(is_paused)

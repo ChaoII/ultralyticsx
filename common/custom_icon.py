@@ -16,6 +16,7 @@ class CustomFluentIcon(FluentIconBase, Enum):
     FOLD = "fold"
     IMPORT = "import"
     IMPORT1 = "import1"
+    MODEL_EXPORT = "model_export"
     NEXT = "next"
     OBB = "obb"
     POSE = "pose"

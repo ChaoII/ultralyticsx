@@ -1,10 +1,10 @@
 import pickle
 from pathlib import Path
-from typing import IO
-from loguru import logger
-from PySide6.QtCore import Slot, Signal, QThread, QObject
 
-from common.utils import log_info, log_error
+from PySide6.QtCore import Slot, Signal, QThread, QObject
+from loguru import logger
+
+from common.utils import log_info
 from home.types import TaskInfo, TaskStatus
 from ultralytics.models.yolo.classify import ClassificationTrainer
 
@@ -94,7 +94,7 @@ class ModelTrainThread(QThread):
     metric_changed_signal = Signal(dict)
 
     def __init__(self, train_parameters: dict):
-        super(ModelTrainThread, self).__init__()
+        super().__init__()
         self.trainer: ClassificationTrainer | None = None
         self._train_parameters = train_parameters
         self._stop = False
@@ -107,7 +107,6 @@ class ModelTrainThread(QThread):
         self._train_log_path: Path | None = None
         self._last_model = ""
         self._logs = CustomLogs()
-        self._current_epoch = 0
 
         self._connect_signals_and_slots()
 
@@ -156,6 +155,15 @@ class ModelTrainThread(QThread):
             self._logs.append(error_msg)
             return False
 
+    def get_log_lines(self) -> list[str]:
+        return self._logs.get_log_lines()
+
+    def get_loss_data(self) -> dict:
+        return self._loss_data.raw_data()
+
+    def get_metric_data(self) -> dict:
+        return self._metric_data.raw_data()
+
     def get_last_model(self):
         return self._last_model
 
@@ -189,7 +197,6 @@ class ModelTrainThread(QThread):
         # epoch 从0 开始
         self._last_model = trainer.last.resolve().as_posix()
         self.train_epoch_end.emit(trainer.epoch + 1)
-        self._current_epoch = trainer.epoch + 1
 
     def _on_fit_epoch_end(self, trainer):
         metrics = trainer.metrics

@@ -1,6 +1,6 @@
 from PySide6.QtCore import Slot, Qt, Signal
 from PySide6.QtWidgets import QWidget, QFormLayout
-from qfluentwidgets import BodyLabel, ComboBox, themeColor, PrimaryPushButton, FluentIcon
+from qfluentwidgets import BodyLabel, ComboBox, themeColor, PrimaryPushButton
 from sqlalchemy import and_
 
 from common.collapsible_widget import CollapsibleWidgetItem
@@ -43,10 +43,10 @@ class DatasetSelectWidget(CollapsibleWidgetItem):
         self.fly_content.setHorizontalSpacing(40)
         self.fly_content.addRow(self.lbl_select_dataset, self.cmb_select_dataset)
         self.fly_content.addRow("", self.dataset_detail)
+        self.set_content_widget(self.content_widget)
         self._is_select_dataset_connect_signal_and_slots = False
         self._connect_signals_and_slots()
         self._task_info: TaskInfo | None = None
-        self.set_content_widget(self.content_widget)
 
     def set_task_info(self, task_info: TaskInfo):
         self.cmb_select_dataset.clear()
