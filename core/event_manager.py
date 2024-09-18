@@ -1,6 +1,7 @@
 from PySide6.QtCore import QObject, Signal, Slot
 
 from dataset.types import DatasetStatus
+from home.types import TaskStatus
 
 
 def singleton(cls):
@@ -18,6 +19,8 @@ def singleton(cls):
 class EventManager(QObject):
     dataset_process_finished = Signal(str)
     import_dataset_finished = Signal(str, DatasetStatus)
+
+    train_status_changed = Signal(str, TaskStatus)
 
     def __init__(self):
         super().__init__()

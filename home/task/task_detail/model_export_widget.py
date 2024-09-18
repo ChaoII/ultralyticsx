@@ -127,9 +127,13 @@ class ModelExportWidget(CollapsibleWidgetItem):
 
         self.btn_export = PrimaryPushButton(CustomFluentIcon.MODEL_EXPORT, self.tr("Export"))
         self.btn_export.setFixedWidth(120)
+        self.fs_export_path = FileSelectWidget()
+        self.fs_export_path.setMinimumWidth(450)
+        self.fs_export_path.setVisible(False)
 
         self.hly_btn = QHBoxLayout()
         self.hly_btn.addWidget(self.btn_export)
+        self.hly_btn.addWidget(self.fs_export_path)
         self.hly_btn.addStretch(1)
 
         self.vly_content.addLayout(self.hly_btn)
@@ -177,6 +181,7 @@ class ModelExportWidget(CollapsibleWidgetItem):
         self.state_tool_tip = None
         self.export_model_finished.emit(True)
         self.btn_export.setEnabled(True)
+        # self.fs_export_path.setText(self._task_info.task_dir / "weight")
 
     @Slot(str)
     def _on_export_failed(self, error_msg: str):

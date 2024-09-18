@@ -1,9 +1,9 @@
 import enum
 
-from qfluentwidgets import themeColor, BodyLabel, SimpleCardWidget, isDarkTheme, FluentIcon
-from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QCursor, QImage, QColor
 from PySide6.QtCore import Qt, QPoint, Signal, Slot, QLine
+from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QCursor, QImage
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
+from qfluentwidgets import themeColor, BodyLabel, SimpleCardWidget
 
 from common.custom_icon import CustomFluentIcon
 from common.utils import CustomColor

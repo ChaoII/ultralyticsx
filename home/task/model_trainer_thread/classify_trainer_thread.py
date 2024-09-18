@@ -4,6 +4,7 @@ from pathlib import Path
 from PySide6.QtCore import Slot, Signal, QThread, QObject
 from loguru import logger
 
+import core
 from common.utils import log_info
 from home.types import TaskInfo, TaskStatus
 from ultralytics.models.yolo.classify import ClassificationTrainer
@@ -155,6 +156,9 @@ class ModelTrainThread(QThread):
             self._logs.append(error_msg)
             return False
 
+    def get_task_info(self) -> TaskInfo:
+        return self._task_info
+
     def get_log_lines(self) -> list[str]:
         return self._logs.get_log_lines()
 
@@ -197,6 +201,8 @@ class ModelTrainThread(QThread):
         # epoch 从0 开始
         self._last_model = trainer.last.resolve().as_posix()
         self.train_epoch_end.emit(trainer.epoch + 1)
+
+        core.EventManager().train_status_changed.emit(f"{trainer.epoch + 1}/{trainer.epochs}", TaskStatus.TRAINING)
 
     def _on_fit_epoch_end(self, trainer):
         metrics = trainer.metrics
@@ -272,6 +278,7 @@ class ModelTrainThread(QThread):
             self._task_info.task_status = TaskStatus.TRN_PAUSE
             self._logs.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {current_epoch}"))
         self.model_train_end.emit(self._task_info)
+        core.EventManager().train_status_changed.emit("", TaskStatus.TRN_FINISHED)
 
     def run(self):
         if self.trainer:
@@ -279,6 +286,7 @@ class ModelTrainThread(QThread):
                 self.trainer.train()
             except Exception as e:
                 self.model_train_failed.emit(str(e))
+                core.EventManager().train_status_changed.emit("", TaskStatus.TRAIN_FAILED)
 
     @Slot()
     def stop_train(self):

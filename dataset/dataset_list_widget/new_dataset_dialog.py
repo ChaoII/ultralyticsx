@@ -1,15 +1,13 @@
 import os
 import re
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QLabel, QPushButton
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
 from qfluentwidgets import BodyLabel, FluentStyleSheet, PrimaryPushButton, \
-    LineEdit, TextEdit, InfoBar, InfoBarPosition, isDarkTheme
+    LineEdit, TextEdit, InfoBar, InfoBarPosition
 from qframelesswindow import FramelessDialog
 from sqlalchemy.orm import Query
 

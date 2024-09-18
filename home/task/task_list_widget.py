@@ -10,14 +10,16 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
 from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, PrimaryPushButton, \
     PopupTeachingTip, TeachingTipTailPosition
 
+import core
 from common.custom_icon import CustomFluentIcon
+from common.custom_process_bar import CustomProcessBar
 from common.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
 from common.tag_widget import TextTagWidget
 from common.utils import format_datatime, open_directory
 from core.content_widget_base import ContentWidgetBase
-from home.types import TaskStatus
+from home.types import TaskStatus, TaskInfo
 from models.models import Task, Project
 
 
@@ -97,20 +99,22 @@ class TaskTableWidget(TableWidget):
         self.verticalHeader().hide()
         self.setBorderRadius(8)
         self.setBorderVisible(True)
-        self.setColumnCount(6)
+        self.setColumnCount(7)
         self.setRowCount(24)
         # self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setItemDelegate(CustomTableItemDelegate(self))
         self.setHorizontalHeaderLabels([
-            self.tr('Task ID'), self.tr('Project name'), self.tr('Task status'),
+            self.tr('Task ID'), self.tr('Project name'), self.tr('Task status'), self.tr("Train progress"),
             self.tr('Comment'), self.tr('Create time'), self.tr("Operation")
         ])
-        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+
         self.setColumnWidth(0, 100)
+        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.setColumnWidth(2, 100)
-        self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-        self.setColumnWidth(4, 160)
+        self.setColumnWidth(3, 400)
+        self.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         self.setColumnWidth(5, 160)
+        self.setColumnWidth(6, 160)
 
     def setColumnEditable(self, column, editable):
         """
@@ -156,6 +160,7 @@ class TaskListWidget(ContentWidgetBase):
     def _connect_signals_and_slots(self):
         self.tb_task.itemChanged.connect(self._comment_item_changed)
         self.btn_create_task.clicked.connect(self._on_create_task)
+        core.EventManager().train_status_changed.connect(self._on_train_status_changed)
 
     @Slot(QTableWidgetItem)
     def _comment_item_changed(self, item: QTableWidgetItem):
@@ -181,12 +186,14 @@ class TaskListWidget(ContentWidgetBase):
                 item0 = QTableWidgetItem(task.task_id)
                 item1 = QTableWidgetItem(task.project.project_name)
                 item2 = TextTagWidget(TaskStatus(task.task_status).name, *TaskStatus(task.task_status).color)
-                item3 = QTableWidgetItem(task.comment)
-                item4 = QTableWidgetItem(format_datatime(task.create_time))
-                item5 = OperationWidget(task.task_id)
-                item5.task_deleted.connect(self._on_delete_task)
-                item5.task_detail.connect(self._on_view_task)
-                item5.open_task_dir.connect(self._on_open_task_dir)
+                item3 = CustomProcessBar()
+                item4 = QTableWidgetItem(task.comment)
+                item5 = QTableWidgetItem(format_datatime(task.create_time))
+                item6 = OperationWidget(task.task_id)
+
+                item6.task_deleted.connect(self._on_delete_task)
+                item6.task_detail.connect(self._on_view_task)
+                item6.open_task_dir.connect(self._on_open_task_dir)
 
                 item0.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 item1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -195,10 +202,16 @@ class TaskListWidget(ContentWidgetBase):
                 self.tb_task.setItem(i, 0, item0)
                 self.tb_task.setItem(i, 1, item1)
                 self.tb_task.setCellWidget(i, 2, item2)
-                self.tb_task.setItem(i, 3, item3)
+                self.tb_task.setCellWidget(i, 3, item3)
                 self.tb_task.setItem(i, 4, item4)
-                self.tb_task.setCellWidget(i, 5, item5)
-        self.tb_task.setColumnEditable(3, True)
+                self.tb_task.setItem(i, 5, item5)
+                self.tb_task.setCellWidget(i, 6, item6)
+        self.tb_task.setColumnEditable(4, True)
+
+    @Slot(str, TaskStatus)
+    def _on_train_status_changed(self, epoch_str, task_status: TaskStatus):
+        task_info: TaskInfo = self.sender().get_task_info()
+        self.set_data(self.project_id)
 
     @staticmethod
     def get_task_id(project_dir: Path) -> str:

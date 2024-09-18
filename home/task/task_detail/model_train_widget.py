@@ -13,6 +13,7 @@ from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
 
 from loguru import logger
 
+import core
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_process_bar import CustomProcessBar
 from common.db_helper import db_session
