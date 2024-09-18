@@ -21,5 +21,5 @@ from ultralytics import YOLO
 model = YOLO(r"C:\Users\84945\Desktop\ultralytics_workspace\project\P000000\T000001\weights\best.pt")
 
 # model.export(format="onnx")
-s = model.val(workers=0, save_dir="./")
+s = model.val(workers=0, save_dir="./", plots=False, split="test")
 print(s)

@@ -227,8 +227,9 @@ class ModelTrainWidget(CollapsibleWidgetItem):
                 self.psb_train.set_value(0)
                 self.pg_widget.clear()
             else:
-                current_epoch = self._current_thread.get_current_epoch()
-                self.psb_train.set_value(current_epoch)
+                pass
+                # current_epoch = self._current_thread.get_current_epoch()
+                # self.psb_train.set_value(current_epoch)
             task_thread = self._initial_model_thread()
             if task_thread:
                 self._task_thread_map.update_thread({self._task_info.task_id: task_thread})
