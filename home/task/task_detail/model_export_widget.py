@@ -33,7 +33,7 @@ class FixWidthBodyLabel(BodyLabel):
 
 
 class ModelExportWidget(CollapsibleWidgetItem):
-    export_model_finished = Signal(TaskInfo)
+    export_model_finished = Signal(bool)
 
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Model export"), parent=parent)
@@ -41,11 +41,12 @@ class ModelExportWidget(CollapsibleWidgetItem):
 
         self.cmb_model_name = ComboBox()
         self.cmb_model_name.setFixedWidth(300)
-        self.cmb_model_name.addItems(["auto", "SGD", "Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp"])
 
         self.cmb_model_format = ComboBox()
         self.cmb_model_format.setFixedWidth(300)
-        self.cmb_model_format.addItems(["auto", "SGD", "Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp"])
+        self.cmb_model_format.addItems(
+            ['torchscript', 'onnx', 'openvino', 'engine', 'coreml', 'saved_model', 'pb', 'tflite', 'edgetpu', 'tfjs',
+             'paddle', 'ncnn'])
 
         self.btn_keras = SwitchButton()
         self.btn_keras.setChecked(False)
@@ -136,7 +137,7 @@ class ModelExportWidget(CollapsibleWidgetItem):
         self.set_content_widget(self.content_widget)
         self._task_info: TaskInfo | None = None
         self._export_parameter = dict()
-        self.stateTooltip = None
+        self._state_tool_tip = None
         self._connect_signals_and_slots()
 
     def _connect_signals_and_slots(self):
@@ -144,6 +145,15 @@ class ModelExportWidget(CollapsibleWidgetItem):
 
     def set_task_info(self, task_info: TaskInfo):
         self._task_info = task_info
+        self._init_model_name()
+
+    def _init_model_name(self):
+        self.cmb_model_name.clear()
+        model_weight_path = self._task_info.task_dir / "weights"
+        for item in model_weight_path.iterdir():
+            if item.is_file() and item.suffix == ".pt":
+                self.cmb_model_name.addItem(item.name)
+        self.cmb_model_name.setCurrentIndex(0)
 
     def create_export_thread(self) -> Optional[ModelExportThread]:
         model_export_thread = ModelExportThread(self._export_parameter)
@@ -157,21 +167,41 @@ class ModelExportWidget(CollapsibleWidgetItem):
             return None
 
     def _on_export_start(self):
-        pass
+        self.export_model_finished.emit(False)
+        self.btn_export.setEnabled(False)
 
     def _on_export_end(self):
-        pass
+        self.state_tool_tip.setContent(
+            self.tr('Export Model completed!') + ' 😆')
+        self.state_tool_tip.setState(True)
+        self.state_tool_tip = None
+        self.export_model_finished.emit(True)
+        self.btn_export.setEnabled(True)
 
-    def _on_export_failed(self):
-        pass
+    @Slot(str)
+    def _on_export_failed(self, error_msg: str):
+        if self._state_tool_tip:
+            self.state_tool_tip.setState(True)
+            self.state_tool_tip = None
+            self.export_model_finished.emit(True)
+            self.btn_export.setEnabled(True)
+            InfoBar.error(
+                title='',
+                content=self.tr("Export model failed: ") + error_msg,
+                orient=Qt.Orientation.Vertical,  # 内容太长时可使用垂直布局
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=-1,
+                parent=self.parent().parent()
+            )
 
     def export(self):
-        self.set_task_info(self._task_info)
         task_thread = self.create_export_thread()
         task_thread.start()
 
     def _on_export_clicked(self):
         parameter = dict(
+            model_name=self._task_info.task_dir / "weights" / self.cmb_model_name.currentText(),
             format=self.cmb_model_format.currentText(),
             keras=self.btn_keras.isChecked(),
             optimize=self.btn_optimize.isChecked(),
@@ -184,3 +214,7 @@ class ModelExportWidget(CollapsibleWidgetItem):
         )
         self._export_parameter = parameter
         self.export()
+        self.state_tool_tip = StateToolTip(
+            self.tr('Model is exporting '), self.tr('Please wait patiently'), self.window())
+        self.state_tool_tip.move(self.state_tool_tip.getSuitablePos())
+        self.state_tool_tip.show()

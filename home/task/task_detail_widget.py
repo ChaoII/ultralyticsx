@@ -52,6 +52,7 @@ class TaskDetailWidget(ContentWidgetBase):
         self.train_parameter_widget.start_training_clicked.connect(self._on_start_training_clicked)
         self.model_train_widget.is_training_signal.connect(self.train_parameter_widget.update_train_btn_status)
         self.model_train_widget.next_step_clicked.connect(self._on_train_finish_and_next_clicked)
+        self.model_export_widget.export_model_finished.connect(self._on_model_export_finish)
 
     @Slot(TaskInfo)
     def _on_dataset_selected_clicked(self, task_info):
@@ -77,6 +78,19 @@ class TaskDetailWidget(ContentWidgetBase):
         self.tool_box.set_current_item(self.model_export_widget)
         self.model_export_widget.setEnabled(True)
         self.model_export_widget.set_task_info(task_info)
+
+    @Slot(bool)
+    def _on_model_export_finish(self, is_finished: bool):
+        if not is_finished:
+            self.model_export_widget.setEnabled(False)
+            self.model_train_widget.setEnabled(False)
+            self.train_parameter_widget.setEnabled(False)
+            self.dataset_select_widget.setEnabled(False)
+        else:
+            self.model_export_widget.setEnabled(True)
+            self.model_train_widget.setEnabled(True)
+            self.train_parameter_widget.setEnabled(True)
+            self.dataset_select_widget.setEnabled(True)
 
     def update_data(self, task_id):
         self._task_id = task_id

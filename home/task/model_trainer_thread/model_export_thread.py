@@ -6,8 +6,8 @@ from ultralytics import YOLO
 
 class ModelExportThread(QThread):
     model_export_start = Signal()
-    model_export_end = Signal(TaskInfo)
-    model_export_failed = Signal()
+    model_export_end = Signal()
+    model_export_failed = Signal(str)
 
     def __init__(self, export_parameters: dict):
         super().__init__()
@@ -28,8 +28,7 @@ class ModelExportThread(QThread):
             self._exporter.add_callback("on_export_end", self._on_export_end)
             return True
         except FileNotFoundError as e:
-            error_msg = self.tr(
-                "Resume checkpoint not found. Please pass a valid checkpoint to resume from,i.e model=path/to/last.pt")
+            error_msg = str(e)
             self.model_export_failed.emit(error_msg)
             return False
 
@@ -37,10 +36,10 @@ class ModelExportThread(QThread):
         return self._last_model
 
     def _on_export_start(self, exporter):
-        pass
+        self.model_export_start.emit()
 
     def _on_export_end(self, exporter):
-        pass
+        self.model_export_end.emit()
 
     def run(self):
         if self._exporter:
