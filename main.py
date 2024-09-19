@@ -1,24 +1,23 @@
 # coding:utf-8
-import sys
 import os
+import sys
 
-from common.utils import show_center
 from PySide6.QtCore import Qt, QTranslator, QSize, Slot
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
+from qfluentwidgets import FluentIcon as FIcon
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
-                            InfoBadge, InfoBadgePosition, SplashScreen, setThemeColor)
-from qfluentwidgets import FluentIcon as FIcon
+                            InfoBadge, InfoBadgePosition, SplashScreen)
+
 from common.custom_icon import CustomFluentIcon
+from common.utils import show_center
 from core.interface_base import InterfaceBase
-
-from settings import SettingInterface, cfg
-from model_train import ModelTrainWidget
-from dataset_process import DataProcessWidget
 from dataset import DatasetWidget
-
+from dataset_process import DataProcessWidget
 from home import HomeWidget
+from model_train import ModelTrainWidget
+from settings import SettingInterface, cfg
 
 
 class Widget(QFrame):

@@ -13,13 +13,13 @@ from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, T
 import core
 from common.custom_icon import CustomFluentIcon
 from common.custom_process_bar import CustomProcessBar
-from common.db_helper import db_session
+from common.database.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
 from common.tag_widget import TextTagWidget
 from common.utils import format_datatime, open_directory
 from core.content_widget_base import ContentWidgetBase
-from home.types import TaskStatus, TaskInfo
+from home.types import TaskStatus
 from models.models import Task, Project
 
 
@@ -149,7 +149,9 @@ class TaskListWidget(ContentWidgetBase):
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
         self.btn_create_task = PrimaryPushButton(FluentIcon.ADD, self.tr("Create task"))
+        self.btn_test = PrimaryPushButton(FluentIcon.MUTE, self.tr("Test"))
         self.hly_btn.addWidget(self.btn_create_task)
+        self.hly_btn.addWidget(self.btn_test)
         self.hly_btn.addStretch(1)
         self.tb_task = TaskTableWidget()
         self.vly.addLayout(self.hly_btn)
@@ -160,7 +162,14 @@ class TaskListWidget(ContentWidgetBase):
     def _connect_signals_and_slots(self):
         self.tb_task.itemChanged.connect(self._comment_item_changed)
         self.btn_create_task.clicked.connect(self._on_create_task)
+        self.btn_test.clicked.connect(self._on_test)
         core.EventManager().train_status_changed.connect(self._on_train_status_changed)
+
+    def _on_test(self):
+        row_count = self.tb_task.rowCount()
+        for i in range(row_count):
+            item = self.tb_task.cellWidget(i, 3)
+            item.setVisible(not item.isVisible())
 
     @Slot(QTableWidgetItem)
     def _comment_item_changed(self, item: QTableWidgetItem):
@@ -208,10 +217,62 @@ class TaskListWidget(ContentWidgetBase):
                 self.tb_task.setCellWidget(i, 6, item6)
         self.tb_task.setColumnEditable(4, True)
 
-    @Slot(str, TaskStatus)
-    def _on_train_status_changed(self, epoch_str, task_status: TaskStatus):
-        task_info: TaskInfo = self.sender().get_task_info()
-        self.set_data(self.project_id)
+        for row_index in range(self.tb_task.rowCount()):
+            item0 = self.tb_task.item(row_index, 0)
+
+            task_id = item0.text()
+            bar = self.tb_task.cellWidget(row_index, 3)
+            bar.setVisible(True)
+
+            if isinstance(bar, CustomProcessBar):
+                with db_session(auto_commit_exit=True) as session:
+                    task: Task = session.query(Task).filter_by(task_id=task_id).first()
+                    if task.task_status == TaskStatus.TRAINING.value:
+                        bar.set_value(task.epoch)
+                        bar.set_max_value(task.epochs)
+                    elif task.task_status == TaskStatus.TRN_PAUSE.value:
+                        bar.set_value(task.epoch)
+                        bar.set_max_value(task.epochs)
+                        bar.set_pause(True)
+                    elif task.task_status == TaskStatus.TRAIN_FAILED.value:
+                        bar.set_value(task.epoch)
+                        bar.set_max_value(task.epochs)
+                        bar.set_error(True)
+                    elif task.task_status == TaskStatus.TRN_FINISHED.value:
+                        bar.set_value(task.epoch)
+                        bar.set_max_value(task.epochs)
+                        bar.resume()
+                    else:
+                        bar.setVisible(False)
+
+    @Slot(str, str, TaskStatus)
+    def _on_train_status_changed(self, task_id: str, epoch, epochs, task_status: TaskStatus):
+        for row_index in range(self.tb_task.rowCount()):
+            item0 = self.tb_task.item(row_index, 0)
+            item2 = self.tb_task.cellWidget(row_index, 2)
+            if item0.text() == task_id:
+                bar = self.tb_task.cellWidget(row_index, 3)
+                if isinstance(bar, CustomProcessBar) and isinstance(item2, TextTagWidget):
+                    bar.setVisible(True)
+                    if task_status == TaskStatus.TRAINING:
+                        bar.set_max_value(epochs)
+                        bar.set_value(epoch)
+                        item2.set_text(TaskStatus.TRAINING.name)
+                        item2.set_color(*TaskStatus.TRAINING.color)
+                    elif task_status == TaskStatus.TRN_PAUSE:
+                        item2.set_text(TaskStatus.TRN_PAUSE.name)
+                        item2.set_color(*TaskStatus.TRN_PAUSE.color)
+                        bar.set_pause(True)
+                    elif task_status == TaskStatus.TRAIN_FAILED:
+                        item2.set_text(TaskStatus.TRAIN_FAILED.name)
+                        item2.set_color(*TaskStatus.TRAIN_FAILED.color)
+                        bar.set_error(True)
+                    elif task_status == TaskStatus.TRN_FINISHED:
+                        item2.set_text(TaskStatus.TRN_FINISHED.name)
+                        item2.set_color(*TaskStatus.TRN_FINISHED.color)
+                        bar.resume()
+                    else:
+                        bar.setVisible(False)
 
     @staticmethod
     def get_task_id(project_dir: Path) -> str:

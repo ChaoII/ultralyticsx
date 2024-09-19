@@ -1,26 +1,17 @@
-import enum
-from pathlib import Path
 from typing import Optional
 
-import yaml
 from PySide6.QtCore import Slot, Signal
-from PySide6.QtGui import Qt, QMouseEvent
-from PySide6.QtWidgets import QWidget, QGridLayout, QFormLayout, QVBoxLayout, QHBoxLayout
-from qfluentwidgets import BodyLabel, ComboBox, themeColor, CompactSpinBox, CompactDoubleSpinBox, SwitchButton, \
-    CheckBox, LineEdit, StrongBodyLabel, SubtitleLabel, PushButton, PrimaryPushButton, FluentIcon, StateToolTip, \
+from PySide6.QtGui import Qt
+from PySide6.QtWidgets import QWidget, QFormLayout, QVBoxLayout, QHBoxLayout
+from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
+    PrimaryPushButton, StateToolTip, \
     InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition
-from sqlalchemy import and_
 
-from common.collapsible_widget import CollapsibleWidgetItem, ToolBox
+from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_icon import CustomFluentIcon
-from common.db_helper import db_session
 from common.file_select_widget import FileSelectWidget
-from common.model_type_widget import ModelType
-from dataset.types import DatasetStatus
-from home.options import model_type_list_map
 from home.task.model_trainer_thread.model_export_thread import ModelExportThread
-from home.types import TaskInfo, TaskStatus
-from models.models import Dataset, Task
+from home.types import TaskInfo
 
 
 class FixWidthBodyLabel(BodyLabel):

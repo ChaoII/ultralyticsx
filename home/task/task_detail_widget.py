@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtWidgets import QVBoxLayout
 
 from common.collapsible_widget import ToolBox
 from common.custom_scroll_widget import CustomScrollWidget
-from common.db_helper import db_session
+from common.database.db_helper import db_session
 from common.model_type_widget import ModelType
 from core.content_widget_base import ContentWidgetBase
 from home.task.task_detail.dataset_select_widget import DatasetSelectWidget

@@ -29,3 +29,6 @@ class CustomProcessBar(QWidget):
 
     def set_pause(self, is_paused):
         self.psb_train.setPaused(is_paused)
+
+    def resume(self):
+        self.psb_train.resume()

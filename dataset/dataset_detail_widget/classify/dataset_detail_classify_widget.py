@@ -4,7 +4,7 @@ import pandas as pd
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout
 
-from common.db_helper import db_session
+from common.database.db_helper import db_session
 from dataset.dataset_checker.classify.split_dataset import split_dataset, load_split_dataset
 from dataset.dataset_detail_widget.classify.classify_dataset_draw_widget import ClassifyDatasetDrawWidget
 from dataset.dataset_detail_widget.common.label_table_Widget import SplitLabelInfo, DatasetLabelsInfoWidget

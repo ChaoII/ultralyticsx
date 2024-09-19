@@ -11,7 +11,7 @@ from qfluentwidgets import BodyLabel, FluentStyleSheet, PrimaryPushButton, \
 from qframelesswindow import FramelessDialog
 from sqlalchemy.orm import Query
 
-from common.db_helper import db_session
+from common.database.db_helper import db_session
 from common.file_select_widget import FileSelectWidget
 from common.model_type_widget import ModelTypeGroupWidget, ModelType
 from home.types import ProjectInfo

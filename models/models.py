@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table
 from sqlalchemy.orm import relationship
 
-from common.db_helper import Base, engine
+from common.database.db_helper import Base, engine
 
 projects_to_datasets = Table(
     "projects_to_datasets",
@@ -55,6 +55,8 @@ class Task(Base):
     dataset_id = Column(String, ForeignKey("tb_datasets.dataset_id"))
     comment = Column(String)
     task_status = Column(Integer, default=0)
+    epoch = Column(Integer, default=0)
+    epochs = Column(Integer, default=0)
     create_time = Column(DateTime, default=datetime.now())
     project = relationship("Project", back_populates="tasks")
     dataset = relationship("Dataset", back_populates="tasks")

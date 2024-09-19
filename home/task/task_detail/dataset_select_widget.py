@@ -5,7 +5,7 @@ from sqlalchemy import and_
 
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_icon import CustomFluentIcon
-from common.db_helper import db_session
+from common.database.db_helper import db_session
 from dataset.types import DatasetStatus
 from home.types import TaskInfo, TaskStatus
 from models.models import Dataset, Task

@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import Signal, Slot, QSize
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt, QColor
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
     QTableWidgetItem, QWidget, QAbstractItemView, QFormLayout
@@ -12,7 +12,7 @@ from sqlalchemy import asc, desc
 from sqlalchemy.orm import Query
 
 from common.custom_icon import CustomFluentIcon
-from common.db_helper import db_session
+from common.database.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
 from common.model_type_widget import ModelType
