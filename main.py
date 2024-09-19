@@ -36,9 +36,13 @@ class Window(FluentWindow):
     def __init__(self):
         super().__init__()
 
-        self.splash_screen = SplashScreen(self.windowIcon(), self)
-        self.splash_screen.setIconSize(QSize(102, 102))
-        self.show()
+        self.resize(1280, 800)
+        self.setWindowIcon(QIcon('./resource/images/ux.png'))
+        self.setWindowTitle('UltralyticsX')
+
+        splash_screen = SplashScreen(self.windowIcon(), self)
+        splash_screen.setIconSize(QSize(102, 102))
+        self.show_center()
 
         # create sub interface
         self.home_interface = HomeWidget(self)
@@ -50,9 +54,22 @@ class Window(FluentWindow):
         self.test_interface = Widget('Test Interface', self)
         self.settingInterface = SettingInterface(self)
         self.initNavigation()
-        self.initWindow()
 
-        self.splash_screen.finish()
+        # set the minimum window width that allows the navigation panel to be expanded
+        # self.navigationInterface.setMinimumExpandWidth(900)
+        # self.navigationInterface.expand(useAni=False)
+        self._connect_signals_and_slots()
+
+        splash_screen.finish()
+
+    def show_center(self):
+        desktop = QApplication.primaryScreen().availableGeometry()
+        cw = self.frameGeometry().width()  # 获取窗口当前宽度
+        ch = self.frameGeometry().height()  # 获取窗口当前高度
+        x = (desktop.width() - cw) // 2  # 使用整除以避免浮点数
+        y = (desktop.height() - ch) // 2
+        self.move(x, y)
+        self.show()
 
     def initNavigation(self):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
@@ -88,16 +105,6 @@ class Window(FluentWindow):
         # NOTE: enable acrylic effect
         self.navigationInterface.setAcrylicEnabled(True)
 
-    def initWindow(self):
-        self.resize(1280, 800)
-        self.setWindowIcon(QIcon('./resource/images/ux.png'))
-        self.setWindowTitle('UltralyticsX')
-
-        # set the minimum window width that allows the navigation panel to be expanded
-        # self.navigationInterface.setMinimumExpandWidth(900)
-        # self.navigationInterface.expand(useAni=False)
-        self._connect_signals_and_slots()
-
     def _connect_signals_and_slots(self):
         self.stackedWidget.currentChanged.connect(self._on_widget_changed)
 
@@ -129,5 +136,7 @@ if __name__ == '__main__':
 
     # create main window
     w = Window()
+
     show_center(w)
+
     app.exec()

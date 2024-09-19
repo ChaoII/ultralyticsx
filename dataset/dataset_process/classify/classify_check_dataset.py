@@ -1,7 +1,6 @@
 from pathlib import Path
-from PIL import Image
 
-from dataset.dataset_checker.classify.split_dataset import split_dataset
+from PIL import Image
 
 
 def is_empty(folder_path: Path):

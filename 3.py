@@ -18,8 +18,9 @@ from ultralytics import YOLO
 #
 # pickle.dump(dataset_frame, open(df_path, "wb"))
 
-model = YOLO(r"C:\Users\84945\Desktop\ultralytics_workspace\project\P000000\T000001\weights\best.pt")
+model = YOLO("yolov8n.pt")
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640, device=0, workers=0)
 
 # model.export(format="onnx")
-s = model.val(workers=0, save_dir="./", plots=False, split="test")
-print(s)
+# s = model.val(workers=0, save_dir="./", plots=False, split="test")
+# print(s)

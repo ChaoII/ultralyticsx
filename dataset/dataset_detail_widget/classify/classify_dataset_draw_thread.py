@@ -6,31 +6,14 @@ from PySide6.QtCore import QThread, Signal, QRect
 from PySide6.QtGui import QPixmap, QPainter, QFont, QFontMetrics, QPen, QColor
 
 from common.utils import generate_color_map, invert_color
+from dataset.dataset_detail_widget.common.dataset_draw_thread_base import DatasetDrawThreadBase
 
 
-class DatasetDrawThread(QThread):
+class ClassifyDatasetDrawThread(DatasetDrawThreadBase):
     draw_one_image = Signal(str, QPixmap)
 
     def __init__(self):
         super().__init__()
-        self.max_draw_num = 50
-        self.draw_labels = False
-        self.color_list = []
-        self.labels = []
-        self.image_paths: pd.DataFrame = pd.DataFrame()
-
-    def set_dataset_path(self, dataset_paths: list[Path]):
-        self.image_paths = dataset_paths
-
-    def set_dataset_label(self, labels):
-        self.labels = list(labels)
-        self.color_list = generate_color_map(len(labels))
-
-    def set_draw_labels_status(self, status: bool):
-        self.draw_labels = status
-
-    def set_max_draw_nums(self, max_draw_num: int):
-        self.max_draw_num = max_draw_num
 
     def run(self):
         for i, (index, row) in enumerate(self.image_paths.iterrows()):

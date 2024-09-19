@@ -6,7 +6,7 @@ from qfluentwidgets import SimpleCardWidget, SubtitleLabel, BodyLabel
 
 from common.database.db_helper import db_session
 from common.tag_widget import TextTagWidget
-from dataset.dataset_checker.classify.split_dataset import split_dataset
+from dataset.dataset_process import split_dataset
 from dataset.dataset_detail_widget.common.dataset_split_widget import DatasetSplitWidget
 from dataset.types import DatasetInfo
 from models.models import Dataset
@@ -47,7 +47,8 @@ class DatasetHeaderWidget(SimpleCardWidget):
     def _on_split_clicked(self, split_rates):
         self._split_rates = split_rates
         # 更新拆分比例
-        dataset_df = split_dataset(Path(self._dataset_info.dataset_dir), self._split_rates)
+        dataset_df = split_dataset(Path(self._dataset_info.dataset_dir), self._split_rates,
+                                   self._dataset_info.model_type)
         with db_session() as session:
             dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()
             dataset.split_rate = "_".join([str(rate) for rate in split_rates])

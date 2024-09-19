@@ -90,8 +90,12 @@ def format_log(message: str, color: str = "white", font_size: int = 20) -> str:
 
 def show_center(widget: QWidget):
     desktop = QApplication.primaryScreen().availableGeometry()
-    w, h = desktop.width(), desktop.height()
-    widget.move(w // 2 - widget.width() // 2, h // 2 - widget.height() // 2)
+    cw = widget.frameGeometry().width()  # 获取窗口当前宽度
+    ch = widget.frameGeometry().height()  # 获取窗口当前高度
+    x = (desktop.width() - cw) // 2  # 使用整除以避免浮点数
+    y = (desktop.height() - ch) // 2
+
+    widget.move(x, y)
     widget.show()
 
 

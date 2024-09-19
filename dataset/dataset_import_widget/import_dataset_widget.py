@@ -10,7 +10,7 @@ from common.file_select_widget import FileSelectWidget
 import core
 from common.tag_widget import TextTagWidget
 from common.utils import copy_tree
-from dataset.dataset_checker.classify.check_dataset import classify_dataset_check
+from ..dataset_process import check_dataset
 from dataset.dataset_import_widget.dataset_format_doc_widget import DatasetFormatDocWidget
 
 from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
@@ -83,7 +83,7 @@ class ImportDatasetWidget(QWidget):
                           orient=Qt.Orientation.Vertical, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
                           duration=2000, parent=self)
             return False
-        if not classify_dataset_check(Path(self._selected_dataset_dir)):
+        if not check_dataset(Path(self._selected_dataset_dir), self._dataset_info.model_type):
             InfoBar.error(title='', content=self.tr("Dataset format error, please check your dataset"),
                           orient=Qt.Orientation.Vertical, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
                           duration=2000, parent=self)
