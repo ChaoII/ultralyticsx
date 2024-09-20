@@ -16,7 +16,14 @@ def is_image(filename):
         return False
 
 
-def detection_dataset_check(dataset_dir: Path):
+def detection_dataset_check(dataset_dir: Path | str):
+    if isinstance(dataset_dir, str):
+        dataset_dir = Path(dataset_dir)
+
+    if not dataset_dir.is_dir():
+        logger.error("输入路径不是一个有效的目录")
+        return False
+
     # 检查文件夹是否包含images和labels和classes.txt
     images_path = dataset_dir / "images"
     labels_path = dataset_dir / "labels"
@@ -32,11 +39,11 @@ def detection_dataset_check(dataset_dir: Path):
         return False
 
     if is_empty(images_path):
-        logger.error("[images]目录未空")
+        logger.error("[images]目录为空")
         return False
 
     if is_empty(labels_path):
-        logger.error("[labels]目录未空")
+        logger.error("[labels]目录为空")
         return False
 
     labels = []

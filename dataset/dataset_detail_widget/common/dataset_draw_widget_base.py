@@ -91,14 +91,18 @@ class DatasetDrawWidgetBase(SimpleCardWidget):
         self.dataset_label = "all"
         self.draw_labels = self.ckb_show_label.isChecked()
 
+    def get_current_condition_dataset(self) -> pd.DataFrame:
+        raise NotImplementedError
+
     def set_dataset_draw_thread(self):
+        raise NotImplementedError
+
+    def init_dataset_labels(self, dataset_df: pd.DataFrame):
         raise NotImplementedError
 
     def update_dataset(self, dataset_df: pd.DataFrame):
         self._dataset_df = dataset_df
-        self.dataset_draw_thread.set_dataset_label(dataset_df.groupby("label").groups.keys())
-        self.cmb_dataset_label.clear()
-        self.cmb_dataset_label.addItems(["all"] + list(dataset_df.groupby("label").groups.keys()))
+        self.init_dataset_labels(dataset_df)
         self._draw_images()
 
     #
@@ -165,18 +169,7 @@ class DatasetDrawWidgetBase(SimpleCardWidget):
     def _draw_images(self):
         self._disable_draw_image_option()
         self.lw_image.clear()
-        if self.dataset_type == DatasetType.ALL:
-            if self.dataset_label == "all":
-                image_paths = self._dataset_df.loc[:, ["image_path", "label"]]
-            else:
-                image_paths = self._dataset_df[self._dataset_df["label"] ==
-                                               self.dataset_label].loc[:, ["image_path", "label"]]
-        else:
-            data_dict = self._dataset_df[self._dataset_df.type == self.dataset_type.value]
-            if self.dataset_label == "all":
-                image_paths = data_dict.loc[:, ["image_path", "label"]]
-            else:
-                image_paths = data_dict[data_dict["label"] == self.dataset_label].loc[:, ["image_path", "label"]]
+        image_paths = self.get_current_condition_dataset()
         self.dataset_draw_thread.set_max_draw_nums(self.max_draw_num)
         self.dataset_draw_thread.set_dataset_path(image_paths)
         self.dataset_draw_thread.set_draw_labels_status(self.draw_labels)

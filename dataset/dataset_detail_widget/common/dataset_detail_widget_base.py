@@ -50,25 +50,15 @@ class DatasetDetailWidgetBase(QWidget):
         else:
             self.split_dataset(self._split_rates)
 
+    def get_dataset_split(self):
+        return self._total_dataset, self._split_rates
+
+    def load_split_info(self, dataset_df: pd.DataFrame) -> list[SplitLabelInfo]:
+        raise NotImplementedError
+
     def _load_dataset(self, dataset_df: pd.DataFrame):
-        all_num = dataset_df.shape[0]
-        train_num = dataset_df.groupby("type").groups[DatasetType.TRAIN.value].size
-        val_num = dataset_df.groupby("type").groups[DatasetType.VAL.value].size
-        test_num = dataset_df.groupby("type").groups[DatasetType.TEST.value].size
-        info = SplitLabelInfo(label="All", all_num=all_num, train_num=train_num, val_num=val_num, test_num=test_num)
-        dataset_split_num_info = [info]
-        for key, group in dataset_df.groupby("label").groups.items():
-            label_df = dataset_df[(dataset_df["label"] == key)]
-            label_dataset_num = group.size
-            train_num = label_df[label_df["type"] == DatasetType.TRAIN.value].shape[0]
-            val_num = label_df[label_df["type"] == DatasetType.VAL.value].shape[0]
-            test_num = label_df[label_df["type"] == DatasetType.TEST.value].shape[0]
-            dataset_split_num_info.append(SplitLabelInfo(label=key,
-                                                         all_num=label_dataset_num,
-                                                         train_num=train_num,
-                                                         val_num=val_num,
-                                                         test_num=test_num))
-        self.labels_widget.update_table(self._split_rates, dataset_split_num_info)
+        split_info = self.load_split_info(dataset_df)
+        self.labels_widget.update_table(self._split_rates, split_info)
         self.draw_widget.update_dataset(dataset_df)
         self.load_dataset_finished.emit(self._total_dataset, self._split_rates)
 

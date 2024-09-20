@@ -2,9 +2,9 @@ import pickle
 import random
 import shutil
 from pathlib import Path
-import pandas as pd
 
-from dataset.types import DatasetType
+import pandas as pd
+import yaml
 
 
 class ClassifySplitDataset:
@@ -25,57 +25,70 @@ def load_split_dataset(dataset_dir: Path):
     return dataset_df
 
 
-def split_dataset(dataset_dir: Path, split_rates: list):
-    dataset_map = dict()
-    label_list = []
-    for item in (dataset_dir / "src").iterdir():
-        if item.is_dir():
-            if item.name == "split":
-                continue
-            images = list(map(lambda x: x.resolve().as_posix(), item.iterdir()))
-            dataset_map[item.name] = images
-            label_list.append(item.name)
+def detection_dataset_split(dataset_dir: Path | str, split_rates: list):
+    if isinstance(dataset_dir, str):
+        dataset_dir = Path(dataset_dir)
 
-    train_dataset_list = []
-    val_dataset_list = []
-    test_dataset_list = []
+    with open(dataset_dir / "src" / "classes.txt", "r", encoding="utf8") as f:
+        labels = [line.strip() for line in f.readlines()]
+    labels_map = {index: label for index, label in enumerate(labels)}
 
-    for key, item in dataset_map.items():
-        label_dataset_num = len(item)
-        train_num = round(label_dataset_num * split_rates[0] / 100)
-        val_num = round(label_dataset_num * split_rates[1] / 100)
-        test_num = label_dataset_num - train_num - val_num
-        label_dataset_index = list(range(len(item)))
-        random.shuffle(label_dataset_index)
-        cur_label_train_data = [[item[index], key] for index in label_dataset_index[:train_num]]
-        cur_label_val_data = [[item[index], key] for index in label_dataset_index[train_num:train_num + val_num]]
-        cur_label_test_data = [[item[index], key] for index in label_dataset_index[train_num + val_num:]]
-        train_dataset_list.extend(cur_label_train_data)
-        val_dataset_list.extend(cur_label_val_data)
-        test_dataset_list.extend(cur_label_test_data)
+    images_paths = list((dataset_dir / "src" / "images").iterdir())
+    labels_paths = list((dataset_dir / "src" / "labels").iterdir())
 
-    train_df = pd.DataFrame(train_dataset_list, index=None, columns=['image_path', 'label'])
-    train_df["type"] = ["train"] * len(train_dataset_list)
-    val_df = pd.DataFrame(val_dataset_list, index=None, columns=['image_path', 'label'])
-    val_df["type"] = ["val"] * len(val_dataset_list)
-    test_df = pd.DataFrame(test_dataset_list, index=None, columns=['image_path', 'label'])
-    test_df["type"] = ["test"] * len(test_dataset_list)
+    dataset_num = len(images_paths)
+    train_num = round(dataset_num * split_rates[0] / 100)
+    val_num = round(dataset_num * split_rates[1] / 100)
+    test_num = dataset_num - train_num - val_num
+    dataset_index = list(range(dataset_num))
+    random.shuffle(dataset_index)
+
+    train_data_list = [images_paths[index] for index in dataset_index[:train_num]]
+    val_data_list = [images_paths[index] for index in dataset_index[train_num:train_num + val_num]]
+    test_data_list = [images_paths[index] for index in dataset_index[train_num + val_num:]]
+
+    train_label_list = [labels_paths[index] for index in dataset_index[:train_num]]
+    val_label_list = [labels_paths[index] for index in dataset_index[train_num:train_num + val_num]]
+    test_label_list = [labels_paths[index] for index in dataset_index[train_num + val_num:]]
+
+    train_df = pd.DataFrame({"image_path": train_data_list, "label_path": train_label_list}, index=None)
+    train_df["type"] = ["train"] * len(train_data_list)
+    val_df = pd.DataFrame({"image_path": val_data_list, "label_path": val_label_list}, index=None)
+    val_df["type"] = ["val"] * len(val_data_list)
+    test_df = pd.DataFrame({"image_path": test_data_list, "label_path": test_label_list}, index=None)
+    test_df["type"] = ["test"] * len(test_data_list)
     all_df = pd.concat([train_df, val_df, test_df]).reset_index(drop=True)
     dst_dir = dataset_dir / "split"
     if dst_dir.exists():
         shutil.rmtree(dst_dir)
+    dst_dir.mkdir(parents=True, exist_ok=True)
 
-    for key, group in all_df.groupby(["type", "label"]).groups.items():
-        split_dir = dst_dir / key[0] / key[1]
-        split_dir.mkdir(parents=True, exist_ok=True)
+    for key, group in all_df.groupby("type").groups.items():
+        split_images_dir = dst_dir / "images" / str(key)
+        split_labels_dir = dst_dir / "labels" / str(key)
+        split_images_dir.mkdir(parents=True, exist_ok=True)
+        split_labels_dir.mkdir(parents=True, exist_ok=True)
         for index in group:
-            filename = all_df.loc[index, "image_path"]
-            all_df.loc[index, "image_path"] = (split_dir / Path(filename).name).resolve().as_posix()
-            shutil.copy(filename, split_dir)
+            image_path = all_df.loc[index, "image_path"]
+            label_path = all_df.loc[index, "label_path"]
+            all_df.loc[index, "image_path"] = (split_images_dir / Path(image_path).name).resolve().as_posix()
+            all_df.loc[index, "label_path"] = (split_labels_dir / Path(label_path).name).resolve().as_posix()
+            shutil.copy(image_path, split_images_dir)
+            shutil.copy(label_path, split_labels_dir)
     pickle.dump(all_df, open(dataset_dir / "split_cache", "wb"))
+
+    dst_yaml_path = dst_dir / "coco_cpy.yaml"
+    dataset_config = dict()
+    with open(dst_yaml_path, 'w', encoding="utf8") as file:
+        dataset_config.update({"path": dst_dir.resolve().as_posix()})
+        dataset_config.update({"train": "images/train"})
+        dataset_config.update({"val": "images/val"})
+        dataset_config.update({"test": "images/test"})
+        dataset_config.update({"names": labels_map})
+        yaml.dump(dataset_config, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
     return all_df
 
 
 if __name__ == '__main__':
     # split_dataset(Path(r"C:\Users\AC\Desktop\1231\dataset\D000000"), [70, 20, 10])
-    split_dataset(Path(r"C:\Users\84945\Desktop\ultralytics_workspace\dataset\D000000"), [70, 20, 10])
+    detection_dataset_split(Path(r"C:\Users\84945\Desktop\ultralytics_workspace\dataset\D000002"), [70, 20, 10])

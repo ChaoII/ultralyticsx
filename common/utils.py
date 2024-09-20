@@ -110,6 +110,8 @@ def copy_tree(src, dst: Path, symlinks=False, ignore=None):
             if os.path.exists(d):
                 shutil.rmtree(d)
             shutil.copytree(s, d, symlinks, ignore)
+        elif os.path.isfile(s):
+            shutil.copy(s, d)
 
 
 def generate_color_map(classes: int):
