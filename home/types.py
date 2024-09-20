@@ -47,5 +47,4 @@ class TaskInfo:
     model_type: ModelType
     task_status: TaskStatus
     task_dir: Path
-    comment: str
     create_time: str

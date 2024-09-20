@@ -1,6 +1,6 @@
 from typing import Optional
 
-from home.task.model_trainer_thread.classify_trainer_thread import ModelTrainThread
+from home.task.model_trainer_thread.model_trainer_thread import ModelTrainThread
 
 
 class TaskThreadMap:

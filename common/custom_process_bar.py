@@ -4,7 +4,7 @@ from qfluentwidgets import ProgressBar, BodyLabel
 
 class CustomProcessBar(QWidget):
     def __init__(self, parent=None):
-        super(CustomProcessBar, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         self.value = 0
         self.max_value = 0
 
@@ -13,6 +13,12 @@ class CustomProcessBar(QWidget):
         self.lbl_train_process = BodyLabel(f"{self.value:>3} / {self.max_value:<3}", self)
         self.psb_hly.addWidget(self.psb_train)
         self.psb_hly.addWidget(self.lbl_train_process)
+        self.setMinimumWidth(200)
+
+    def setVisible(self, visible: bool) -> None:
+        self.psb_train.setVisible(visible)
+        self.lbl_train_process.setVisible(visible)
+        super().setVisible(visible)
 
     def set_value(self, value):
         self.value = value

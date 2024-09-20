@@ -1,4 +1,6 @@
 import pickle
+import time
+from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import Slot, Signal, QThread, QObject
@@ -6,9 +8,12 @@ from loguru import logger
 
 import core
 from common.database.task_helper import update_task_epoch_info
-from common.utils import log_info
+from common.model_type_widget import ModelType
+from common.utils import log_info, format_datatime
 from home.types import TaskInfo, TaskStatus
+from ultralytics.engine.trainer import BaseTrainer
 from ultralytics.models.yolo.classify import ClassificationTrainer
+from ultralytics.models.yolo.detect import DetectionTrainer
 
 
 class CustomLogs(QObject):
@@ -58,13 +63,16 @@ class CustomPlotData(QObject):
     def clear_data(self):
         self._plot_data = dict()
 
-    def init_plot_data(self, init_data: list | dict):
+    def init_plot_data(self, init_data: list | dict | tuple):
         if isinstance(init_data, list):
             for loss_name in init_data:
                 self._plot_data[loss_name] = []
         elif isinstance(init_data, dict):
             for key, value in init_data.items():
                 self._plot_data[key] = []
+        elif isinstance(init_data, tuple):
+            for loss_name in init_data:
+                self._plot_data[loss_name] = []
         else:
             logger.error(f"unsupported type {type(init_data)}, only support list and dict")
             return
@@ -97,7 +105,7 @@ class ModelTrainThread(QThread):
 
     def __init__(self, train_parameters: dict):
         super().__init__()
-        self.trainer: ClassificationTrainer | None = None
+        self.trainer: BaseTrainer | None = None
         self._train_parameters = train_parameters
         self._stop = False
         self._metric_num = 0
@@ -109,7 +117,7 @@ class ModelTrainThread(QThread):
         self._train_log_path: Path | None = None
         self._last_model = ""
         self._logs = CustomLogs()
-
+        self._start_time = None
         self._connect_signals_and_slots()
 
     def _connect_signals_and_slots(self):
@@ -119,7 +127,13 @@ class ModelTrainThread(QThread):
 
     def init_model_trainer(self, task_info: TaskInfo) -> bool:
         try:
-            self.trainer = ClassificationTrainer(overrides=self._train_parameters)
+            if task_info.model_type == ModelType.CLASSIFY:
+                self.trainer = ClassificationTrainer(overrides=self._train_parameters)
+            elif task_info.model_type == ModelType.DETECT:
+                self.trainer = DetectionTrainer(overrides=self._train_parameters)
+            else:
+                logger.error(f"unsupported model type {task_info.model_type}")
+                return False
             self.trainer.add_callback("on_train_start", self._on_train_start)
             self.trainer.add_callback("on_train_batch_start", self._on_train_batch_start)
             self.trainer.add_callback("on_train_batch_end", self._on_train_batch_end)
@@ -181,6 +195,8 @@ class ModelTrainThread(QThread):
         return 0
 
     def _on_train_start(self, trainer):
+        self._start_time = time.time()
+
         metrics = trainer.metrics
         loss_names = trainer.loss_names
         if self._loss_data.is_empty():
@@ -188,6 +204,8 @@ class ModelTrainThread(QThread):
         if self._metric_data.is_empty():
             self._metric_data.init_plot_data(metrics)
         self.train_start_signal.emit(self._loss_data.raw_data(), self._metric_data.raw_data())
+        core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, format_datatime(
+            datetime.fromtimestamp(self._start_time)), None, None, TaskStatus.TRAINING)
 
     def _on_train_epoch_start(self, trainer):
         loss_names = trainer.loss_names
@@ -206,7 +224,8 @@ class ModelTrainThread(QThread):
 
         self.train_epoch_end.emit(epoch)
         update_task_epoch_info(self._task_info.task_id, epoch, epochs)
-        core.EventManager().train_status_changed.emit(self._task_info.task_id, epoch, epochs, TaskStatus.TRAINING)
+        core.EventManager().train_status_changed.emit(self._task_info.task_id, epoch, epochs, format_datatime(
+            datetime.fromtimestamp(self._start_time)), None, None, TaskStatus.TRAINING)
 
     def _on_fit_epoch_end(self, trainer):
         metrics = trainer.metrics
@@ -265,8 +284,7 @@ class ModelTrainThread(QThread):
         if loss_items.ndim == 0:
             result_dict = {loss_names[0]: loss_items}
         else:
-            result_dict = {k: k for k, v in zip(loss_names, loss_items)}
-
+            result_dict = {k: v for k, v in zip(loss_names, loss_items)}
         self._loss_data.append(result_dict)
         self._logs.append(batch_info)
 
@@ -282,7 +300,16 @@ class ModelTrainThread(QThread):
             self._task_info.task_status = TaskStatus.TRN_PAUSE
             self._logs.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {current_epoch}"))
         self.model_train_end.emit(self._task_info)
-        core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, TaskStatus.TRN_FINISHED)
+        end_time = time.time()
+        elapsed_time = end_time - self._start_time
+        if elapsed_time > 3600:
+            elapsed_time = f"{elapsed_time / 3600:.2f}h "
+        else:
+            elapsed_time = f"{elapsed_time / 60:.2f}min"
+        logger.info(f"train finished, {elapsed_time}")
+        core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None,
+                                                      format_datatime(datetime.fromtimestamp(end_time)), elapsed_time,
+                                                      TaskStatus.TRN_FINISHED)
 
     def run(self):
         if self.trainer:
@@ -290,7 +317,7 @@ class ModelTrainThread(QThread):
                 self.trainer.train()
             except Exception as e:
                 self.model_train_failed.emit(str(e))
-                core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None,
+                core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
                                                               TaskStatus.TRAIN_FAILED)
 
     @Slot()

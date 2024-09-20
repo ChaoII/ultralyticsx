@@ -11,7 +11,7 @@ from common.utils import CustomColor
 
 class ModelType(enum.Enum):
     CLASSIFY = 0
-    DETECTION = 1
+    DETECT = 1
     SEGMENT = 2
     OBB = 3
     POSE = 4
@@ -20,7 +20,7 @@ class ModelType(enum.Enum):
     def color(self):
         _color_map = {
             ModelType.CLASSIFY: CustomColor.BLUE.value,
-            ModelType.DETECTION: CustomColor.BROWN.value,
+            ModelType.DETECT: CustomColor.BROWN.value,
             ModelType.SEGMENT: CustomColor.YELLOW.value,
             ModelType.OBB: CustomColor.GRAY.value,
             ModelType.POSE: CustomColor.PURPLE.value
@@ -31,7 +31,7 @@ class ModelType(enum.Enum):
     def icon(self):
         _icon_map = {
             ModelType.CLASSIFY: CustomFluentIcon.CLASSIFY.colored(*self.color),
-            ModelType.DETECTION: CustomFluentIcon.DETECT.colored(*self.color),
+            ModelType.DETECT: CustomFluentIcon.DETECT.colored(*self.color),
             ModelType.SEGMENT: CustomFluentIcon.SEGMENT.colored(*self.color),
             ModelType.OBB: CustomFluentIcon.OBB.colored(*self.color),
             ModelType.POSE: CustomFluentIcon.POSE.colored(*self.color),
@@ -118,7 +118,7 @@ class ModelTypeGroupWidget(QWidget):
     def _init_type_item(self):
         type_classify = ModelTypeItemWidget(self.tr("classify"), "resource/images/classify.png", ModelType.CLASSIFY)
         type_classify.enable_selected()
-        type_detect = ModelTypeItemWidget(self.tr("detection"), "resource/images/detect.png", ModelType.DETECTION)
+        type_detect = ModelTypeItemWidget(self.tr("detect"), "resource/images/detect.png", ModelType.DETECT)
         type_segment = ModelTypeItemWidget(self.tr("segment"), "resource/images/segment.png", ModelType.SEGMENT)
         type_obb = ModelTypeItemWidget(self.tr("obb"), "resource/images/obb.png", ModelType.OBB)
         type_pose = ModelTypeItemWidget(self.tr("pose"), "resource/images/pose.png", ModelType.POSE)

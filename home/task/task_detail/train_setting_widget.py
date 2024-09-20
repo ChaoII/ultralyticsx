@@ -5,12 +5,15 @@ import yaml
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QWidget, QFormLayout, QVBoxLayout, QHBoxLayout
+from loguru import logger
 from qfluentwidgets import BodyLabel, ComboBox, themeColor, CompactSpinBox, CompactDoubleSpinBox, SwitchButton, \
-    CheckBox, LineEdit, StrongBodyLabel, PushButton, PrimaryPushButton, FluentIcon, InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition
+    CheckBox, LineEdit, StrongBodyLabel, PushButton, PrimaryPushButton, FluentIcon, InfoBar, InfoBarPosition, \
+    ToolTipFilter, ToolTipPosition
 
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.database.db_helper import db_session
 from common.file_select_widget import FileSelectWidget
+from common.model_type_widget import ModelType
 from home.options import model_type_list_map
 from home.types import TaskInfo, TaskStatus
 from models.models import Task
@@ -695,7 +698,13 @@ class TrainParameterWidget(CollapsibleWidgetItem):
 
         with db_session() as session:
             task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
-            data = (Path(task.dataset.dataset_dir) / "split").resolve().as_posix()
+            if task.project.model_type == ModelType.CLASSIFY.value:
+                data = (Path(task.dataset.dataset_dir) / "split").resolve().as_posix()
+            elif task.project.model_type == ModelType.DETECT.value:
+                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+            else:
+                logger.error(f"Unsupported model type: {task.project.model_type}")
+                return
 
         model = self.cmb_model_name.currentText()
         pretrained = False

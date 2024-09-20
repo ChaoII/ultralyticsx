@@ -3,11 +3,12 @@ import re
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import Signal, QModelIndex, Slot
-from PySide6.QtGui import Qt, QColor, QPalette
+from PySide6.QtCore import Signal, Slot
+from PySide6.QtGui import Qt, QColor
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
-    QStyleOptionViewItem, QTableWidgetItem, QWidget
-from qfluentwidgets import isDarkTheme, FluentIcon, CaptionLabel, TableWidget, TableItemDelegate, PrimaryPushButton, \
+    QTableWidgetItem, QWidget
+from loguru import logger
+from qfluentwidgets import FluentIcon, CaptionLabel, TableWidget, PrimaryPushButton, \
     PopupTeachingTip, TeachingTipTailPosition
 
 import core
@@ -21,6 +22,16 @@ from common.utils import format_datatime, open_directory
 from core.content_widget_base import ContentWidgetBase
 from home.types import TaskStatus
 from models.models import Task, Project
+
+COLUMN_TASK_ID = 0
+COLUMN_PROJECT_NAME = 1
+COLUMN_TASK_STATUS = 2
+COLUMN_PROGRESS_BAR = 3
+COLUMN_START_TIME = 4
+COLUMN_END_TIME = 5
+COLUMN_ELAPSED = 6
+COLUMN_CREATE_TIME = 7
+COLUMN_OPERATION = 8
 
 
 class OperationWidget(QWidget):
@@ -78,65 +89,29 @@ class OperationWidget(QWidget):
         self.popup_tip.close()
 
 
-class CustomTableItemDelegate(TableItemDelegate):
-    """ Custom table item delegate """
-
-    def initStyleOption(self, option: QStyleOptionViewItem, index: QModelIndex):
-        super().initStyleOption(option, index)
-        if index.column() != 1:
-            return
-        if isDarkTheme():
-            option.palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-            option.palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
-        else:
-            option.palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.red)
-            option.palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.red)
-
-
 class TaskTableWidget(TableWidget):
     def __init__(self):
         super().__init__()
         self.verticalHeader().hide()
         self.setBorderRadius(8)
         self.setBorderVisible(True)
-        self.setColumnCount(7)
+        self.setColumnCount(9)
         self.setRowCount(24)
         # self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.setItemDelegate(CustomTableItemDelegate(self))
         self.setHorizontalHeaderLabels([
             self.tr('Task ID'), self.tr('Project name'), self.tr('Task status'), self.tr("Train progress"),
-            self.tr('Comment'), self.tr('Create time'), self.tr("Operation")
+            self.tr('Start time'), self.tr('End time'), self.tr("Elapsed"), self.tr('Create time'), self.tr("Operation")
         ])
-
-        self.setColumnWidth(0, 100)
-        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.setColumnWidth(2, 100)
-        self.setColumnWidth(3, 400)
-        self.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-        self.setColumnWidth(5, 160)
-        self.setColumnWidth(6, 160)
-
-    def setColumnEditable(self, column, editable):
-        """
-        设置指定列的可编辑性。
-
-        :param column: 列的索引（从0开始）
-        :param editable: 布尔值，表示是否可编辑
-        """
-        for row in range(self.rowCount()):
-            for col in range(self.columnCount()):
-                item = self.item(row, col)
-                if item:
-                    if col == column:
-                        if editable:
-                            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
-                        else:
-                            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    else:
-                        if editable:
-                            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                        else:
-                            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        self.setColumnWidth(COLUMN_TASK_ID, 130)
+        self.horizontalHeader().setSectionResizeMode(COLUMN_PROJECT_NAME, QHeaderView.ResizeMode.ResizeToContents)
+        self.setColumnWidth(COLUMN_TASK_STATUS, 100)
+        self.horizontalHeader().setSectionResizeMode(COLUMN_PROGRESS_BAR, QHeaderView.ResizeMode.Stretch)
+        # self.setColumnWidth(COLUMN_PROGRESS_BAR, 300)
+        self.setColumnWidth(COLUMN_START_TIME, 160)
+        self.setColumnWidth(COLUMN_END_TIME, 160)
+        self.setColumnWidth(COLUMN_ELAPSED, 100)
+        self.setColumnWidth(COLUMN_CREATE_TIME, 160)
+        self.setColumnWidth(COLUMN_OPERATION, 160)
 
 
 class TaskListWidget(ContentWidgetBase):
@@ -149,38 +124,18 @@ class TaskListWidget(ContentWidgetBase):
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
         self.btn_create_task = PrimaryPushButton(FluentIcon.ADD, self.tr("Create task"))
-        self.btn_test = PrimaryPushButton(FluentIcon.MUTE, self.tr("Test"))
         self.hly_btn.addWidget(self.btn_create_task)
-        self.hly_btn.addWidget(self.btn_test)
         self.hly_btn.addStretch(1)
         self.tb_task = TaskTableWidget()
         self.vly.addLayout(self.hly_btn)
         self.vly.addWidget(self.tb_task)
         self.project_id = ""
         self._connect_signals_and_slots()
+        self._task_id_to_row_index = dict()
 
     def _connect_signals_and_slots(self):
-        self.tb_task.itemChanged.connect(self._comment_item_changed)
         self.btn_create_task.clicked.connect(self._on_create_task)
-        self.btn_test.clicked.connect(self._on_test)
         core.EventManager().train_status_changed.connect(self._on_train_status_changed)
-
-    def _on_test(self):
-        row_count = self.tb_task.rowCount()
-        for i in range(row_count):
-            item = self.tb_task.cellWidget(i, 3)
-            item.setVisible(not item.isVisible())
-
-    @Slot(QTableWidgetItem)
-    def _comment_item_changed(self, item: QTableWidgetItem):
-        row = item.row()
-        if item.column() != 3:
-            return
-        comment = item.text()
-        task_id = self.tb_task.item(row, 0).text()
-        with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=task_id).first()
-            task.comment = comment
 
     def set_data(self, project_id: str):
         self.project_id = project_id
@@ -191,104 +146,110 @@ class TaskListWidget(ContentWidgetBase):
         with db_session(auto_commit_exit=True) as session:
             tasks: list[Task] = session.query(Task).filter_by(project_id=self.project_id).all()
             self.tb_task.setRowCount(len(tasks))
-            for i, task in enumerate(tasks):
+            for row_index, task in enumerate(tasks):
+                self._task_id_to_row_index[task.task_id] = row_index
+
                 item0 = QTableWidgetItem(task.task_id)
                 item1 = QTableWidgetItem(task.project.project_name)
                 item2 = TextTagWidget(TaskStatus(task.task_status).name, *TaskStatus(task.task_status).color)
                 item3 = CustomProcessBar()
-                item4 = QTableWidgetItem(task.comment)
-                item5 = QTableWidgetItem(format_datatime(task.create_time))
-                item6 = OperationWidget(task.task_id)
+                item4 = QTableWidgetItem(format_datatime(task.start_time))
+                item5 = QTableWidgetItem(format_datatime(task.end_time))
+                item6 = QTableWidgetItem(task.elapsed)
+                item7 = QTableWidgetItem(format_datatime(task.create_time))
+                item8 = OperationWidget(task.task_id)
 
-                item6.task_deleted.connect(self._on_delete_task)
-                item6.task_detail.connect(self._on_view_task)
-                item6.open_task_dir.connect(self._on_open_task_dir)
+                item8.task_deleted.connect(self._on_delete_task)
+                item8.task_detail.connect(self._on_view_task)
+                item8.open_task_dir.connect(self._on_open_task_dir)
 
                 item0.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 item1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 item4.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
-                self.tb_task.setItem(i, 0, item0)
-                self.tb_task.setItem(i, 1, item1)
-                self.tb_task.setCellWidget(i, 2, item2)
-                self.tb_task.setCellWidget(i, 3, item3)
-                self.tb_task.setItem(i, 4, item4)
-                self.tb_task.setItem(i, 5, item5)
-                self.tb_task.setCellWidget(i, 6, item6)
-        self.tb_task.setColumnEditable(4, True)
+                self.tb_task.setItem(row_index, COLUMN_TASK_ID, item0)
+                self.tb_task.setItem(row_index, COLUMN_PROJECT_NAME, item1)
+                self.tb_task.setCellWidget(row_index, COLUMN_TASK_STATUS, item2)
+                self.tb_task.setCellWidget(row_index, COLUMN_PROGRESS_BAR, item3)
+                self.tb_task.setItem(row_index, COLUMN_START_TIME, item4)
+                self.tb_task.setItem(row_index, COLUMN_END_TIME, item5)
+                self.tb_task.setItem(row_index, COLUMN_ELAPSED, item6)
+                self.tb_task.setItem(row_index, COLUMN_CREATE_TIME, item7)
+                self.tb_task.setCellWidget(row_index, COLUMN_OPERATION, item8)
 
-        for row_index in range(self.tb_task.rowCount()):
-            item0 = self.tb_task.item(row_index, 0)
-
-            task_id = item0.text()
-            bar = self.tb_task.cellWidget(row_index, 3)
-            bar.setVisible(True)
-
-            if isinstance(bar, CustomProcessBar):
-                with db_session(auto_commit_exit=True) as session:
-                    task: Task = session.query(Task).filter_by(task_id=task_id).first()
-                    if task.task_status == TaskStatus.TRAINING.value:
-                        bar.set_value(task.epoch)
-                        bar.set_max_value(task.epochs)
-                    elif task.task_status == TaskStatus.TRN_PAUSE.value:
-                        bar.set_value(task.epoch)
-                        bar.set_max_value(task.epochs)
-                        bar.set_pause(True)
-                    elif task.task_status == TaskStatus.TRAIN_FAILED.value:
-                        bar.set_value(task.epoch)
-                        bar.set_max_value(task.epochs)
-                        bar.set_error(True)
-                    elif task.task_status == TaskStatus.TRN_FINISHED.value:
-                        bar.set_value(task.epoch)
-                        bar.set_max_value(task.epochs)
-                        bar.resume()
-                    else:
-                        bar.setVisible(False)
+                if task.task_status == TaskStatus.TRAINING.value:
+                    item3.set_value(task.epoch)
+                    item3.set_max_value(task.epochs)
+                elif task.task_status == TaskStatus.TRN_PAUSE.value:
+                    item3.set_value(task.epoch)
+                    item3.set_max_value(task.epochs)
+                    item3.set_pause(True)
+                elif task.task_status == TaskStatus.TRAIN_FAILED.value:
+                    item3.set_value(task.epoch)
+                    item3.set_max_value(task.epochs)
+                    item3.set_error(True)
+                elif task.task_status == TaskStatus.TRN_FINISHED.value:
+                    item3.set_value(task.epoch)
+                    item3.set_max_value(task.epochs)
+                    item3.resume()
+                else:
+                    item3.setVisible(False)
 
     @Slot(str, str, TaskStatus)
-    def _on_train_status_changed(self, task_id: str, epoch, epochs, task_status: TaskStatus):
-        for row_index in range(self.tb_task.rowCount()):
-            item0 = self.tb_task.item(row_index, 0)
-            item2 = self.tb_task.cellWidget(row_index, 2)
-            if item0.text() == task_id:
-                bar = self.tb_task.cellWidget(row_index, 3)
-                if isinstance(bar, CustomProcessBar) and isinstance(item2, TextTagWidget):
-                    bar.setVisible(True)
-                    if task_status == TaskStatus.TRAINING:
-                        bar.set_max_value(epochs)
-                        bar.set_value(epoch)
-                        item2.set_text(TaskStatus.TRAINING.name)
-                        item2.set_color(*TaskStatus.TRAINING.color)
-                    elif task_status == TaskStatus.TRN_PAUSE:
-                        item2.set_text(TaskStatus.TRN_PAUSE.name)
-                        item2.set_color(*TaskStatus.TRN_PAUSE.color)
-                        bar.set_pause(True)
-                    elif task_status == TaskStatus.TRAIN_FAILED:
-                        item2.set_text(TaskStatus.TRAIN_FAILED.name)
-                        item2.set_color(*TaskStatus.TRAIN_FAILED.color)
-                        bar.set_error(True)
-                    elif task_status == TaskStatus.TRN_FINISHED:
-                        item2.set_text(TaskStatus.TRN_FINISHED.name)
-                        item2.set_color(*TaskStatus.TRN_FINISHED.color)
-                        bar.resume()
-                    else:
-                        bar.setVisible(False)
+    def _on_train_status_changed(self, task_id: str, epoch: int, epochs: int, start_time: str, end_time: str,
+                                 elapsed: str, task_status: TaskStatus):
+        row_index = self._task_id_to_row_index.get(task_id)
+        if row_index is None:
+            logger.warning(f"task_id: {task_id} not found in table")
+            return
+        item_task_status = self.tb_task.cellWidget(row_index, COLUMN_TASK_STATUS)
+        item_start_time = self.tb_task.item(row_index, COLUMN_START_TIME)
+        item_end_time = self.tb_task.item(row_index, COLUMN_END_TIME)
+        item_elapsed = self.tb_task.item(row_index, COLUMN_ELAPSED)
+        item_bar = self.tb_task.cellWidget(row_index, COLUMN_PROGRESS_BAR)
 
-    @staticmethod
-    def get_task_id(project_dir: Path) -> str:
-        task_id = f"T{0:06d}"
+        if isinstance(item_bar, CustomProcessBar) and isinstance(item_task_status, TextTagWidget):
+            item_bar.setVisible(True)
+            if task_status == TaskStatus.TRAINING:
+                item_bar.set_max_value(epochs)
+                item_bar.set_value(epoch)
+                item_task_status.set_text(TaskStatus.TRAINING.name)
+                item_task_status.set_color(*TaskStatus.TRAINING.color)
+                item_start_time.setText(start_time)
+            elif task_status == TaskStatus.TRN_PAUSE:
+                item_task_status.set_text(TaskStatus.TRN_PAUSE.name)
+                item_task_status.set_color(*TaskStatus.TRN_PAUSE.color)
+                item_bar.set_pause(True)
+            elif task_status == TaskStatus.TRAIN_FAILED:
+                item_task_status.set_text(TaskStatus.TRAIN_FAILED.name)
+                item_task_status.set_color(*TaskStatus.TRAIN_FAILED.color)
+                item_bar.set_error(True)
+            elif task_status == TaskStatus.TRN_FINISHED:
+                item_task_status.set_text(TaskStatus.TRN_FINISHED.name)
+                item_task_status.set_color(*TaskStatus.TRN_FINISHED.color)
+                item_bar.resume()
+                item_end_time.setText(end_time)
+                item_elapsed.setText(elapsed)
+            else:
+                item_bar.setVisible(False)
+
+    def get_task_id(self, project_dir: Path) -> str:
+        task_id = f"T{self.project_id[1:]}{0:06d}"
         for item in project_dir.iterdir():
-            if item.is_dir() and re.match(r'^T\d{6}$', item.name):
-                task_id = f"T{int(item.name[1:]) + 1:06d}"
+            if item.is_dir() and re.match(r'^T\d{12}$', item.name):
+                task_id = f"T{int(item.name[1:]) + 1:012d}"
         return task_id
 
     @Slot(str)
     def _on_delete_task(self, task_id):
-        with db_session(auto_commit_exit=True) as session:
+        with db_session() as session:
             task = session.query(Task).filter_by(task_id=task_id).first()
             directory = Path(task.project.project_dir) / task_id
             session.delete(task)
-        shutil.rmtree(directory)
+        try:
+            shutil.rmtree(directory)
+        except Exception as e:
+            logger.error(f"Failed to delete directory {directory}: {e}")
         self.set_data(self.project_id)
 
     @Slot(str)
@@ -309,11 +270,16 @@ class TaskListWidget(ContentWidgetBase):
             project: Project = session.query(Project).filter_by(project_id=self.project_id).first()
             project_dir = Path(project.project_dir)
             task_id = self.get_task_id(project_dir)
-            os.makedirs(project_dir / task_id, exist_ok=True)
-            task = Task(
-                task_id=task_id,
-                comment="",
-                task_status=0,
-            )
-            project.tasks.append(task)
+            try:
+                os.makedirs(project_dir / task_id, exist_ok=True)
+                task = Task(
+                    task_id=task_id,
+                    comment="",
+                    task_status=TaskStatus.INITIALIZING.value,
+                    epoch=0,
+                    epochs=0
+                )
+                project.tasks.append(task)
+            except Exception as e:
+                logger.error(f"Failed to create task directory {project_dir / task_id}: {e}")
         self.set_data(self.project_id)

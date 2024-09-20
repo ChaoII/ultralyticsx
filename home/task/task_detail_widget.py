@@ -103,7 +103,6 @@ class TaskDetailWidget(ContentWidgetBase):
             task_info.task_id = task.task_id
             task_info.dataset_id = task.dataset_id
             task_info.project_id = task.project_id
-            task_info.comment = task.comment
             task_info.task_status = TaskStatus(task.task_status)
             task_info.model_type = ModelType(task.project.model_type)
             task_info.task_dir = Path(task.project.project_dir) / self._task_id

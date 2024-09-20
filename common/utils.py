@@ -38,7 +38,13 @@ class CustomColor(enum.Enum):
 
 
 def format_datatime(data_time: datetime, fmt="%Y-%m-%d %H:%M:%S") -> str:
+    if not data_time:
+        return ""
     return data_time.strftime(fmt)
+
+
+def str_to_datetime(datetime_str: str, fmt="%Y-%m-%d %H:%M:%S"):
+    return datetime.strptime(datetime_str, fmt)
 
 
 def open_directory(directory: Path):
@@ -50,10 +56,6 @@ def open_directory(directory: Path):
     else:  # Linux
         import subprocess
         subprocess.Popen(['xdg-open', directory])
-
-
-def str_to_datetime(datetime_str: str, fmt="%Y-%m-%d %H:%M:%S"):
-    return datetime.strptime(datetime_str, fmt)
 
 
 def log_info(message: str, color: str = "green", apply_rich_text=False) -> str:

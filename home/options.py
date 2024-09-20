@@ -43,7 +43,7 @@ model_options_pose = [
 
 model_type_list_map = {
     ModelType.CLASSIFY: model_options_cls,
-    ModelType.DETECTION: model_options_det,
+    ModelType.DETECT: model_options_det,
     ModelType.SEGMENT: model_options_seg,
     ModelType.OBB: model_options_obb,
     ModelType.POSE: model_options_pose,

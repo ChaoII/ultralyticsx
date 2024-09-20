@@ -145,6 +145,8 @@ class ModelExportWidget(CollapsibleWidgetItem):
     def _init_model_name(self):
         self.cmb_model_name.clear()
         model_weight_path = self._task_info.task_dir / "weights"
+        if not model_weight_path.exists():
+            return
         for item in model_weight_path.iterdir():
             if item.is_file() and item.suffix == ".pt":
                 self.cmb_model_name.addItem(item.name)
