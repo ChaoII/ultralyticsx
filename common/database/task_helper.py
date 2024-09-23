@@ -31,6 +31,8 @@ def db_update_task_started(task_id, start_time: datetime):
         task: Task = session.query(Task).filter_by(task_id=task_id).first()
         task.task_status = TaskStatus.TRAINING.value
         task.start_time = start_time
+        task.end_time = None
+        task.elapsed = None
 
 
 def db_update_task_failed(task_id):
@@ -39,3 +41,9 @@ def db_update_task_failed(task_id):
         task.task_status = TaskStatus.TRAIN_FAILED.value
         task.end_time = None
         task.elapsed = None
+
+
+def db_get_project_id(task_id: str) -> str:
+    with db_session() as session:
+        task: Task = session.query(Task).filter_by(task_id=task_id).first()
+        return task.project_id

@@ -15,6 +15,7 @@ import core
 from common.custom_icon import CustomFluentIcon
 from common.custom_process_bar import CustomProcessBar
 from common.database.db_helper import db_session
+from common.database.task_helper import db_get_project_id
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
 from common.tag_widget import TextTagWidget
@@ -126,7 +127,7 @@ class TaskListWidget(ContentWidgetBase):
         self.tb_task = TaskTableWidget()
         self.vly.addLayout(self.hly_btn)
         self.vly.addWidget(self.tb_task)
-        self.project_id = ""
+        self._current_project_id = ""
         self._connect_signals_and_slots()
         self._task_id_to_row_index = dict()
 
@@ -135,13 +136,13 @@ class TaskListWidget(ContentWidgetBase):
         core.EventManager().train_status_changed.connect(self._on_train_status_changed)
 
     def set_data(self, project_id: str):
-        self.project_id = project_id
+        self._current_project_id = project_id
         self.update_widget()
 
     def update_widget(self):
         self.tb_task.clearContents()
         with db_session(auto_commit_exit=True) as session:
-            tasks: list[Task] = session.query(Task).filter_by(project_id=self.project_id).all()
+            tasks: list[Task] = session.query(Task).filter_by(project_id=self._current_project_id).all()
             self.tb_task.setRowCount(len(tasks))
             for row_index, task in enumerate(tasks):
                 self._task_id_to_row_index[task.task_id] = row_index
@@ -193,6 +194,9 @@ class TaskListWidget(ContentWidgetBase):
     @Slot(str, str, TaskStatus)
     def _on_train_status_changed(self, task_id: str, epoch: int, epochs: int, start_time: str, end_time: str,
                                  elapsed: str, task_status: TaskStatus):
+        project_id = db_get_project_id(task_id)
+        if project_id != self._current_project_id:
+            return
         row_index = self._task_id_to_row_index.get(task_id)
         if row_index is None:
             logger.warning(f"task_id: {task_id} not found in table")
@@ -211,6 +215,8 @@ class TaskListWidget(ContentWidgetBase):
                 item_task_status.set_text(TaskStatus.TRAINING.name)
                 item_task_status.set_color(*TaskStatus.TRAINING.color)
                 item_start_time.setText(start_time)
+                item_end_time.setText("")
+                item_elapsed.setText("")
             elif task_status == TaskStatus.TRN_PAUSE:
                 item_task_status.set_text(TaskStatus.TRN_PAUSE.name)
                 item_task_status.set_color(*TaskStatus.TRN_PAUSE.color)
@@ -233,7 +239,7 @@ class TaskListWidget(ContentWidgetBase):
         super().resizeEvent(event)
 
     def get_task_id(self, project_dir: Path) -> str:
-        task_id = f"T{self.project_id[1:]}{0:06d}"
+        task_id = f"T{self._current_project_id[1:]}{0:06d}"
         for item in project_dir.iterdir():
             if item.is_dir() and re.match(r'^T\d{12}$', item.name):
                 task_id = f"T{int(item.name[1:]) + 1:012d}"
@@ -249,7 +255,7 @@ class TaskListWidget(ContentWidgetBase):
             shutil.rmtree(directory)
         except Exception as e:
             logger.error(f"Failed to delete directory {directory}: {e}")
-        self.set_data(self.project_id)
+        self.set_data(self._current_project_id)
 
     @Slot(str)
     def _on_view_task(self, task_id):
@@ -266,14 +272,13 @@ class TaskListWidget(ContentWidgetBase):
     def _on_create_task(self):
         # 创建任务路径
         with db_session() as session:
-            project: Project = session.query(Project).filter_by(project_id=self.project_id).first()
+            project: Project = session.query(Project).filter_by(project_id=self._current_project_id).first()
             project_dir = Path(project.project_dir)
             task_id = self.get_task_id(project_dir)
             try:
                 os.makedirs(project_dir / task_id, exist_ok=True)
                 task = Task(
                     task_id=task_id,
-                    comment="",
                     task_status=TaskStatus.INITIALIZING.value,
                     epoch=0,
                     epochs=0
@@ -281,4 +286,4 @@ class TaskListWidget(ContentWidgetBase):
                 project.tasks.append(task)
             except Exception as e:
                 logger.error(f"Failed to create task directory {project_dir / task_id}: {e}")
-        self.set_data(self.project_id)
+        self.set_data(self._current_project_id)

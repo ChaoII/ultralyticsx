@@ -15,6 +15,7 @@ from home.types import TaskInfo, TaskStatus
 from ultralytics.engine.trainer import BaseTrainer
 from ultralytics.models.yolo.classify import ClassificationTrainer
 from ultralytics.models.yolo.detect import DetectionTrainer
+from ultralytics.models.yolo.segment import SegmentationTrainer
 
 
 class CustomLogs(QObject):
@@ -132,6 +133,8 @@ class ModelTrainThread(QThread):
                 self.trainer = ClassificationTrainer(overrides=self._train_parameters)
             elif task_info.model_type == ModelType.DETECT:
                 self.trainer = DetectionTrainer(overrides=self._train_parameters)
+            elif task_info.model_type == ModelType.SEGMENT:
+                self.trainer = SegmentationTrainer(overrides=self._train_parameters)
             else:
                 logger.error(f"unsupported model type {task_info.model_type}")
                 return False
@@ -210,7 +213,6 @@ class ModelTrainThread(QThread):
         self.train_start_signal.emit(self._loss_data.raw_data(), self._metric_data.raw_data())
         core.EventManager().train_status_changed.emit(self._task_info.task_id, 0, epochs, format_datatime(
             datetime.fromtimestamp(self._start_time)), None, None, TaskStatus.TRAINING)
-
         db_update_task_started(self._task_info.task_id, datetime.fromtimestamp(self._start_time))
 
     def _on_train_epoch_start(self, trainer):

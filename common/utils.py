@@ -2,19 +2,16 @@ import enum
 import os
 import shutil
 import sys
+from datetime import datetime
 from pathlib import Path
-
-from loguru import logger
-from datetime import datetime
-from PySide6.QtWidgets import QApplication, QWidget
-from PySide6.QtGui import QColor
 from random import randint
-from datetime import datetime
+
+from PIL import Image
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QApplication, QWidget
+from loguru import logger
 
 NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-
-DARK_BG = "rgb(33,39,54)"
-LIGHT_BG = "rgb(249, 249, 249)"
 
 
 class CustomColor(enum.Enum):
@@ -149,3 +146,16 @@ def invert_color(color):
 
     # 返回取反后的颜色
     return inverted_color
+
+
+def is_empty(folder_path: Path):
+    return not any(folder_path.iterdir())
+
+
+def is_image(filename):
+    try:
+        with Image.open(filename) as img:
+            img.verify()  # 验证图片是否完整
+            return True
+    except (IOError, SyntaxError) as e:
+        return False

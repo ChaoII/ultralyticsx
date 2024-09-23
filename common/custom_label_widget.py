@@ -1,5 +1,5 @@
 from PySide6.QtGui import QColor
-from qfluentwidgets import HyperlinkLabel, setCustomStyleSheet, BodyLabel
+from qfluentwidgets import setCustomStyleSheet, BodyLabel
 
 
 class CustomLabel(BodyLabel):

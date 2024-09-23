@@ -69,7 +69,6 @@ class DatasetDrawWidget(QWidget):
         self.dataset_draw_thread.draw_labels_finished.connect(self._on_draw_image)
         self.dataset_draw_thread.finished.connect(self._on_draw_image_finished)
 
-        self._set_qss()
         self._connect_signals_and_slots()
 
         self.dataset_info = LoadDatasetInfo()
@@ -167,11 +166,4 @@ class DatasetDrawWidget(QWidget):
 
     @Slot(Theme)
     def _on_theme_changed(self, theme):
-        self._set_qss()
-
-    def _set_qss(self):
-        """ set style sheet """
-        if isDarkTheme():
-            self.setStyleSheet(f"QScrollArea{{background-color:{DARK_BG}}}")
-        else:
-            self.setStyleSheet(f"QScrollArea{{background-color:{LIGHT_BG}}}")
+        pass

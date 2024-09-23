@@ -97,7 +97,7 @@ class DatasetFormatDocWidget(QWidget):
 
     def _connect_signals_and_slots(self):
         self.classify_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.CLASSIFY))
-        self.detection_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.DETECTION))
+        self.detection_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.DETECT))
         self.segmentation_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.SEGMENT))
         self.OBB_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.OBB))
         self.pose_doc.collapse_clicked.connect(lambda: self.set_current_model_type(ModelType.POSE))
@@ -113,7 +113,7 @@ class DatasetFormatDocWidget(QWidget):
         self._collapse_all_doc()
         if model_type == ModelType.CLASSIFY:
             self.classify_doc.set_collapsed(False)
-        if model_type == ModelType.DETECTION:
+        if model_type == ModelType.DETECT:
             self.detection_doc.set_collapsed(False)
         if model_type == ModelType.SEGMENT:
             self.segmentation_doc.set_collapsed(False)

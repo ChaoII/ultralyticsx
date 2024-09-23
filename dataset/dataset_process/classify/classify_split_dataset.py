@@ -5,19 +5,6 @@ from pathlib import Path
 import pandas as pd
 
 
-class ClassifySplitDataset:
-    label: list[str]
-    train_dataset: list[list[str, int]]
-    val_dataset: list[list[str, int]]
-    test_dataset: list[list[str, int]]
-
-    def __init__(self, label: list[str], train_dataset, val_dataset, test_dataset):
-        self.label = label
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
-        self.test_dataset = test_dataset
-
-
 def classify_dataset_split(dataset_dir: Path, split_rates: list):
     dataset_map = dict()
     label_list = []
@@ -71,4 +58,4 @@ def classify_dataset_split(dataset_dir: Path, split_rates: list):
 
 if __name__ == '__main__':
     # split_dataset(Path(r"C:\Users\AC\Desktop\1231\dataset\D000000"), [70, 20, 10])
-    split_dataset(Path(r"C:\Users\84945\Desktop\ultralytics_workspace\dataset\D000000"), [70, 20, 10])
+    classify_dataset_split(Path(r"C:\Users\84945\Desktop\ultralytics_workspace\dataset\D000000"), [70, 20, 10])

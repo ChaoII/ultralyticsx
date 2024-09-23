@@ -1,11 +1,10 @@
-import time
 from pathlib import Path
 
 import pandas as pd
-from PySide6.QtCore import QThread, Signal, QRect
-from PySide6.QtGui import QPixmap, QPainter, QFont, QFontMetrics, QPen, QColor
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtGui import QPixmap
 
-from common.utils import generate_color_map, invert_color
+from common.utils import generate_color_map
 
 
 class DatasetDrawThreadBase(QThread):

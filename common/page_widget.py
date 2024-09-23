@@ -1,13 +1,11 @@
 from enum import Enum
-from PySide6.QtCore import Qt, Signal, QModelIndex, QPoint, Property, QSize, QRectF
-from PySide6.QtGui import QPixmap, QPainter, QColor, QBrush
-from PySide6.QtWidgets import (QStyleOptionViewItem, QStyle, QListWidget, QListWidgetItem, QStyledItemDelegate,
-                               QToolButton)
-
-from qfluentwidgets import FluentIcon, drawIcon, isDarkTheme, FluentStyleSheet, ToolButton, ToolTipFilter, \
-    ToolTipPosition, SmoothScrollBar, PrimaryToolButton, themeColor,PipsPager
-
 from functools import singledispatch, update_wrapper
+
+from PySide6.QtCore import Qt, Signal, QModelIndex, Property, QSize, QRectF
+from PySide6.QtGui import QPainter, QColor
+from PySide6.QtWidgets import (QStyleOptionViewItem, QStyle, QListWidget, QListWidgetItem, QStyledItemDelegate)
+from qfluentwidgets import FluentIcon, drawIcon, isDarkTheme, FluentStyleSheet, ToolButton, ToolTipFilter, \
+    ToolTipPosition, SmoothScrollBar, themeColor
 
 
 class singledispatchmethod:

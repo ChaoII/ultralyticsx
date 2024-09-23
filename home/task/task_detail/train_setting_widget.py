@@ -702,6 +702,8 @@ class TrainParameterWidget(CollapsibleWidgetItem):
                 data = (Path(task.dataset.dataset_dir) / "split").resolve().as_posix()
             elif task.project.model_type == ModelType.DETECT.value:
                 data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+            elif task.project.model_type == ModelType.SEGMENT.value:
+                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
             else:
                 logger.error(f"Unsupported model type: {task.project.model_type}")
                 return

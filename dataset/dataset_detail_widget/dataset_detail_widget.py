@@ -8,6 +8,8 @@ from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
 from .common.dataset_detail_widget_base import DatasetDetailWidgetBase
 from loguru import logger
 
+from .segment.segment_dataset_detail_widget import SegmentDatasetDetailWidget
+
 
 class DatasetDetailWidget(QWidget):
     def __init__(self):
@@ -55,6 +57,8 @@ class DatasetDetailWidget(QWidget):
             self.content = ClassifyDatasetDetailWidget()
         elif self._dataset_info.model_type == ModelType.DETECT:
             self.content = DetectionDatasetDetailWidget()
+        elif self._dataset_info.model_type == ModelType.SEGMENT:
+            self.content = SegmentDatasetDetailWidget()
         else:
             # 如果模型类型不是分类或检测，记录日志并返回
             logger.warning(f"Unsupported model type: {self._dataset_info.model_type.name}")

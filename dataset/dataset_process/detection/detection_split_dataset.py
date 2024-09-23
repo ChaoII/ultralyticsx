@@ -7,24 +7,6 @@ import pandas as pd
 import yaml
 
 
-class ClassifySplitDataset:
-    label: list[str]
-    train_dataset: list[list[str, int]]
-    val_dataset: list[list[str, int]]
-    test_dataset: list[list[str, int]]
-
-    def __init__(self, label: list[str], train_dataset, val_dataset, test_dataset):
-        self.label = label
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
-        self.test_dataset = test_dataset
-
-
-def load_split_dataset(dataset_dir: Path):
-    dataset_df = pickle.load(open(dataset_dir / "split_cache", "rb"))
-    return dataset_df
-
-
 def detection_dataset_split(dataset_dir: Path | str, split_rates: list):
     if isinstance(dataset_dir, str):
         dataset_dir = Path(dataset_dir)

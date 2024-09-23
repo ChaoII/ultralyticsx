@@ -1,19 +1,7 @@
 from pathlib import Path
 from loguru import logger
-from PIL import Image
 
-
-def is_empty(folder_path: Path):
-    return not any(folder_path.iterdir())
-
-
-def is_image(filename):
-    try:
-        with Image.open(filename) as img:
-            img.verify()  # 验证图片是否完整
-            return True
-    except (IOError, SyntaxError) as e:
-        return False
+from common.utils import is_empty, is_image
 
 
 def detection_dataset_check(dataset_dir: Path | str):
