@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 
 from PIL.ImageQt import QPixmap
-from PySide6.QtCore import QPointF, QRectF
+from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QFontMetrics, QBrush, QPolygonF
 
 from common.utils import invert_color
@@ -44,6 +44,7 @@ class SegmentDatasetDrawThread(DatasetDrawThreadBase):
                         # 设置填充色
                         color.setAlpha(100)
                         # 设置边框颜色
+                        painter.setBrush(Qt.BrushStyle.NoBrush)
                         painter.setPen(QPen(QColor(color.red(), color.green(), color.blue()), line_width))  # 设置画笔颜色和宽度
                         # 绘制外接矩形
                         bounding_rect = polygon.boundingRect()

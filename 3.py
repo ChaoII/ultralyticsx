@@ -20,9 +20,15 @@ from ultralytics import YOLO
 #
 # pickle.dump(dataset_frame, open(df_path, "wb"))
 
-model = YOLO("yolov8n-seg.pt")
-results = model.train(data="coco128-seg.yaml", epochs=100, imgsz=640, device=0, workers=0)
+# model = YOLO("yolov8n-pose.pt")
+# results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640, device=0, workers=0)
 
 # model.export(format="onnx")
 # s = model.val(workers=0, save_dir="./", plots=False, split="test")
 # print(s)
+
+with open(r"C:\Users\AC\Desktop\1231\dataset\coco8-pose\labels\000000000049.txt", "r", encoding="utf8") as f:
+    lines = f.readlines()
+    for line in lines:
+        data = line.split(" ")
+        print(len(data))
