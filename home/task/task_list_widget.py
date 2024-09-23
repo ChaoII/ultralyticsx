@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 
 from PySide6.QtCore import Signal, Slot
-from PySide6.QtGui import Qt, QColor
+from PySide6.QtGui import Qt, QColor, QResizeEvent
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
     QTableWidgetItem, QWidget
 from loguru import logger
@@ -18,7 +18,7 @@ from common.database.db_helper import db_session
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
 from common.tag_widget import TextTagWidget
-from common.utils import format_datatime, open_directory
+from common.utils import format_datatime, open_directory, str_to_datetime
 from core.content_widget_base import ContentWidgetBase
 from home.types import TaskStatus
 from models.models import Task, Project
@@ -30,8 +30,7 @@ COLUMN_PROGRESS_BAR = 3
 COLUMN_START_TIME = 4
 COLUMN_END_TIME = 5
 COLUMN_ELAPSED = 6
-COLUMN_CREATE_TIME = 7
-COLUMN_OPERATION = 8
+COLUMN_OPERATION = 7
 
 
 class OperationWidget(QWidget):
@@ -95,23 +94,21 @@ class TaskTableWidget(TableWidget):
         self.verticalHeader().hide()
         self.setBorderRadius(8)
         self.setBorderVisible(True)
-        self.setColumnCount(9)
+        self.setColumnCount(8)
         self.setRowCount(24)
         # self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setHorizontalHeaderLabels([
             self.tr('Task ID'), self.tr('Project name'), self.tr('Task status'), self.tr("Train progress"),
-            self.tr('Start time'), self.tr('End time'), self.tr("Elapsed"), self.tr('Create time'), self.tr("Operation")
+            self.tr('Start time'), self.tr('End time'), self.tr("Elapsed"), self.tr("Operation")
         ])
         self.setColumnWidth(COLUMN_TASK_ID, 130)
         self.horizontalHeader().setSectionResizeMode(COLUMN_PROJECT_NAME, QHeaderView.ResizeMode.ResizeToContents)
         self.setColumnWidth(COLUMN_TASK_STATUS, 100)
         self.horizontalHeader().setSectionResizeMode(COLUMN_PROGRESS_BAR, QHeaderView.ResizeMode.Stretch)
-        # self.setColumnWidth(COLUMN_PROGRESS_BAR, 300)
-        self.setColumnWidth(COLUMN_START_TIME, 160)
-        self.setColumnWidth(COLUMN_END_TIME, 160)
+        self.setColumnWidth(COLUMN_START_TIME, 156)
+        self.setColumnWidth(COLUMN_END_TIME, 156)
         self.setColumnWidth(COLUMN_ELAPSED, 100)
-        self.setColumnWidth(COLUMN_CREATE_TIME, 160)
-        self.setColumnWidth(COLUMN_OPERATION, 160)
+        self.setColumnWidth(COLUMN_OPERATION, 120)
 
 
 class TaskListWidget(ContentWidgetBase):
@@ -156,12 +153,11 @@ class TaskListWidget(ContentWidgetBase):
                 item4 = QTableWidgetItem(format_datatime(task.start_time))
                 item5 = QTableWidgetItem(format_datatime(task.end_time))
                 item6 = QTableWidgetItem(task.elapsed)
-                item7 = QTableWidgetItem(format_datatime(task.create_time))
-                item8 = OperationWidget(task.task_id)
+                item7 = OperationWidget(task.task_id)
 
-                item8.task_deleted.connect(self._on_delete_task)
-                item8.task_detail.connect(self._on_view_task)
-                item8.open_task_dir.connect(self._on_open_task_dir)
+                item7.task_deleted.connect(self._on_delete_task)
+                item7.task_detail.connect(self._on_view_task)
+                item7.open_task_dir.connect(self._on_open_task_dir)
 
                 item0.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 item1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -174,8 +170,7 @@ class TaskListWidget(ContentWidgetBase):
                 self.tb_task.setItem(row_index, COLUMN_START_TIME, item4)
                 self.tb_task.setItem(row_index, COLUMN_END_TIME, item5)
                 self.tb_task.setItem(row_index, COLUMN_ELAPSED, item6)
-                self.tb_task.setItem(row_index, COLUMN_CREATE_TIME, item7)
-                self.tb_task.setCellWidget(row_index, COLUMN_OPERATION, item8)
+                self.tb_task.setCellWidget(row_index, COLUMN_OPERATION, item7)
 
                 if task.task_status == TaskStatus.TRAINING.value:
                     item3.set_value(task.epoch)
@@ -232,6 +227,10 @@ class TaskListWidget(ContentWidgetBase):
                 item_elapsed.setText(elapsed)
             else:
                 item_bar.setVisible(False)
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        # self.update_widget()
+        super().resizeEvent(event)
 
     def get_task_id(self, project_dir: Path) -> str:
         task_id = f"T{self.project_id[1:]}{0:06d}"

@@ -24,7 +24,7 @@ class ClassifyDatasetDrawThread(DatasetDrawThreadBase):
                 label = row["label"]
                 # 绘制矩形
                 painter = QPainter(pix)
-                line_width = min(pix.width(), pix.height()) // 50
+                line_width = 1
                 # 设置填充色
                 color = self.color_list[self.labels.index(label)]
                 inv_color = invert_color(color)
@@ -32,7 +32,7 @@ class ClassifyDatasetDrawThread(DatasetDrawThreadBase):
                 # 设置边框颜色
                 painter.setPen(QPen(QColor(color.red(), color.green(), color.blue()), line_width))  # 设置画笔颜色和宽度
                 # 获取字体大小
-                font_size = min(pix.width(), pix.height()) // 10  # 假设文字大小是窗口大小的10%
+                font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
                 font = QFont("Microsoft YaHei UI")
                 font.setPixelSize(font_size)
                 fm = QFontMetrics(font)

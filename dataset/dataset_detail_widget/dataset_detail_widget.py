@@ -53,7 +53,7 @@ class DatasetDetailWidget(QWidget):
         # 根据数据集的模型类型创建新的内容组件
         if self._dataset_info.model_type == ModelType.CLASSIFY:
             self.content = ClassifyDatasetDetailWidget()
-        elif self._dataset_info.model_type == ModelType.DETECTION:
+        elif self._dataset_info.model_type == ModelType.DETECT:
             self.content = DetectionDatasetDetailWidget()
         else:
             # 如果模型类型不是分类或检测，记录日志并返回

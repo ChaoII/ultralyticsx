@@ -34,7 +34,7 @@ class DetectionDatasetDrawThread(DatasetDrawThreadBase):
                         color = self.color_list[int(class_id)]
                         inv_color = invert_color(color)
                         # 绘制矩形
-                        line_width = min(width_, height_) // 50
+                        line_width = 1
                         # 设置填充色
                         color.setAlpha(100)
                         painter.setBrush(QBrush(color))
@@ -42,14 +42,14 @@ class DetectionDatasetDrawThread(DatasetDrawThreadBase):
                         painter.setPen(QPen(QColor(color.red(), color.green(), color.blue()), line_width))  # 设置画笔颜色和宽度
                         painter.drawRect(x, y, width_, height_)  # 绘制矩形
                         # 获取字体大小
-                        font_size = min(width_, height_) // 10  # 假设文字大小是窗口大小的10%
+                        font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
                         font = QFont("Microsoft YaHei UI")
                         font.setPixelSize(font_size)
                         fm = QFontMetrics(font)
 
                         # 文字填充色
                         painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
-                        new_rect = QRect(x, y - fm.height(), fm.boundingRect(label).width(), fm.height())
+                        new_rect = QRect(x, y - fm.height(), fm.boundingRect(label).width() + line_width, fm.height())
                         painter.drawRect(new_rect)
 
                         painter.setFont(font)

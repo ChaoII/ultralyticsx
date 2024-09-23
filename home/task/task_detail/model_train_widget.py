@@ -117,8 +117,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.vly.addWidget(self.pg_widget)
         self.vly.addWidget(self.ted_train_log)
 
-        self.state_tool_tip = None
-
         self._connect_signals_and_slot()
         self._train_parameter: dict = dict()
         self._train_config_file_path: Path | None = None
@@ -234,11 +232,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
                 self._current_thread = self._task_thread_map.get_thread_by_task_id(self._task_info.task_id)
 
         self._disable_btn_to_train_status()
-        # 设置状态工具栏并显示
-        self.state_tool_tip = StateToolTip(
-            self.tr('The model is currently being trained '), self.tr('Please wait patiently'), self.window())
-        self.state_tool_tip.move(self.state_tool_tip.getSuitablePos())
-        self.state_tool_tip.show()
         self._current_thread.start()
         self._task_info.task_status = TaskStatus.TRAINING
         with db_session() as session:
@@ -327,40 +320,26 @@ class ModelTrainWidget(CollapsibleWidgetItem):
                 self.btn_start_train.setText(self.tr("Resume"))
                 self._is_retrain = False
             self._task_info.task_status = task_info.task_status
-            # 数据转换完成，显示状态信息
-            self.state_tool_tip.setContent(
-                self.tr('Model training is completed!') + ' 😆')
-            self.state_tool_tip.setState(True)
-            self.state_tool_tip = None
             self.is_training_signal.emit(False, self._task_info.task_id)
 
         with open(task_info.task_dir / "train_config.yaml", "w", encoding="utf8") as f:
             yaml.dump(self.sender().get_train_parameters(), f, default_flow_style=False, allow_unicode=True,
                       sort_keys=False)
-        with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=task_info.task_id).first()
-            task.task_status = task_info.task_status.value
 
     @Slot(str)
     def _on_model_train_failed(self, error_info: str):
-        if self.sender() != self._current_thread:
-            return
-        self.ted_train_log.append(log_error(error_info))
-        self._enable_btn_to_train_status()
-        self.state_tool_tip.setState(True)
-        self.state_tool_tip = None
-        self._task_info.task_status = TaskStatus.TRAIN_FAILED
-        with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
-            task.task_status = self._task_info.task_status.value
+        if self.sender() == self._current_thread:
+            self.ted_train_log.append(log_error(error_info))
+            self._enable_btn_to_train_status()
+            self._task_info.task_status = TaskStatus.TRAIN_FAILED
 
-        InfoBar.error(
-            title='',
-            content=self.tr("Model train failed"),
-            orient=Qt.Orientation.Vertical,  # 内容太长时可使用垂直布局
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=-1,
-            parent=self.parent().parent()
-        )
-        self.is_training_signal.emit(False, self._task_info.task_id)
+            InfoBar.error(
+                title='',
+                content=self.tr("Model train failed"),
+                orient=Qt.Orientation.Vertical,  # 内容太长时可使用垂直布局
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=-1,
+                parent=self.parent().parent()
+            )
+            self.is_training_signal.emit(False, self._task_info.task_id)

@@ -7,7 +7,8 @@ from PySide6.QtCore import Slot, Signal, QThread, QObject
 from loguru import logger
 
 import core
-from common.database.task_helper import update_task_epoch_info
+from common.database.task_helper import db_update_task_epoch_info, db_update_task_finished, db_update_task_pause, \
+    db_update_task_started, db_update_task_failed
 from common.model_type_widget import ModelType
 from common.utils import log_info, format_datatime
 from home.types import TaskInfo, TaskStatus
@@ -189,6 +190,9 @@ class ModelTrainThread(QThread):
     def get_train_parameters(self):
         return self._train_parameters
 
+    def get_task_id(self) -> str:
+        return self._task_info.task_id
+
     def get_current_epoch(self) -> int:
         if self.trainer:
             return self.trainer.epoch
@@ -196,7 +200,7 @@ class ModelTrainThread(QThread):
 
     def _on_train_start(self, trainer):
         self._start_time = time.time()
-
+        epochs = trainer.epochs
         metrics = trainer.metrics
         loss_names = trainer.loss_names
         if self._loss_data.is_empty():
@@ -204,8 +208,10 @@ class ModelTrainThread(QThread):
         if self._metric_data.is_empty():
             self._metric_data.init_plot_data(metrics)
         self.train_start_signal.emit(self._loss_data.raw_data(), self._metric_data.raw_data())
-        core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, format_datatime(
+        core.EventManager().train_status_changed.emit(self._task_info.task_id, 0, epochs, format_datatime(
             datetime.fromtimestamp(self._start_time)), None, None, TaskStatus.TRAINING)
+
+        db_update_task_started(self._task_info.task_id, datetime.fromtimestamp(self._start_time))
 
     def _on_train_epoch_start(self, trainer):
         loss_names = trainer.loss_names
@@ -221,11 +227,12 @@ class ModelTrainThread(QThread):
         self._last_model = trainer.last.resolve().as_posix()
         epoch = trainer.epoch + 1
         epochs = trainer.epochs
-
         self.train_epoch_end.emit(epoch)
-        update_task_epoch_info(self._task_info.task_id, epoch, epochs)
+
         core.EventManager().train_status_changed.emit(self._task_info.task_id, epoch, epochs, format_datatime(
             datetime.fromtimestamp(self._start_time)), None, None, TaskStatus.TRAINING)
+
+        db_update_task_epoch_info(self._task_info.task_id, epoch, epochs)
 
     def _on_fit_epoch_end(self, trainer):
         metrics = trainer.metrics
@@ -290,26 +297,30 @@ class ModelTrainThread(QThread):
 
     def _on_train_end(self, trainer):
         current_epoch = trainer.epoch + 1
-        if current_epoch == self._train_parameters["epochs"] and not self._stop:
-            self._train_parameters["resume"] = ""
-            self._task_info.task_status = TaskStatus.TRN_FINISHED
-            self._logs.append(log_info(f"{self.tr('train finished')} epoch = {current_epoch}"))
-        else:
-            if self._last_model:
-                self._train_parameters["resume"] = self._last_model
-            self._task_info.task_status = TaskStatus.TRN_PAUSE
-            self._logs.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {current_epoch}"))
-        self.model_train_end.emit(self._task_info)
         end_time = time.time()
         elapsed_time = end_time - self._start_time
         if elapsed_time > 3600:
             elapsed_time = f"{elapsed_time / 3600:.2f}h "
         else:
             elapsed_time = f"{elapsed_time / 60:.2f}min"
+        if current_epoch == self._train_parameters["epochs"] and not self._stop:
+            self._train_parameters["resume"] = ""
+            self._task_info.task_status = TaskStatus.TRN_FINISHED
+            self._logs.append(log_info(f"{self.tr('train finished')} epoch = {current_epoch}"))
+            db_update_task_finished(self._task_info.task_id, datetime.fromtimestamp(end_time), elapsed_time)
+        else:
+            if self._last_model:
+                self._train_parameters["resume"] = self._last_model
+            self._task_info.task_status = TaskStatus.TRN_PAUSE
+            self._logs.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {current_epoch}"))
+            db_update_task_pause(self._task_info.task_id)
+
+        self.model_train_end.emit(self._task_info)
+
         logger.info(f"train finished, {elapsed_time}")
         core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None,
                                                       format_datatime(datetime.fromtimestamp(end_time)), elapsed_time,
-                                                      TaskStatus.TRN_FINISHED)
+                                                      self._task_info.task_status)
 
     def run(self):
         if self.trainer:
@@ -319,6 +330,7 @@ class ModelTrainThread(QThread):
                 self.model_train_failed.emit(str(e))
                 core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
                                                               TaskStatus.TRAIN_FAILED)
+                db_update_task_failed(self._task_info.task_id)
 
     @Slot()
     def stop_train(self):
