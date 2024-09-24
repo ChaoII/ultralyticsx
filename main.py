@@ -3,9 +3,9 @@ import os
 import sys
 
 from PySide6.QtCore import Qt, QTranslator, QSize, Slot
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
-from qfluentwidgets import FluentIcon as FIcon
+from PySide6.QtGui import QIcon, QAction
+from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QSystemTrayIcon, QMenu
+from qfluentwidgets import FluentIcon as FIcon, SystemTrayMenu, Action
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
                             InfoBadge, InfoBadgePosition, SplashScreen)
@@ -38,9 +38,9 @@ class Window(FluentWindow):
         self.setWindowIcon(QIcon('./resource/images/ux.png'))
         self.setWindowTitle('UltralyticsX')
 
-        splash_screen = SplashScreen(self.windowIcon(), self)
-        splash_screen.setIconSize(QSize(102, 102))
-        self.show_center()
+        # splash_screen = SplashScreen(self.windowIcon(), self)
+        # splash_screen.setIconSize(QSize(102, 102))
+        # self.show_center()
 
         # create sub interface
         self.home_interface = HomeWidget(self)
@@ -56,9 +56,31 @@ class Window(FluentWindow):
         # set the minimum window width that allows the navigation panel to be expanded
         # self.navigationInterface.setMinimumExpandWidth(900)
         # self.navigationInterface.expand(useAni=False)
+        self.init_system_tray()  # 初始化系统托盘
         self._connect_signals_and_slots()
 
-        splash_screen.finish()
+        # splash_screen.finish()
+
+    def init_system_tray(self):
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(self.windowIcon())  # 设置托盘图标
+
+        # 创建托盘菜单
+        tray_menu = SystemTrayMenu(parent=self)
+        action_show = Action(CustomFluentIcon.SHOW, "显示主窗口")
+        tray_menu.addAction(action_show)
+        action_show.triggered.connect(self.showNormal)
+
+        action_exit = Action(CustomFluentIcon.EXIT, "退出")
+        tray_menu.addAction(action_exit)
+        action_exit.triggered.connect(QApplication.quit)
+
+        # 设置托盘菜单
+        self.tray_icon.setContextMenu(tray_menu)
+        # 托盘提示信息
+        self.tray_icon.setToolTip("UltralyticsX")
+        # 显示托盘图标
+        self.tray_icon.show()
 
     def show_center(self):
         desktop = QApplication.primaryScreen().availableGeometry()
@@ -105,6 +127,30 @@ class Window(FluentWindow):
 
     def _connect_signals_and_slots(self):
         self.stackedWidget.currentChanged.connect(self._on_widget_changed)
+        self.tray_icon.activated.connect(self.onTrayIconActivated)
+
+    @Slot(QSystemTrayIcon.ActivationReason)
+    def onTrayIconActivated(self, reason):
+        """ 处理托盘图标的激活事件 """
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+            self.showNormal()
+            self.activateWindow()
+        elif reason == QSystemTrayIcon.ActivationReason.MiddleClick:
+            QApplication.quit()
+
+    def closeEvent(self, event):
+        """ 重写关闭事件处理器 """
+        if self.isMinimized():
+            event.ignore()
+        else:
+            self.hide()
+            self.tray_icon.showMessage(
+                "正在后台运行",
+                "UltralyticsX 正在托盘中运行。",
+                QSystemTrayIcon.MessageIcon.Information,
+                2000
+            )
+            event.ignore()
 
     @Slot(int)
     def _on_widget_changed(self, index: int):

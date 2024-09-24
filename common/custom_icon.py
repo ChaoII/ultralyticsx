@@ -12,6 +12,7 @@ class CustomFluentIcon(FluentIconBase, Enum):
     DETAIL = "detail"
     DETAIL1 = "detail1"
     DETECT = "detect"
+    EXIT = "exit"
     FILL_DIRECTORY = "fill_directory"
     FOLD = "fold"
     IMPORT = "import"
@@ -21,6 +22,7 @@ class CustomFluentIcon(FluentIconBase, Enum):
     OBB = "obb"
     POSE = "pose"
     SEGMENT = "segment"
+    SHOW = "show"
     UNFOLD = "unfold"
 
     def path(self, theme=Theme.AUTO):
