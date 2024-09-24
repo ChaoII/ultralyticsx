@@ -3,7 +3,8 @@
         "dpi_scale": "auto",
         "enable_acrylic_background": false,
         "language": "Auto",
-        "minimize_to_tray": false
+        "minimize_to_tray": true,
+        "remember_quit_status": true
     },
     "model": {
         "enable_tensorboard": false,
@@ -11,6 +12,6 @@
     },
     "QFluentWidgets": {
         "ThemeColor": "#ff009faa",
-        "ThemeMode": "Dark"
+        "ThemeMode": "Light"
     }
 }

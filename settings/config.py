@@ -43,6 +43,9 @@ class Config(QConfig):
     language = OptionsConfigItem(
         "personalization", "language", Language.AUTO, OptionsValidator(Language), LanguageSerializer(), restart=True)
 
+    remember_quit_status = ConfigItem(
+        "personalization", "remember_quit_status", False, BoolValidator())
+
 
 cfg = Config()
 qconfig.load('settings/config.json', cfg)

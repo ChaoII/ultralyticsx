@@ -5,11 +5,12 @@ import sys
 from PySide6.QtCore import Qt, QTranslator, QSize, Slot
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QSystemTrayIcon, QMenu
-from qfluentwidgets import FluentIcon as FIcon, SystemTrayMenu, Action
+from qfluentwidgets import FluentIcon as FIcon, SystemTrayMenu, Action, MessageBox
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
                             InfoBadge, InfoBadgePosition, SplashScreen)
 
+from common.close_message_box import CustomMessageBox
 from common.custom_icon import CustomFluentIcon
 from common.utils import show_center
 from core.interface_base import InterfaceBase
@@ -51,7 +52,7 @@ class Window(FluentWindow):
         self.export_interface = Widget('Export Interface', self)
         self.test_interface = Widget('Test Interface', self)
         self.settingInterface = SettingInterface(self)
-        self.initNavigation()
+        self.init_navigation()
 
         # set the minimum window width that allows the navigation panel to be expanded
         # self.navigationInterface.setMinimumExpandWidth(900)
@@ -72,8 +73,8 @@ class Window(FluentWindow):
         action_show.triggered.connect(self.showNormal)
 
         action_exit = Action(CustomFluentIcon.EXIT, "退出")
+        action_exit.triggered.connect(self._on_tray_exit_clicked)
         tray_menu.addAction(action_exit)
-        action_exit.triggered.connect(QApplication.quit)
 
         # 设置托盘菜单
         self.tray_icon.setContextMenu(tray_menu)
@@ -91,7 +92,7 @@ class Window(FluentWindow):
         self.move(x, y)
         self.show()
 
-    def initNavigation(self):
+    def init_navigation(self):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
         self.navigationInterface.addSeparator()
         self.addSubInterface(self.dataset_interface1, CustomFluentIcon.DATASET1, self.tr('dataset1'))
@@ -121,36 +122,49 @@ class Window(FluentWindow):
             target=item,
             position=InfoBadgePosition.NAVIGATION_ITEM
         )
-
         # NOTE: enable acrylic effect
         self.navigationInterface.setAcrylicEnabled(True)
 
     def _connect_signals_and_slots(self):
         self.stackedWidget.currentChanged.connect(self._on_widget_changed)
-        self.tray_icon.activated.connect(self.onTrayIconActivated)
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+        self.titleBar.closeBtn.clicked.disconnect(self.titleBar.window().close)
+        self.titleBar.closeBtn.clicked.connect(self._on_close_clicked)
 
     @Slot(QSystemTrayIcon.ActivationReason)
-    def onTrayIconActivated(self, reason):
+    def on_tray_icon_activated(self, reason):
         """ 处理托盘图标的激活事件 """
         if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.showNormal()
             self.activateWindow()
-        elif reason == QSystemTrayIcon.ActivationReason.MiddleClick:
-            QApplication.quit()
 
-    def closeEvent(self, event):
-        """ 重写关闭事件处理器 """
-        if self.isMinimized():
-            event.ignore()
+    def _hide_to_tray(self):
+        self.hide()
+        self.tray_icon.showMessage(
+            "UltralyticsX 已隐藏",
+            "点击托盘图标以显示。",
+            QSystemTrayIcon.MessageIcon.Information,
+            1000
+        )
+
+    def _on_tray_exit_clicked(self):
+        QApplication.quit()
+
+    def _on_close_clicked(self):
+        if cfg.get(cfg.remember_quit_status):
+            if cfg.get(cfg.minimize_to_tray):
+                self._hide_to_tray()
+            else:
+                QApplication.quit()
         else:
-            self.hide()
-            self.tray_icon.showMessage(
-                "正在后台运行",
-                "UltralyticsX 正在托盘中运行。",
-                QSystemTrayIcon.MessageIcon.Information,
-                2000
-            )
-            event.ignore()
+            msg_box = CustomMessageBox(self)
+            msg_box.exec()
+            if msg_box.get_accept_status():
+                cfg.set(cfg.minimize_to_tray, False)
+                self.close()
+            else:
+                cfg.set(cfg.minimize_to_tray, True)
+                self._hide_to_tray()
 
     @Slot(int)
     def _on_widget_changed(self, index: int):
