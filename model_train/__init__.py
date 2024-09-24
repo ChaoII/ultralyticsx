@@ -1,1 +1,0 @@
-from .model_train_interface import ModelTrainWidget

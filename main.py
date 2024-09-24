@@ -14,9 +14,7 @@ from common.custom_icon import CustomFluentIcon
 from common.utils import show_center
 from core.interface_base import InterfaceBase
 from dataset import DatasetWidget
-from dataset_process import DataProcessWidget
 from home import HomeWidget
-from model_train import ModelTrainWidget
 from settings import SettingInterface, cfg
 
 
@@ -47,8 +45,8 @@ class Window(FluentWindow):
         # create sub interface
         self.home_interface = HomeWidget(self)
         self.dataset_interface1 = DatasetWidget(self)
-        self.dataset_interface = DataProcessWidget(self)
-        self.train_interface = ModelTrainWidget(self)
+        self.dataset_interface = Widget('Interface1', self)
+        self.train_interface = Widget('Interface2', self)
         self.val_interface = Widget('Val Interface', self)
         self.export_interface = Widget('Export Interface', self)
         self.test_interface = Widget('Test Interface', self)
