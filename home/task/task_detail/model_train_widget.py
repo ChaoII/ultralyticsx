@@ -9,17 +9,17 @@ from PySide6.QtGui import QFont, QColor, Qt
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy)
 from pyqtgraph import PlotItem
 from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
-    TextEdit, StateToolTip, isDarkTheme, InfoBar, InfoBarPosition
+    TextEdit, isDarkTheme, InfoBar, InfoBarPosition
 
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_process_bar import CustomProcessBar
 from common.database.db_helper import db_session
 from common.utils import log_warning, log_error
-from home.task.model_trainer_thread.model_trainer_thread import ModelTrainThread
-from home.task.task_threads import TaskThreadMap
-from home.types import TaskInfo, TaskStatus
 from models.models import Task
 from settings import cfg
+from ..model_trainer_thread.model_trainer_thread import ModelTrainThread
+from ..task_threads import TaskThreadMap
+from ...types import TaskInfo, TaskStatus
 
 
 class GraphicsLayoutWidget(pg.GraphicsLayoutWidget):

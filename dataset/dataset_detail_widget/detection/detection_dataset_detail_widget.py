@@ -1,12 +1,11 @@
-import pickle
 from collections import Counter
 from pathlib import Path
 
 import pandas as pd
 import yaml
 
-from ..common.dataset_detail_widget_base import DatasetDetailWidgetBase
 from .detection_dataset_draw_widget import DetectionDatasetDrawWidget
+from ..common.dataset_detail_widget_base import DatasetDetailWidgetBase
 from ..common.label_table_Widget import SplitLabelInfo
 from ...types import DatasetType
 

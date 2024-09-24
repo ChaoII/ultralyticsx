@@ -1,15 +1,15 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout
+from loguru import logger
 
 from common.model_type_widget import ModelType
 from .classify.classify_dataset_detail_widget import ClassifyDatasetDetailWidget
-from .detection.detection_dataset_detail_widget import DetectionDatasetDetailWidget
-from dataset.dataset_detail_widget.common.datset_header_widget import DatasetHeaderWidget
-from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
 from .common.dataset_detail_widget_base import DatasetDetailWidgetBase
-from loguru import logger
-
+from .common.datset_header_widget import DatasetHeaderWidget
+from .detection.detection_dataset_detail_widget import DetectionDatasetDetailWidget
+from .obb.obb_dataset_detail_widget import OBBDatasetDetailWidget
 from .pose.pose_dataset_detail_widget import PoseDatasetDetailWidget
 from .segment.segment_dataset_detail_widget import SegmentDatasetDetailWidget
+from ..dataset_list_widget.new_dataset_dialog import DatasetInfo
 
 
 class DatasetDetailWidget(QWidget):
@@ -62,6 +62,8 @@ class DatasetDetailWidget(QWidget):
             self.content = SegmentDatasetDetailWidget()
         elif self._dataset_info.model_type == ModelType.POSE:
             self.content = PoseDatasetDetailWidget()
+        elif self._dataset_info.model_type == ModelType.OBB:
+            self.content = OBBDatasetDetailWidget()
         else:
             # 如果模型类型不是分类或检测，记录日志并返回
             logger.warning(f"Unsupported model type: {self._dataset_info.model_type.name}")

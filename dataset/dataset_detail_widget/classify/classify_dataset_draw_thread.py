@@ -5,7 +5,7 @@ from PySide6.QtCore import Signal, QRect
 from PySide6.QtGui import QPixmap, QPainter, QFont, QFontMetrics, QPen, QColor
 
 from common.utils import invert_color
-from dataset.dataset_detail_widget.common.dataset_draw_thread_base import DatasetDrawThreadBase
+from ..common.dataset_draw_thread_base import DatasetDrawThreadBase
 
 
 class ClassifyDatasetDrawThread(DatasetDrawThreadBase):

@@ -1,9 +1,8 @@
 from enum import Enum
 
 from PySide6.QtCore import QLocale
-from qfluentwidgets import (qconfig, QConfig, ConfigItem, OptionsConfigItem, BoolValidator,
-                            ColorConfigItem, OptionsValidator, RangeConfigItem, RangeValidator,
-                            FolderListValidator, FolderValidator, ConfigSerializer)
+from qfluentwidgets import qconfig, QConfig, ConfigItem, OptionsConfigItem, BoolValidator, \
+    OptionsValidator, FolderValidator, ConfigSerializer
 
 
 class Language(Enum):
@@ -46,4 +45,4 @@ class Config(QConfig):
 
 
 cfg = Config()
-qconfig.load('config/config.json', cfg)
+qconfig.load('settings/config.json', cfg)

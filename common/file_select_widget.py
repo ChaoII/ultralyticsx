@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import themeColor, LineEdit
 from qfluentwidgets.common.icon import toQIcon, drawIcon
 
-from common.custom_icon import CustomFluentIcon
+from .custom_icon import CustomFluentIcon
 
 
 class FileSelectWidget(LineEdit):

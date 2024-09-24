@@ -7,8 +7,8 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QListView, QListWidgetIt
 from qfluentwidgets import SimpleCardWidget, ComboBox, CheckBox, ListWidget
 
 from common.image_tip_widget import ImageTip
-from dataset.dataset_detail_widget.common.dataset_draw_thread_base import DatasetDrawThreadBase
-from dataset.types import DatasetType
+from .dataset_draw_thread_base import DatasetDrawThreadBase
+from ...types import DatasetType
 
 
 class ImageItemSize(enum.Enum):

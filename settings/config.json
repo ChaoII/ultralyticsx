@@ -3,7 +3,7 @@
         "dpi_scale": "auto",
         "enable_acrylic_background": false,
         "language": "Auto",
-        "minimize_to_tray": true
+        "minimize_to_tray": false
     },
     "model": {
         "enable_tensorboard": false,

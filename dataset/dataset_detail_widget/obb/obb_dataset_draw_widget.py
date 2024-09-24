@@ -3,18 +3,18 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from .pose_dataset_draw_thread import PoseDatasetDrawThread
+from .obb_dataset_draw_thread import OBBDatasetDrawThread
 from ..common.dataset_draw_widget_base import DatasetDrawWidgetBase
 from ...types import DatasetType
 
 
-class PoseDatasetDrawWidget(DatasetDrawWidgetBase):
+class OBBDatasetDrawWidget(DatasetDrawWidgetBase):
 
     def __init__(self):
         super().__init__()
 
     def set_dataset_draw_thread(self):
-        self.dataset_draw_thread = PoseDatasetDrawThread()
+        self.dataset_draw_thread = OBBDatasetDrawThread()
 
     def init_dataset_labels(self, dataset_df: pd.DataFrame):
         config_path = Path(dataset_df.loc[0, "image_path"]).parent.parent.parent / "coco_cpy.yaml"

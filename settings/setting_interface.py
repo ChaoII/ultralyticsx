@@ -1,13 +1,11 @@
-# coding:utf-8
-from .config import cfg
-from qfluentwidgets import (SettingCardGroup, SwitchSettingCard, FolderListSettingCard,
-                            OptionsSettingCard, RangeSettingCard, PushSettingCard, BodyLabel,
-                            ColorSettingCard, HyperlinkCard, PrimaryPushSettingCard, ScrollArea,
-                            ComboBoxSettingCard, ExpandLayout, Theme, InfoBar, CustomColorSettingCard,
-                            setTheme, setThemeColor, isDarkTheme)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QFontDialog, QFileDialog
 from qfluentwidgets import FluentIcon as FIco
-from PySide6.QtCore import Qt, Signal, QUrl, QStandardPaths
-from PySide6.QtWidgets import QFrame, QLabel, QFontDialog, QFileDialog
+from qfluentwidgets import SettingCardGroup, SwitchSettingCard, OptionsSettingCard, PushSettingCard, ScrollArea, \
+    ComboBoxSettingCard, ExpandLayout, Theme, InfoBar, CustomColorSettingCard, \
+    setTheme, setThemeColor, isDarkTheme
+
+from .config import cfg
 
 
 class SettingInterface(ScrollArea):

@@ -5,11 +5,11 @@ from PySide6.QtCore import Slot, Signal
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout
 
 from common.database.db_helper import db_session
-from dataset.dataset_detail_widget.common.dataset_draw_widget_base import DatasetDrawWidgetBase
-from dataset.dataset_detail_widget.common.label_table_Widget import SplitLabelInfo, DatasetLabelsInfoWidget
-from dataset.dataset_process import split_dataset, load_split_dataset
-from dataset.types import DatasetInfo, DatasetType, DatasetStatus
 from models.models import Dataset
+from .dataset_draw_widget_base import DatasetDrawWidgetBase
+from .label_table_Widget import SplitLabelInfo, DatasetLabelsInfoWidget
+from ...dataset_process import split_dataset, load_split_dataset
+from ...types import DatasetInfo, DatasetStatus
 
 
 class DatasetDetailWidgetBase(QWidget):

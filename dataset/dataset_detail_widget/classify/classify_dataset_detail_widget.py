@@ -1,9 +1,9 @@
 import pandas as pd
 
-from dataset.dataset_detail_widget.classify.classify_dataset_draw_widget import ClassifyDatasetDrawWidget
-from dataset.dataset_detail_widget.common.dataset_detail_widget_base import DatasetDetailWidgetBase
-from dataset.dataset_detail_widget.common.label_table_Widget import SplitLabelInfo
-from dataset.types import DatasetType
+from .classify_dataset_draw_widget import ClassifyDatasetDrawWidget
+from ..common.dataset_detail_widget_base import DatasetDetailWidgetBase
+from ..common.label_table_Widget import SplitLabelInfo
+from ...types import DatasetType
 
 
 class ClassifyDatasetDetailWidget(DatasetDetailWidgetBase):

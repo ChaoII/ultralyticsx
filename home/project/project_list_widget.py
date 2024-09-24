@@ -128,7 +128,7 @@ class ProjectListWidget(ContentWidgetBase):
             if self.cmb_type.currentIndex() == 0:
                 query: Query = session.query(Project)
             else:
-                query: Query = session.query(Project).filter(Project.project_type == self.cmb_type.currentIndex() - 1)
+                query: Query = session.query(Project).filter(Project.model_type == self.cmb_type.currentIndex() - 1)
             result: list[Project] = query.order_by(order(field)).all()
             # 转成json
             # json_result = json.dumps([user.__dict__ for user in result], default=str)

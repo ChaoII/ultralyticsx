@@ -1,7 +1,7 @@
-from PySide6.QtCore import Slot, Signal, QThread, QObject
-from loguru import logger
-from home.types import TaskInfo, TaskStatus
+from PySide6.QtCore import Signal, QThread
+
 from ultralytics import YOLO
+from ...types import TaskInfo
 
 
 class ModelExportThread(QThread):

@@ -11,12 +11,13 @@ from common.database.task_helper import db_update_task_epoch_info, db_update_tas
     db_update_task_started, db_update_task_failed
 from common.model_type_widget import ModelType
 from common.utils import log_info, format_datatime
-from home.types import TaskInfo, TaskStatus
 from ultralytics.engine.trainer import BaseTrainer
 from ultralytics.models.yolo.classify import ClassificationTrainer
 from ultralytics.models.yolo.detect import DetectionTrainer
-from ultralytics.models.yolo.segment import SegmentationTrainer
+from ultralytics.models.yolo.obb import OBBTrainer
 from ultralytics.models.yolo.pose import PoseTrainer
+from ultralytics.models.yolo.segment import SegmentationTrainer
+from ...types import TaskInfo, TaskStatus
 
 
 class CustomLogs(QObject):
@@ -138,6 +139,8 @@ class ModelTrainThread(QThread):
                 self.trainer = SegmentationTrainer(overrides=self._train_parameters)
             elif task_info.model_type == ModelType.POSE:
                 self.trainer = PoseTrainer(overrides=self._train_parameters)
+            elif task_info.model_type == ModelType.OBB:
+                self.trainer = OBBTrainer(overrides=self._train_parameters)
             else:
                 logger.error(f"unsupported model type {task_info.model_type}")
                 return False

@@ -116,13 +116,11 @@ class Window(FluentWindow):
 
 
 if __name__ == '__main__':
-
     if cfg.get(cfg.dpi_scale) == "auto":
         QApplication.setHighDpiScaleFactorRoundingPolicy(
             Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     else:
         os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
-
     app = QApplication(sys.argv)
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
     # internationalization
@@ -130,13 +128,9 @@ if __name__ == '__main__':
     fluentTranslator = FluentTranslator(locale)
     settingTranslator = QTranslator()
     settingTranslator.load(locale, "settings", ".", "resource/i18n")
-
     app.installTranslator(fluentTranslator)
     app.installTranslator(settingTranslator)
-
     # create main window
     w = Window()
-
     show_center(w)
-
     app.exec()

@@ -6,10 +6,10 @@ from qfluentwidgets import SimpleCardWidget, SubtitleLabel, BodyLabel
 
 from common.database.db_helper import db_session
 from common.tag_widget import TextTagWidget
-from dataset.dataset_process import split_dataset
-from dataset.dataset_detail_widget.common.dataset_split_widget import DatasetSplitWidget
-from dataset.types import DatasetInfo
 from models.models import Dataset
+from .dataset_split_widget import DatasetSplitWidget
+from ...dataset_process import split_dataset
+from ...types import DatasetInfo
 
 
 class DatasetHeaderWidget(SimpleCardWidget):

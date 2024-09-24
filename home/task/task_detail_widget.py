@@ -8,12 +8,12 @@ from common.custom_scroll_widget import CustomScrollWidget
 from common.database.db_helper import db_session
 from common.model_type_widget import ModelType
 from core.content_widget_base import ContentWidgetBase
-from home.task.task_detail.dataset_select_widget import DatasetSelectWidget
-from home.task.task_detail.model_export_widget import ModelExportWidget
-from home.task.task_detail.model_train_widget import ModelTrainWidget
-from home.task.task_detail.train_setting_widget import TrainParameterWidget
-from home.types import TaskInfo, TaskStatus
 from models.models import Task
+from .task_detail.train_setting_widget import TrainParameterWidget
+from .task_detail.dataset_select_widget import DatasetSelectWidget
+from .task_detail.model_export_widget import ModelExportWidget
+from .task_detail.model_train_widget import ModelTrainWidget
+from ..types import TaskInfo, TaskStatus
 
 
 class TaskDetailWidget(ContentWidgetBase):

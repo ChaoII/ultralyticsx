@@ -3,11 +3,11 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget, QStackedWidget
 from qfluentwidgets import BreadcrumbBar
 
 from core.content_widget_base import ContentWidgetBase
-from home.project.project_list.new_project_dialog import ProjectInfo
-from home.project.project_list_widget import ProjectListWidget
-from home.task.task_detail_widget import TaskDetailWidget
-from home.task.task_list_widget import TaskListWidget
 from core.interface_base import InterfaceBase
+from .project.project_list.new_project_dialog import ProjectInfo
+from .project.project_list_widget import ProjectListWidget
+from .task.task_detail_widget import TaskDetailWidget
+from .task.task_list_widget import TaskListWidget
 
 
 class HomeWidget(InterfaceBase):

@@ -1,8 +1,8 @@
 import pandas as pd
 
-from dataset.dataset_detail_widget.classify.classify_dataset_draw_thread import ClassifyDatasetDrawThread
-from dataset.dataset_detail_widget.common.dataset_draw_widget_base import DatasetDrawWidgetBase
-from dataset.types import DatasetType
+from .classify_dataset_draw_thread import ClassifyDatasetDrawThread
+from ..common.dataset_draw_widget_base import DatasetDrawWidgetBase
+from ...types import DatasetType
 
 
 class ClassifyDatasetDrawWidget(DatasetDrawWidgetBase):

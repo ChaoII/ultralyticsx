@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 
 from PySide6.QtCore import Signal, Slot
-from PySide6.QtGui import Qt, QColor, QResizeEvent
+from PySide6.QtGui import Qt, QColor
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
     QTableWidgetItem, QWidget
 from loguru import logger
@@ -19,10 +19,10 @@ from common.database.task_helper import db_get_project_id
 from common.delete_ensure_widget import CustomFlyoutView
 from common.fill_tool_button import FillToolButton
 from common.tag_widget import TextTagWidget
-from common.utils import format_datatime, open_directory, str_to_datetime
+from common.utils import format_datatime, open_directory
 from core.content_widget_base import ContentWidgetBase
-from home.types import TaskStatus
 from models.models import Task, Project
+from ..types import TaskStatus
 
 COLUMN_TASK_ID = 0
 COLUMN_PROJECT_NAME = 1
@@ -173,23 +173,14 @@ class TaskListWidget(ContentWidgetBase):
                 self.tb_task.setItem(row_index, COLUMN_ELAPSED, item6)
                 self.tb_task.setCellWidget(row_index, COLUMN_OPERATION, item7)
 
-                if task.task_status == TaskStatus.TRAINING.value:
-                    item3.set_value(task.epoch)
-                    item3.set_max_value(task.epochs)
-                elif task.task_status == TaskStatus.TRN_PAUSE.value:
-                    item3.set_value(task.epoch)
-                    item3.set_max_value(task.epochs)
+                item3.set_value(task.epoch)
+                item3.set_max_value(task.epochs)
+                if task.task_status == TaskStatus.TRN_PAUSE.value:
                     item3.set_pause(True)
                 elif task.task_status == TaskStatus.TRAIN_FAILED.value:
-                    item3.set_value(task.epoch)
-                    item3.set_max_value(task.epochs)
                     item3.set_error(True)
                 elif task.task_status == TaskStatus.TRN_FINISHED.value:
-                    item3.set_value(task.epoch)
-                    item3.set_max_value(task.epochs)
                     item3.resume()
-                else:
-                    item3.setVisible(False)
 
     @Slot(str, str, TaskStatus)
     def _on_train_status_changed(self, task_id: str, epoch: int, epochs: int, start_time: str, end_time: str,
@@ -208,7 +199,6 @@ class TaskListWidget(ContentWidgetBase):
         item_bar = self.tb_task.cellWidget(row_index, COLUMN_PROGRESS_BAR)
 
         if isinstance(item_bar, CustomProcessBar) and isinstance(item_task_status, TextTagWidget):
-            item_bar.setVisible(True)
             if task_status == TaskStatus.TRAINING:
                 item_bar.set_max_value(epochs)
                 item_bar.set_value(epoch)
@@ -231,12 +221,7 @@ class TaskListWidget(ContentWidgetBase):
                 item_bar.resume()
                 item_end_time.setText(end_time)
                 item_elapsed.setText(elapsed)
-            else:
-                item_bar.setVisible(False)
-
-    def resizeEvent(self, event: QResizeEvent) -> None:
-        # self.update_widget()
-        super().resizeEvent(event)
+            self.update()
 
     def get_task_id(self, project_dir: Path) -> str:
         task_id = f"T{self._current_project_id[1:]}{0:06d}"

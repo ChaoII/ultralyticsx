@@ -3,8 +3,8 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from ..common.dataset_draw_widget_base import DatasetDrawWidgetBase
 from .detection_dataset_draw_thread import DetectionDatasetDrawThread
+from ..common.dataset_draw_widget_base import DatasetDrawWidgetBase
 from ...types import DatasetType
 
 

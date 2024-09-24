@@ -14,9 +14,9 @@ from common.collapsible_widget import CollapsibleWidgetItem
 from common.database.db_helper import db_session
 from common.file_select_widget import FileSelectWidget
 from common.model_type_widget import ModelType
-from home.options import model_type_list_map
-from home.types import TaskInfo, TaskStatus
 from models.models import Task
+from ...options import model_type_list_map
+from ...types import TaskInfo, TaskStatus
 
 
 class BatchStatus(enum.Enum):
@@ -705,6 +705,8 @@ class TrainParameterWidget(CollapsibleWidgetItem):
             elif task.project.model_type == ModelType.SEGMENT.value:
                 data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
             elif task.project.model_type == ModelType.POSE.value:
+                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+            elif task.project.model_type == ModelType.OBB.value:
                 data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
             else:
                 logger.error(f"Unsupported model type: {task.project.model_type}")

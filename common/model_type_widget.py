@@ -5,8 +5,8 @@ from PySide6.QtGui import QPaintEvent, QPainter, QPolygon, QPen, QCursor, QImage
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import themeColor, BodyLabel, SimpleCardWidget
 
-from common.custom_icon import CustomFluentIcon
-from common.utils import CustomColor
+from .custom_icon import CustomFluentIcon
+from .utils import CustomColor
 
 
 class ModelType(enum.Enum):

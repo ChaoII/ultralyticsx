@@ -2,14 +2,14 @@ import time
 from pathlib import Path
 
 from PIL.ImageQt import QPixmap
-from PySide6.QtCore import QRect
-from PySide6.QtGui import QPainter, QPen, QColor, QFont, QFontMetrics, QBrush
+from PySide6.QtCore import QRect, QPointF
+from PySide6.QtGui import QPainter, QPen, QColor, QFont, QFontMetrics, QBrush, QPolygonF
 
 from common.utils import invert_color
 from ..common.dataset_draw_thread_base import DatasetDrawThreadBase
 
 
-class DetectionDatasetDrawThread(DatasetDrawThreadBase):
+class OBBDatasetDrawThread(DatasetDrawThreadBase):
 
     def __init__(self):
         super().__init__()
@@ -23,20 +23,23 @@ class DetectionDatasetDrawThread(DatasetDrawThreadBase):
             pix = QPixmap(row["image_path"])
             painter.begin(pix)
             line_width = 1
-            font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
+            font_size = min(pix.width(), pix.height()) // 60  # 假设文字大小是窗口大小的10%
             font = QFont("Courier")
             font.setPixelSize(font_size)
+            width = pix.width()
+            height = pix.height()
             if self.draw_labels:
                 with open(row["label_path"], "r", encoding="utf8") as f:
                     lines = f.readlines()
                     for line in lines:
-                        class_id, x_center, y_center, width, height = [float(x) for x in line.split(" ")]
-                        x = (x_center - width / 2) * pix.width()
-                        y = (y_center - height / 2) * pix.height()
-                        width_ = width * pix.width()
-                        height_ = height * pix.height()
+                        polygon = QPolygonF()
+                        class_id, x1, y1, x2, y2, x3, y3, x4, y4 = [float(x) for x in line.split(" ")]
+                        polygon.append(QPointF(x1 * width, y1 * height))
+                        polygon.append(QPointF(x2 * width, y2 * height))
+                        polygon.append(QPointF(x3 * width, y3 * height))
+                        polygon.append(QPointF(x4 * width, y4 * height))
 
-                        label = self.labels[int(class_id)]
+                        label = self.labels[int(class_id)].replace(" ", "_")
                         color = self.color_list[int(class_id)]
                         inv_color = invert_color(color)
                         # 设置填充色
@@ -44,14 +47,14 @@ class DetectionDatasetDrawThread(DatasetDrawThreadBase):
                         painter.setBrush(QBrush(color))
                         # 设置边框颜色
                         painter.setPen(QPen(QColor(color.red(), color.green(), color.blue()), line_width))  # 设置画笔颜色和宽度
-                        painter.drawRect(x, y, width_, height_)  # 绘制矩形
+                        painter.drawPolygon(polygon)  # 绘制旋转矩形
                         # 获取字体大小
                         fm = QFontMetrics(font)
                         # 文字填充色
                         painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
-                        text_rect = QRect(x, y - fm.height(), fm.boundingRect(label).width() + line_width, fm.height())
+                        text_rect = QRect(x1 * width, y1 * height - fm.height(),
+                                          fm.boundingRect(label).width() + line_width, fm.height())
                         painter.drawRect(text_rect)
-
                         painter.setFont(font)
                         painter.setPen(QPen(inv_color))
                         painter.drawText(text_rect, label)

@@ -3,8 +3,8 @@ from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from qfluentwidgets import TransparentToolButton, SimpleCardWidget, StrongBodyLabel
 
-from common.custom_icon import CustomFluentIcon
-from common.custom_scroll_widget import CustomScrollWidget
+from .custom_icon import CustomFluentIcon
+from .custom_scroll_widget import CustomScrollWidget
 
 
 class HeaderWidget(SimpleCardWidget):

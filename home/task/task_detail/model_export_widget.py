@@ -10,8 +10,8 @@ from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_icon import CustomFluentIcon
 from common.file_select_widget import FileSelectWidget
-from home.task.model_trainer_thread.model_export_thread import ModelExportThread
-from home.types import TaskInfo
+from ..model_trainer_thread.model_export_thread import ModelExportThread
+from ...types import TaskInfo
 
 
 class FixWidthBodyLabel(BodyLabel):
