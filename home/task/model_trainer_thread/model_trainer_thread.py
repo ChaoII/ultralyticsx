@@ -16,6 +16,7 @@ from ultralytics.engine.trainer import BaseTrainer
 from ultralytics.models.yolo.classify import ClassificationTrainer
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.models.yolo.segment import SegmentationTrainer
+from ultralytics.models.yolo.pose import PoseTrainer
 
 
 class CustomLogs(QObject):
@@ -135,6 +136,8 @@ class ModelTrainThread(QThread):
                 self.trainer = DetectionTrainer(overrides=self._train_parameters)
             elif task_info.model_type == ModelType.SEGMENT:
                 self.trainer = SegmentationTrainer(overrides=self._train_parameters)
+            elif task_info.model_type == ModelType.POSE:
+                self.trainer = PoseTrainer(overrides=self._train_parameters)
             else:
                 logger.error(f"unsupported model type {task_info.model_type}")
                 return False

@@ -316,6 +316,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             if task_info.task_status == TaskStatus.TRN_FINISHED:
                 self.btn_start_train.setText(self.tr("ReTrain"))
                 self._is_retrain = True
+                self.btn_next_step.setVisible(True)
             if task_info.task_status == TaskStatus.TRN_PAUSE:
                 self.btn_start_train.setText(self.tr("Resume"))
                 self._is_retrain = False

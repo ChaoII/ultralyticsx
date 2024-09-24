@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 from PySide6.QtCore import QThread, Signal
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QColor
 
 from common.utils import generate_color_map
 
@@ -14,7 +14,7 @@ class DatasetDrawThreadBase(QThread):
         super().__init__()
         self.max_draw_num = 50
         self.draw_labels = False
-        self.color_list = []
+        self.color_list: list[QColor] = []
         self.labels = []
         self.image_paths: pd.DataFrame = pd.DataFrame()
 

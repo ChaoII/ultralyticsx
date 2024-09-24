@@ -704,9 +704,11 @@ class TrainParameterWidget(CollapsibleWidgetItem):
                 data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
             elif task.project.model_type == ModelType.SEGMENT.value:
                 data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+            elif task.project.model_type == ModelType.POSE.value:
+                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
             else:
                 logger.error(f"Unsupported model type: {task.project.model_type}")
-                return
+                raise ValueError(f"Unsupported model type: {task.project.model_type}")
 
         model = self.cmb_model_name.currentText()
         pretrained = False
