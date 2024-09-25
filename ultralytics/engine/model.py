@@ -91,10 +91,10 @@ class Model(nn.Module):
     """
 
     def __init__(
-        self,
-        model: Union[str, Path] = "yolov8n.pt",
-        task: str = None,
-        verbose: bool = False,
+            self,
+            model: Union[str, Path] = "yolov8n.pt",
+            task: str = None,
+            verbose: bool = False,
     ) -> None:
         """
         Initializes a new instance of the YOLO model class.
@@ -119,6 +119,7 @@ class Model(nn.Module):
         super().__init__()
         self.callbacks = callbacks.get_default_callbacks()
         self.predictor = None  # reuse predictor
+        self.validator = None
         self.model = None  # model object
         self.trainer = None  # trainer object
         self.ckpt = None  # if loaded from *.pt
@@ -149,10 +150,10 @@ class Model(nn.Module):
             self._load(model, task=task)
 
     def __call__(
-        self,
-        source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
-        stream: bool = False,
-        **kwargs,
+            self,
+            source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
+            stream: bool = False,
+            **kwargs,
     ) -> list:
         """
         An alias for the predict method, enabling the model instance to be callable.
@@ -358,10 +359,10 @@ class Model(nn.Module):
         self.model.fuse()
 
     def embed(
-        self,
-        source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
-        stream: bool = False,
-        **kwargs,
+            self,
+            source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
+            stream: bool = False,
+            **kwargs,
     ) -> list:
         """
         Generates image embeddings based on the provided source.
@@ -386,11 +387,11 @@ class Model(nn.Module):
         return self.predict(source, stream, **kwargs)
 
     def predict(
-        self,
-        source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
-        stream: bool = False,
-        predictor=None,
-        **kwargs,
+            self,
+            source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
+            stream: bool = False,
+            predictor=None,
+            **kwargs,
     ) -> List[Results]:
         """
         Performs predictions on the given image source using the YOLO model.
@@ -444,11 +445,11 @@ class Model(nn.Module):
         return self.predictor.predict_cli(source=source) if is_cli else self.predictor(source=source, stream=stream)
 
     def track(
-        self,
-        source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
-        stream: bool = False,
-        persist: bool = False,
-        **kwargs,
+            self,
+            source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
+            stream: bool = False,
+            persist: bool = False,
+            **kwargs,
     ) -> List[Results]:
         """
         Conducts object tracking on the specified input source using the registered trackers.
@@ -484,9 +485,9 @@ class Model(nn.Module):
         return self.predict(source=source, stream=stream, **kwargs)
 
     def val(
-        self,
-        validator=None,
-        **kwargs,
+            self,
+            validator=None,
+            **kwargs,
     ):
         """
         Validates the model using a specified dataset and validation configuration.
@@ -515,14 +516,14 @@ class Model(nn.Module):
         custom = {"rect": True}  # method defaults
         args = {**self.overrides, **custom, **kwargs, "mode": "val"}  # highest priority args on the right
 
-        validator = (validator or self._smart_load("validator"))(args=args, _callbacks=self.callbacks)
-        validator(model=self.model)
-        self.metrics = validator.metrics
-        return validator.metrics
+        self.validator = (validator or self._smart_load("validator"))(args=args, _callbacks=self.callbacks)
+        self.validator(model=self.model)
+        self.metrics = self.validator.metrics
+        return self.validator.metrics
 
     def benchmark(
-        self,
-        **kwargs,
+            self,
+            **kwargs,
     ):
         """
         Benchmarks the model across various export formats to evaluate performance.
@@ -562,8 +563,8 @@ class Model(nn.Module):
         )
 
     def export(
-        self,
-        **kwargs,
+            self,
+            **kwargs,
     ) -> str:
         """
         Exports the model to a different format suitable for deployment.
@@ -593,9 +594,9 @@ class Model(nn.Module):
         return Exporter(overrides=args, _callbacks=self.callbacks)(model=self.model)
 
     def train(
-        self,
-        trainer=None,
-        **kwargs,
+            self,
+            trainer=None,
+            **kwargs,
     ):
         """
         Trains the model using the specified dataset and training configuration.
@@ -661,11 +662,11 @@ class Model(nn.Module):
         return self.metrics
 
     def tune(
-        self,
-        use_ray=False,
-        iterations=10,
-        *args,
-        **kwargs,
+            self,
+            use_ray=False,
+            iterations=10,
+            *args,
+            **kwargs,
     ):
         """
         Conducts hyperparameter tuning for the model, with an option to use Ray Tune.

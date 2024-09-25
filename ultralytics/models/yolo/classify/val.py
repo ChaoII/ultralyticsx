@@ -90,6 +90,10 @@ class ClassificationValidator(BaseValidator):
         pf = "%22s" + "%11.3g" * len(self.metrics.keys)  # print format
         LOGGER.info(pf % ("all", self.metrics.top1, self.metrics.top5))
 
+    def get_val_results(self):
+        results = [self.get_desc().split(), ["all", self.metrics.top1, self.metrics.top5]]
+        return results
+
     def plot_val_samples(self, batch, ni):
         """Plot validation image samples."""
         plot_images(

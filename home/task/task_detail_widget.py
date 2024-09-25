@@ -9,6 +9,7 @@ from common.database.db_helper import db_session
 from common.model_type_widget import ModelType
 from core.content_widget_base import ContentWidgetBase
 from models.models import Task
+from .task_detail.model_val_widget import ModelValWidget
 from .task_detail.train_setting_widget import TrainParameterWidget
 from .task_detail.dataset_select_widget import DatasetSelectWidget
 from .task_detail.model_export_widget import ModelExportWidget
@@ -25,10 +26,12 @@ class TaskDetailWidget(ContentWidgetBase):
         self.dataset_select_widget = DatasetSelectWidget()
         self.train_parameter_widget = TrainParameterWidget()
         self.model_train_widget = ModelTrainWidget()
+        self.model_val_widget = ModelValWidget()
         self.model_export_widget = ModelExportWidget()
         self.tool_box.add_item(self.dataset_select_widget)
         self.tool_box.add_item(self.train_parameter_widget)
         self.tool_box.add_item(self.model_train_widget)
+        self.tool_box.add_item(self.model_val_widget)
         self.tool_box.add_item(self.model_export_widget)
 
         self.vly = QVBoxLayout()
@@ -52,6 +55,7 @@ class TaskDetailWidget(ContentWidgetBase):
         self.train_parameter_widget.start_training_clicked.connect(self._on_start_training_clicked)
         self.model_train_widget.is_training_signal.connect(self.train_parameter_widget.update_train_btn_status)
         self.model_train_widget.next_step_clicked.connect(self._on_train_finish_and_next_clicked)
+        self.model_val_widget.next_step_clicked.connect(self._on_val_finish_and_next_clicked)
         self.model_export_widget.export_model_finished.connect(self._on_model_export_finish)
 
     @Slot(TaskInfo)
@@ -75,6 +79,11 @@ class TaskDetailWidget(ContentWidgetBase):
 
     @Slot(TaskInfo)
     def _on_train_finish_and_next_clicked(self, task_info: TaskInfo):
+        self.tool_box.set_current_item(self.model_val_widget)
+        self.model_val_widget.setEnabled(True)
+        self.model_val_widget.set_task_info(task_info)
+
+    def _on_val_finish_and_next_clicked(self, task_info: TaskInfo):
         self.tool_box.set_current_item(self.model_export_widget)
         self.model_export_widget.setEnabled(True)
         self.model_export_widget.set_task_info(task_info)
@@ -115,28 +124,32 @@ class TaskDetailWidget(ContentWidgetBase):
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(False)
             self.model_train_widget.setEnabled(False)
+            self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
         if task_info.task_status == TaskStatus.DS_SELECTED:
             self.tool_box.set_current_item(self.train_parameter_widget)
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(True)
             self.model_train_widget.setEnabled(False)
+            self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
         if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             self.tool_box.set_current_item(self.model_train_widget)
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(True)
             self.model_train_widget.setEnabled(True)
+            self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
-
         if task_info.task_status.value >= TaskStatus.TRN_FINISHED.value:
             self.tool_box.set_current_item(self.model_export_widget)
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(True)
             self.model_train_widget.setEnabled(True)
+            self.model_val_widget.setEnabled(True)
             self.model_export_widget.setEnabled(True)
 
         self.dataset_select_widget.set_task_info(task_info)
         self.train_parameter_widget.set_task_info(task_info)
         self.model_train_widget.set_task_info(task_info)
+        self.model_val_widget.set_task_info(task_info)
         self.model_export_widget.set_task_info(task_info)

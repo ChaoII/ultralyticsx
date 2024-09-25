@@ -836,7 +836,7 @@ class Retry(contextlib.ContextDecorator):
                     print(f"Retry {self._attempts}/{self.times} failed: {e}")
                     if self._attempts >= self.times:
                         raise e
-                    time.sleep(self.delay * (2**self._attempts))  # exponential backoff delay
+                    time.sleep(self.delay * (2 ** self._attempts))  # exponential backoff delay
 
         return wrapped_func
 
@@ -906,13 +906,13 @@ def set_sentry():
         return event
 
     if (
-        SETTINGS["sync"]
-        and RANK in {-1, 0}
-        and Path(ARGV[0]).name == "yolo"
-        and not TESTS_RUNNING
-        and ONLINE
-        and IS_PIP_PACKAGE
-        and not IS_GIT_DIR
+            SETTINGS["sync"]
+            and RANK in {-1, 0}
+            and Path(ARGV[0]).name == "yolo"
+            and not TESTS_RUNNING
+            and ONLINE
+            and IS_PIP_PACKAGE
+            and not IS_GIT_DIR
     ):
         # If sentry_sdk package is not installed then return and do not use Sentry
         try:

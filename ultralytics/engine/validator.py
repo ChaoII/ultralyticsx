@@ -155,7 +155,7 @@ class BaseValidator:
 
             model.eval()
             model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup
-
+        self.batches = len(self.dataloader)
         self.run_callbacks("on_val_start")
         dt = (
             Profile(device=self.device),
@@ -163,7 +163,7 @@ class BaseValidator:
             Profile(device=self.device),
             Profile(device=self.device),
         )
-        bar = TQDM(self.dataloader, desc=self.get_desc(), total=len(self.dataloader))
+        bar = TQDM(self.dataloader, desc=self.get_desc(), total=self.batches)
         self.init_metrics(de_parallel(model))
         self.jdict = []  # empty before each val
         for batch_i, batch in enumerate(bar):
@@ -190,13 +190,13 @@ class BaseValidator:
             if self.args.plots and batch_i < 3:
                 self.plot_val_samples(batch, batch_i)
                 self.plot_predictions(batch, preds, batch_i)
-
+            self.batch = batch_i
             self.run_callbacks("on_val_batch_end")
         stats = self.get_stats()
         self.check_stats(stats)
         self.speed = dict(zip(self.speed.keys(), (x.t / len(self.dataloader.dataset) * 1e3 for x in dt)))
         self.finalize_metrics()
-        self.print_results()
+        # self.print_results()
         self.run_callbacks("on_val_end")
         if self.training:
             model.float()
