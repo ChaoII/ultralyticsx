@@ -52,7 +52,7 @@ class HomeWidget(InterfaceBase):
         self.breadcrumbBar.addItem(self.task_detail_widget.objectName(), task_id)
 
     def update_widget(self):
-        self.breadcrumbBar.setCurrentItem(self.task_list_widget.objectName())
+        self.breadcrumbBar.setCurrentItem(self.project_list_widget.objectName())
 
     @Slot(str)
     def _on_bread_bar_item_changed(self, obj_name):

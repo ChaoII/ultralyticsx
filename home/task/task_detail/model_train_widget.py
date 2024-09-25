@@ -7,6 +7,7 @@ import yaml
 from PySide6.QtCore import Slot, QCoreApplication, Signal
 from PySide6.QtGui import QFont, QColor, Qt
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy)
+from loguru import logger
 from pyqtgraph import PlotItem
 from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
     TextEdit, isDarkTheme, InfoBar, InfoBarPosition
@@ -29,8 +30,9 @@ class GraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         pg.setConfigOptions(antialias=True)
         cfg.themeChanged.connect(self._on_theme_changed)
         self._background_colors: list[QColor] = [QColor("#ffffff"), QColor("#2f3441")]
+        self._on_theme_changed()
 
-    def set_background(self, light_color, dark_color):
+    def set_background_color(self, light_color=QColor("#ffffff"), dark_color=QColor("#2f3441")):
         self._background_colors = [light_color, dark_color]
 
     def _on_theme_changed(self):
@@ -99,7 +101,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
         pg.setConfigOptions(antialias=True)
         self.pg_widget = GraphicsLayoutWidget(show=False)
-        self.pg_widget.setBackground(QColor("#2f3441"))
         self.pg_widget.setFixedHeight(600)
         self._loss_plots = dict()
         self._metric_plots = dict()
@@ -195,6 +196,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         model_thread.log_changed_signal.connect(self._on_log_changed)
         model_thread.loss_changed_signal.connect(self._on_loss_changed)
         model_thread.metric_changed_signal.connect(self._on_metric_changed)
+        model_thread.finished.connect(model_thread.deleteLater)
         if model_thread.init_model_trainer(self._task_info):
             return model_thread
         else:
@@ -275,6 +277,14 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.ted_train_log.append(
             log_warning(self.tr("model training stopped by user, click start training to resume training process")))
 
+    def stop_all_training_task(self):
+        for task_thread in self._task_thread_map.get_thread_map().values():
+            if task_thread.isRunning():
+                logger.info(f"stop training task: {task_thread.get_task_info().task_id}")
+                task_thread.stop_train()
+                task_thread.quit()
+                task_thread.wait()
+
     @Slot()
     def _on_next_step_clicked(self):
         self.next_step_clicked.emit(self._task_info)
@@ -322,10 +332,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
                 self._is_retrain = False
             self._task_info.task_status = task_info.task_status
             self.is_training_signal.emit(False, self._task_info.task_id)
-
-        with open(task_info.task_dir / "train_config.yaml", "w", encoding="utf8") as f:
-            yaml.dump(self.sender().get_train_parameters(), f, default_flow_style=False, allow_unicode=True,
-                      sort_keys=False)
 
     @Slot(str)
     def _on_model_train_failed(self, error_info: str):

@@ -148,6 +148,7 @@ class Window(FluentWindow):
         )
 
     def _on_tray_exit_clicked(self):
+        self.home_interface.task_detail_widget.model_train_widget.stop_all_training_task()
         QApplication.quit()
 
     def _on_close_clicked(self):

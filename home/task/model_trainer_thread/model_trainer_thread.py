@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 from PySide6.QtCore import Slot, Signal, QThread, QObject
 from loguru import logger
 
@@ -324,7 +325,9 @@ class ModelTrainThread(QThread):
             db_update_task_pause(self._task_info.task_id)
 
         self.model_train_end.emit(self._task_info)
-
+        with open(self._task_info.task_dir / "train_config.yaml", "w", encoding="utf8") as f:
+            yaml.dump(self._train_parameters, f, default_flow_style=False, allow_unicode=True,
+                      sort_keys=False)
         logger.info(f"train finished, {elapsed_time}")
         core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None,
                                                       format_datatime(datetime.fromtimestamp(end_time)), elapsed_time,
