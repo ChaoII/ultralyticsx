@@ -177,7 +177,7 @@ class TaskListWidget(ContentWidgetBase):
                 item3.set_max_value(task.epochs)
                 if task.task_status == TaskStatus.TRN_PAUSE.value:
                     item3.set_pause(True)
-                elif task.task_status == TaskStatus.TRAIN_FAILED.value:
+                elif task.task_status == TaskStatus.TRN_FAILED.value:
                     item3.set_error(True)
                 elif task.task_status == TaskStatus.TRN_FINISHED.value:
                     item3.resume()
@@ -211,9 +211,9 @@ class TaskListWidget(ContentWidgetBase):
                 item_task_status.set_text(TaskStatus.TRN_PAUSE.name)
                 item_task_status.set_color(*TaskStatus.TRN_PAUSE.color)
                 item_bar.set_pause(True)
-            elif task_status == TaskStatus.TRAIN_FAILED:
-                item_task_status.set_text(TaskStatus.TRAIN_FAILED.name)
-                item_task_status.set_color(*TaskStatus.TRAIN_FAILED.color)
+            elif task_status == TaskStatus.TRN_FAILED:
+                item_task_status.set_text(TaskStatus.TRN_FAILED.name)
+                item_task_status.set_color(*TaskStatus.TRN_FAILED.color)
                 item_bar.set_error(True)
             elif task_status == TaskStatus.TRN_FINISHED:
                 item_task_status.set_text(TaskStatus.TRN_FINISHED.name)

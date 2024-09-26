@@ -5,6 +5,12 @@ from home.types import TaskStatus
 from models.models import Task
 
 
+def db_update_task_status(task_id, status: TaskStatus):
+    with db_session() as session:
+        task: Task = session.query(Task).filter_by(task_id=task_id).first()
+        task.task_status = status.value
+
+
 def db_update_task_epoch_info(task_id, epoch, epochs):
     with db_session() as session:
         task = session.query(Task).filter_by(task_id=task_id).first()
@@ -38,7 +44,7 @@ def db_update_task_started(task_id, start_time: datetime):
 def db_update_task_failed(task_id):
     with db_session() as session:
         task: Task = session.query(Task).filter_by(task_id=task_id).first()
-        task.task_status = TaskStatus.TRAIN_FAILED.value
+        task.task_status = TaskStatus.TRN_FAILED.value
         task.end_time = None
         task.elapsed = None
 

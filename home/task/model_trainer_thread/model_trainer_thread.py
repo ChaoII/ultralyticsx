@@ -340,7 +340,7 @@ class ModelTrainThread(QThread):
             except Exception as e:
                 self.model_train_failed.emit(str(e))
                 core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
-                                                              TaskStatus.TRAIN_FAILED)
+                                                              TaskStatus.TRN_FAILED)
                 db_update_task_failed(self._task_info.task_id)
 
     @Slot()

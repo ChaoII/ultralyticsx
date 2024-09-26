@@ -1,6 +1,7 @@
 # coding:utf-8
 import os
 import sys
+from core.window_manager import WindowManager
 
 from PySide6.QtCore import Qt, QTranslator, QSize, Slot
 from PySide6.QtGui import QIcon, QAction
@@ -38,7 +39,7 @@ class Window(FluentWindow):
         self.resize(1280, 800)
         self.setWindowIcon(QIcon('./resource/images/ux.png'))
         self.setWindowTitle('UltralyticsX')
-
+        self.setObjectName("main_widget")
         # splash_screen = SplashScreen(self.windowIcon(), self)
         # splash_screen.setIconSize(QSize(102, 102))
         # self.show_center()
@@ -61,6 +62,7 @@ class Window(FluentWindow):
         self._connect_signals_and_slots()
 
         # splash_screen.finish()
+        WindowManager().register_window("main_widget", self)
 
     def init_system_tray(self):
         self.tray_icon = QSystemTrayIcon(self)

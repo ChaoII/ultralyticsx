@@ -141,6 +141,13 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
         if task_info.task_status.value >= TaskStatus.TRN_FINISHED.value:
+            self.tool_box.set_current_item(self.model_val_widget)
+            self.dataset_select_widget.setEnabled(True)
+            self.train_parameter_widget.setEnabled(True)
+            self.model_train_widget.setEnabled(True)
+            self.model_val_widget.setEnabled(True)
+            self.model_export_widget.setEnabled(False)
+        if task_info.task_status.value >= TaskStatus.VAL_FINISHED.value:
             self.tool_box.set_current_item(self.model_export_widget)
             self.dataset_select_widget.setEnabled(True)
             self.train_parameter_widget.setEnabled(True)
