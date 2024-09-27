@@ -14,6 +14,7 @@ from .task_detail.train_setting_widget import TrainParameterWidget
 from .task_detail.dataset_select_widget import DatasetSelectWidget
 from .task_detail.model_export_widget import ModelExportWidget
 from .task_detail.model_train_widget import ModelTrainWidget
+from .task_detail.model_predict_widget import ModelPredictWidget
 from ..types import TaskInfo, TaskStatus
 
 
@@ -28,11 +29,13 @@ class TaskDetailWidget(ContentWidgetBase):
         self.model_train_widget = ModelTrainWidget()
         self.model_val_widget = ModelValWidget()
         self.model_export_widget = ModelExportWidget()
+        self.model_predict_widget = ModelPredictWidget()
         self.tool_box.add_item(self.dataset_select_widget)
         self.tool_box.add_item(self.train_parameter_widget)
         self.tool_box.add_item(self.model_train_widget)
         self.tool_box.add_item(self.model_val_widget)
         self.tool_box.add_item(self.model_export_widget)
+        self.tool_box.add_item(self.model_predict_widget)
 
         self.vly = QVBoxLayout()
         self.vly.setContentsMargins(0, 0, 0, 0)
@@ -91,19 +94,23 @@ class TaskDetailWidget(ContentWidgetBase):
     @Slot(bool)
     def _on_model_export_finish(self, is_finished: bool):
         if not is_finished:
-            self.model_export_widget.setEnabled(False)
-            self.model_train_widget.setEnabled(False)
-            self.train_parameter_widget.setEnabled(False)
             self.dataset_select_widget.setEnabled(False)
+            self.train_parameter_widget.setEnabled(False)
+            self.model_train_widget.setEnabled(False)
+            self.model_val_widget.setEnabled(False)
+            self.model_export_widget.setEnabled(False)
+            self.model_predict_widget.setEnabled(False)
         else:
-            self.model_export_widget.setEnabled(True)
-            self.model_train_widget.setEnabled(True)
-            self.train_parameter_widget.setEnabled(True)
             self.dataset_select_widget.setEnabled(True)
+            self.train_parameter_widget.setEnabled(True)
+            self.model_train_widget.setEnabled(True)
+            self.model_val_widget.setEnabled(True)
+            self.model_export_widget.setEnabled(True)
+            self.model_predict_widget.setEnabled(True)
 
     def update_data(self, task_id):
         self._task_id = task_id
-        self.update_widget()
+        # self.update_widget()
 
     def update_widget(self):
         task_info = TaskInfo()
@@ -126,6 +133,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_train_widget.setEnabled(False)
             self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
+            self.model_predict_widget.setEnabled(False)
         if task_info.task_status == TaskStatus.DS_SELECTED:
             self.tool_box.set_current_item(self.train_parameter_widget)
             self.dataset_select_widget.setEnabled(True)
@@ -133,6 +141,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_train_widget.setEnabled(False)
             self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
+            self.model_predict_widget.setEnabled(False)
         if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
             self.tool_box.set_current_item(self.model_train_widget)
             self.dataset_select_widget.setEnabled(True)
@@ -140,6 +149,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_train_widget.setEnabled(True)
             self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
+            self.model_predict_widget.setEnabled(False)
         if task_info.task_status.value >= TaskStatus.TRN_FINISHED.value:
             self.tool_box.set_current_item(self.model_val_widget)
             self.dataset_select_widget.setEnabled(True)
@@ -147,6 +157,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_train_widget.setEnabled(True)
             self.model_val_widget.setEnabled(True)
             self.model_export_widget.setEnabled(False)
+            self.model_predict_widget.setEnabled(False)
         if task_info.task_status.value >= TaskStatus.VAL_FINISHED.value:
             self.tool_box.set_current_item(self.model_export_widget)
             self.dataset_select_widget.setEnabled(True)
@@ -154,9 +165,11 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_train_widget.setEnabled(True)
             self.model_val_widget.setEnabled(True)
             self.model_export_widget.setEnabled(True)
+            self.model_predict_widget.setEnabled(True)
 
         self.dataset_select_widget.set_task_info(task_info)
         self.train_parameter_widget.set_task_info(task_info)
         self.model_train_widget.set_task_info(task_info)
         self.model_val_widget.set_task_info(task_info)
         self.model_export_widget.set_task_info(task_info)
+        self.model_predict_widget.set_task_info(task_info)

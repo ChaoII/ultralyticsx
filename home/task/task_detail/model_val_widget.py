@@ -289,7 +289,6 @@ class ModelValWidget(CollapsibleWidgetItem):
         task_thread.start()
 
     def _on_val_clicked(self):
-
         parameter = dict(
             model_name=self._task_info.task_dir / "weights" / self.cmb_model_name.currentText(),
             split=self.cmb_split.currentText(),
