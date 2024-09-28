@@ -42,6 +42,9 @@ class ImageShowWidget(QWidget):
         self.lbl_image.setBorderRadius(top_left, top_right, bottom_left, bottom_right)
         self.update()
 
+    def clear(self):
+        self.set_image(QImage())
+
     def paintEvent(self, e):
         super().paintEvent(e)
         painter = QPainter(self)

@@ -42,6 +42,9 @@ class ImageSelectWidget(QWidget):
         self.lbl_image.setBorderRadius(top_left, top_right, bottom_left, bottom_right)
         self.update()
 
+    def clear(self):
+        self.set_image(QImage())
+
     def paintEvent(self, e):
         super().paintEvent(e)
         painter = QPainter(self)
@@ -86,6 +89,8 @@ class ImageSelectWidget(QWidget):
         painter.setPen(pen)
         painter.drawLine(self.width() // 2 - 20, self.height() // 2, self.width() // 2 + 20, self.height() // 2)
         painter.drawLine(self.width() // 2, self.height() // 2 - 20, self.width() // 2, self.height() // 2 + 20)
+        pen.setStyle(Qt.PenStyle.SolidLine)
+        painter.setPen(pen)
         painter.drawPath(path)
 
     def enterEvent(self, event) -> None:
@@ -111,7 +116,7 @@ class ImageSelectWidget(QWidget):
         else:
             _dir = Path.home().as_posix()
         filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir)
-        if is_image(filename):
+        if filename and is_image(filename):
             self._cur_path = filename
             self._is_hovered = False
             self.set_image(self._cur_path)

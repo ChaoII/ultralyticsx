@@ -1,9 +1,10 @@
+import time
 from pathlib import Path
 from pprint import pprint
 from typing import Optional
 
 from PySide6.QtCore import Slot, Signal
-from PySide6.QtGui import Qt
+from PySide6.QtGui import Qt, QFont, QImage
 from PySide6.QtWidgets import QWidget, QFormLayout, QVBoxLayout, QHBoxLayout, QAbstractItemView, QTableWidgetItem, \
     QSizePolicy
 from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
@@ -11,6 +12,7 @@ from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
     InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition, ImageLabel, TableWidget, TextEdit
 
 from common.model_type_widget import ModelType
+from common.progress_message_box import ProgressMessageBox
 from ultralytics.engine.results import Results
 
 from common.collapsible_widget import CollapsibleWidgetItem
@@ -57,15 +59,21 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self.hly_export_setting.addStretch(1)
 
         self.lbl_input_image = ImageSelectWidget()
-        self.lbl_input_image.setFixedSize(300, 400)
+        self.lbl_input_image.setFixedSize(360, 300)
         self.lbl_input_image.set_border_radius(10, 10, 10, 10)
         self.lbl_output_image = ImageShowWidget()
-        self.lbl_output_image.setFixedSize(300, 400)
+        self.lbl_output_image.setFixedSize(360, 300)
 
         self.lbl_output_result = TextEdit()
         self.lbl_output_result.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.lbl_output_result.setFixedWidth(300)
         self.lbl_output_result.setVisible(False)
+
+        font = QFont("Courier")  # "Courier" 是常见的等宽字体
+        font.setWeight(QFont.Weight.Normal)
+        font.setPixelSize(14)
+        font.setStyleHint(QFont.StyleHint.Monospace)  # 设置字体风格提示为 Monospace (等宽字体)
+        self.lbl_output_result.setFont(font)
 
         self.hly_tb_predict_speed = QHBoxLayout()
         self.tb_predict_speed = TableWidget()
@@ -114,6 +122,7 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self._model_predict_thread: ModelPredictorThread | None = None
         self._current_image_path: Path | None = None
         self._connect_signals_and_slots()
+        self._message_box: ProgressMessageBox | None = None
 
     def _connect_signals_and_slots(self):
         self.btn_predict.clicked.connect(self._on_predict_clicked)
@@ -122,6 +131,12 @@ class ModelPredictWidget(CollapsibleWidgetItem):
     def set_task_info(self, task_info: TaskInfo):
         self._task_info = task_info
         self._init_model_name()
+        self.tb_predict_speed.clear()
+        self.tb_predict_speed.setVisible(False)
+        self.lbl_output_result.clear()
+        self.lbl_output_result.setVisible(False)
+        self.lbl_input_image.clear()
+        self.lbl_output_image.clear()
 
     def _init_model_name(self):
         self.cmb_model_name.clear()
@@ -133,9 +148,13 @@ class ModelPredictWidget(CollapsibleWidgetItem):
                 self.cmb_model_name.addItem(item.name)
         self.cmb_model_name.setCurrentIndex(0)
 
+
+
+
     def create_predict_thread(self):
         self._model_predict_thread = ModelPredictorThread(
             self._task_info.task_dir / "weights" / self.cmb_model_name.currentText())
+        self._model_predict_thread.set_task_info(self._task_info)
         self._model_predict_thread.model_predict_end.connect(self._on_predict_end)
 
     def predict(self):
@@ -144,13 +163,16 @@ class ModelPredictWidget(CollapsibleWidgetItem):
             InfoBar.error(
                 title="",
                 content=self.tr("Please select a image"),
-                duration=-1,
+                duration=2000,
                 position=InfoBarPosition.TOP_RIGHT,
                 parent=WindowManager().find_window("main_widget")
             )
             return
         self._model_predict_thread.set_predict_image(self._current_image_path)
         self._model_predict_thread.start()
+        self._message_box = ProgressMessageBox(parent=WindowManager().find_window("main_widget"))
+        self._message_box.set_max_value(1)
+        self._message_box.exec()
 
     def _on_image_selected(self, image_path: str):
         self._current_image_path = Path(image_path)
@@ -158,18 +180,18 @@ class ModelPredictWidget(CollapsibleWidgetItem):
     def _on_predict_clicked(self):
         self.predict()
 
-    def _on_predict_end(self, results: list[Results]):
+    def _on_predict_end(self, image: QImage, results: list[Results]):
+        print("--------4---------")
         result = results[0]
-
-        pprint(result)
-        pprint(result.probs)
+        self.lbl_output_image.set_image(image)
+        self.lbl_output_result.clear()
         self.lbl_output_result.setVisible(True)
         self.lbl_output_result.append("top1:")
-        self.lbl_output_result.append(f"  -{result.names[result.probs.top1]:<30}: {float(result.probs.top1conf):.2f}")
+        self.lbl_output_result.append(f"  -{result.names[result.probs.top1]:<15}: {float(result.probs.top1conf):.4f}")
         self.lbl_output_result.append("top5:")
         top5_text = ""
         for index, data in enumerate(result.probs.top5):
-            top5_text += f"  -{result.names[data]:<30}: {float(result.probs.top5conf[index]):.2f}\n"
+            top5_text += f"  -{result.names[data]:<15}: {float(result.probs.top5conf[index]):.2f}\n"
         self.lbl_output_result.append(top5_text)
 
         self.tb_predict_speed.setVisible(True)
@@ -191,3 +213,6 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         for col in range(self.tb_predict_speed.columnCount()):
             min_width += self.tb_predict_speed.columnWidth(col)
         self.tb_predict_speed.setFixedSize(min_width + 5, min_height + 5)
+        if self._message_box:
+            self._message_box.set_value(1)
+            self._message_box.accept()

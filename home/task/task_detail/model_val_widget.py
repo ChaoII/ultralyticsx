@@ -210,7 +210,7 @@ class ModelValWidget(CollapsibleWidgetItem):
 
         for col in range(self.tb_val_result.columnCount()):
             min_width += self.tb_val_result.columnWidth(col)
-        self.tb_val_result.setMinimumSize(min_width + 5, min_height + 5)
+        self.tb_val_result.setFixedSize(min_width + 5, min_height + 5)
 
         for col, speed in enumerate(val_speed.values()):
             item = QTableWidgetItem(f"{speed:.4f}")
@@ -223,7 +223,7 @@ class ModelValWidget(CollapsibleWidgetItem):
 
         for col in range(self.tb_val_speed.columnCount()):
             min_width += self.tb_val_speed.columnWidth(col)
-        self.tb_val_speed.setMinimumSize(min_width + 5, min_height + 5)
+        self.tb_val_speed.setFixedSize(min_width + 5, min_height + 5)
 
     def _init_model_name(self):
         self.cmb_model_name.clear()

@@ -8,7 +8,8 @@ from random import randint
 
 import numpy as np
 from PIL import Image
-from PySide6.QtGui import QColor
+from PySide6.QtCore import QRect
+from PySide6.QtGui import QColor, QPen, QPainter, QImage, QFont, QFontMetrics
 from PySide6.QtWidgets import QApplication, QWidget
 from loguru import logger
 
@@ -291,3 +292,26 @@ def is_image(filename):
     except (IOError, SyntaxError):
         # 如果发生IO错误或语法错误，说明文件不是图片
         return False
+
+
+def draw_classify(painter: QPainter, pix: QImage, label: str, color: QColor, line_width: int = 1):
+    painter.begin(pix)
+    # 设置填充色
+    inv_color = invert_color(color)
+    color.setAlpha(100)
+    # 设置边框颜色
+    painter.setPen(QPen(QColor(color.red(), color.green(), color.blue()), line_width))  # 设置画笔颜色和宽度
+    # 获取字体大小
+    font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
+    font = QFont("Courier")
+    font.setPixelSize(font_size)
+    fm = QFontMetrics(font)
+
+    # 文字填充色
+    painter.setBrush(color)
+    text_rect = QRect(5, 5, fm.boundingRect(label).width() + line_width, fm.height())
+    painter.drawRect(text_rect)
+    painter.setFont(font)
+    painter.setPen(QPen(inv_color))
+    painter.drawText(text_rect, label)
+    painter.end()
