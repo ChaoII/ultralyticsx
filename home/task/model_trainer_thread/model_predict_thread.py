@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from PySide6.QtCore import Signal, QThread
+from ultralytics.engine.results import Results
+
 from ultralytics import YOLO
 from ...types import TaskInfo
 
