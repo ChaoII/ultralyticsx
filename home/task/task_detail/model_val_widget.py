@@ -1,15 +1,12 @@
 import pickle
-from typing import Optional
 
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import QWidget, QFormLayout, QVBoxLayout, QHBoxLayout, QTableWidgetItem, QTableWidget, \
-    QSizePolicy, QHeaderView, QAbstractItemView, QApplication
+from PySide6.QtWidgets import QWidget, QFormLayout, QVBoxLayout, QHBoxLayout, QTableWidgetItem, QAbstractItemView
 from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
-    PrimaryPushButton, StateToolTip, TableWidget, \
-    InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition, CompactDoubleSpinBox, PushButton, FluentIcon, MessageBox
+    PrimaryPushButton, TableWidget, \
+    InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition, CompactDoubleSpinBox, PushButton, FluentIcon
 
-from common.close_message_box import CustomMessageBox
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_icon import CustomFluentIcon
 from common.progress_message_box import ProgressMessageBox
@@ -157,6 +154,7 @@ class ModelValWidget(CollapsibleWidgetItem):
 
         self.set_content_widget(self.content_widget)
         self._task_info: TaskInfo | None = None
+        self._model_val_thread: ModelValThread | None = None
         self._export_parameter = dict()
         self._state_tool_tip = None
         self._connect_signals_and_slots()
@@ -235,16 +233,13 @@ class ModelValWidget(CollapsibleWidgetItem):
                 self.cmb_model_name.addItem(item.name)
         self.cmb_model_name.setCurrentIndex(0)
 
-    def create_val_thread(self) -> Optional[ModelValThread]:
-        model_export_thread = ModelValThread(self._export_parameter)
-        model_export_thread.model_val_start.connect(self._on_val_start)
-        model_export_thread.model_val_end.connect(self._on_val_end)
-        model_export_thread.model_val_batch_end.connect(self._on_val_batch_end)
-        model_export_thread.model_val_failed.connect(self._on_val_failed)
-        if model_export_thread.init_model_validator(self._task_info):
-            return model_export_thread
-        else:
-            return None
+    def create_val_thread(self):
+        self._model_val_thread = ModelValThread(self._export_parameter)
+        self._model_val_thread.model_val_start.connect(self._on_val_start)
+        self._model_val_thread.model_val_end.connect(self._on_val_end)
+        self._model_val_thread.model_val_batch_end.connect(self._on_val_batch_end)
+        self._model_val_thread.model_val_failed.connect(self._on_val_failed)
+        self._model_val_thread.set_task_info(self._task_info)
 
     def _on_next_step_clicked(self):
         self.next_step_clicked.emit(self._task_info)
@@ -268,25 +263,28 @@ class ModelValWidget(CollapsibleWidgetItem):
         self.update_table_data(val_results, val_speed)
 
         if self._message_box:
-            self._message_box.accept()
+            self._message_box.close()
 
     @Slot(str)
     def _on_val_failed(self, error_msg: str):
         self.val_model_finished.emit(True)
         self.btn_val.setEnabled(True)
+        if self._message_box:
+            self._message_box.pgr.setError(True)
+            self._message_box.close()
         InfoBar.error(
             title='',
             content=self.tr("val model failed: ") + error_msg,
             orient=Qt.Orientation.Vertical,  # 内容太长时可使用垂直布局
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
-            duration=-1,
+            duration=2000,
             parent=WindowManager().find_window("main_widget")
         )
 
     def val(self):
-        task_thread = self.create_val_thread()
-        task_thread.start()
+        self.create_val_thread()
+        self._model_val_thread.start()
 
     def _on_val_clicked(self):
         parameter = dict(

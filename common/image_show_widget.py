@@ -1,14 +1,7 @@
-from ctypes import Union
-from pathlib import Path
-
-from PySide6.QtCore import QSize, QRect, Qt, Signal
-from PySide6.QtGui import QPainter, QMouseEvent, QFontMetrics, QImage, QPen, QPainterPath, QPixmap
-from PySide6.QtWidgets import QFileDialog, QWidget, QVBoxLayout
-from qfluentwidgets import themeColor, LineEdit, ImageLabel
-from qfluentwidgets.common.icon import toQIcon, drawIcon
-
-from .custom_icon import CustomFluentIcon
-from .utils import is_image
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPainter, QImage, QPen, QPainterPath, QPixmap
+from PySide6.QtWidgets import QWidget, QVBoxLayout
+from qfluentwidgets import ImageLabel
 
 
 class ImageShowWidget(QWidget):
@@ -28,10 +21,26 @@ class ImageShowWidget(QWidget):
         self.vly_image.setContentsMargins(0, 0, 0, 0)
         self.vly_image.addWidget(self.lbl_image, 0, Qt.AlignmentFlag.AlignCenter)
 
+    def _scale_image(self):
+        if self.width() > self.height():
+            if self.lbl_image.image.width() > self.lbl_image.image.height():
+                self.lbl_image.scaledToWidth(self.width() - 2)
+            else:
+                self.lbl_image.scaledToHeight(self.height() - 2)
+        else:
+            if self.lbl_image.image.width() > self.lbl_image.image.height():
+                self.lbl_image.scaledToHeight(self.height() - 2)
+            else:
+                self.lbl_image.scaledToWidth(self.width() - 2)
+
     def set_image(self, image: str | QPixmap | QImage = None):
         """ set the image of label """
         self.lbl_image.setImage(image)
-        self.lbl_image.scaledToWidth(self.width())
+        self._scale_image()
+
+    def setFixedSize(self, *args, **kwargs) -> None:
+        super().setFixedSize(*args, **kwargs)
+        self._scale_image()
 
     def set_border_radius(self, top_left: int, top_right: int, bottom_left: int, bottom_right: int):
         """ set the border radius of image """
@@ -39,7 +48,7 @@ class ImageShowWidget(QWidget):
         self._bottom_left_radius = top_right
         self._top_right_radius = bottom_left
         self._top_left_radius = bottom_right
-        self.lbl_image.setBorderRadius(top_left, top_right, bottom_left, bottom_right)
+        self.lbl_image.setBorderRadius(0, 0, 0, 0)
         self.update()
 
     def clear(self):

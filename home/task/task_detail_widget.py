@@ -123,9 +123,6 @@ class TaskDetailWidget(ContentWidgetBase):
             task_info.model_type = ModelType(task.project.model_type)
             task_info.task_dir = Path(task.project.project_dir) / self._task_id
 
-        print("============================================================================================")
-        print(task_info.task_status)
-
         if task_info.task_status == TaskStatus.INITIALIZING:
             self.tool_box.set_current_item(self.dataset_select_widget)
             self.dataset_select_widget.setEnabled(True)
