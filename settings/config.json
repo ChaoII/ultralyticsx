@@ -1,7 +1,7 @@
 {
     "personalization": {
         "dpi_scale": "auto",
-        "enable_acrylic_background": false,
+        "enable_mica_effect": true,
         "language": "Auto",
         "minimize_to_tray": true,
         "remember_quit_status": true

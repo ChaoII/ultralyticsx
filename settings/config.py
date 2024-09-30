@@ -1,8 +1,13 @@
+import sys
 from enum import Enum
 
 from PySide6.QtCore import QLocale
 from qfluentwidgets import qconfig, QConfig, ConfigItem, OptionsConfigItem, BoolValidator, \
     OptionsValidator, FolderValidator, ConfigSerializer
+
+
+def is_win11():
+    return sys.platform == 'win32' and sys.getwindowsversion().build >= 22000
 
 
 class Language(Enum):
@@ -34,8 +39,8 @@ class Config(QConfig):
         "model", "enable_tensorboard", False, BoolValidator())
 
     # main window
-    enable_acrylic_background = ConfigItem(
-        "personalization", "enable_acrylic_background", False, BoolValidator())
+    enable_mica_effect = ConfigItem(
+        "personalization", "enable_mica_effect", is_win11(), BoolValidator())
     minimize_to_tray = ConfigItem(
         "personalization", "minimize_to_tray", True, BoolValidator())
     dpi_scale = OptionsConfigItem(

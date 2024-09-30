@@ -5,7 +5,7 @@ from PySide6.QtGui import QPainter, QMouseEvent, QImage, QPen, QPainterPath, QPi
 from PySide6.QtWidgets import QFileDialog, QWidget, QVBoxLayout
 from qfluentwidgets import ImageLabel
 
-from .utils import is_image
+from common.utils.utils import is_image
 
 
 class ImageSelectWidget(QWidget):

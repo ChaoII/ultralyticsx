@@ -1,4 +1,4 @@
-from common.model_type_widget import ModelType
+from common.component.model_type_widget import ModelType
 
 model_options_cls = [
     "yolov8n-cls",

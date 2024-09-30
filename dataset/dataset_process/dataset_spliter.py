@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from common.model_type_widget import ModelType
+from common.component.model_type_widget import ModelType
 from dataset.dataset_process.classify.classify_split_dataset import classify_dataset_split
 from dataset.dataset_process.detection.detection_split_dataset import detection_dataset_split
 from dataset.dataset_process.obb.obb_split_dataset import obb_dataset_split

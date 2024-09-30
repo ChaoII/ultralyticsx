@@ -7,10 +7,10 @@ from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
     PrimaryPushButton, TableWidget, \
     InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition, CompactDoubleSpinBox, PushButton, FluentIcon
 
-from common.collapsible_widget import CollapsibleWidgetItem
-from common.custom_icon import CustomFluentIcon
-from common.progress_message_box import ProgressMessageBox
-from core.window_manager import WindowManager
+from common.component.collapsible_widget import CollapsibleWidgetItem
+from common.component.custom_icon import CustomFluentIcon
+from common.component.progress_message_box import ProgressMessageBox
+from common.core.window_manager import WindowManager
 from ..task_thread.model_val_thread import ModelValThread
 from ...types import TaskInfo
 

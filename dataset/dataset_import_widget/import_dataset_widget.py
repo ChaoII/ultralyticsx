@@ -3,13 +3,13 @@ from pathlib import Path
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QHBoxLayout
 from qfluentwidgets import BodyLabel, SubtitleLabel, PrimaryPushButton, \
-    FluentIcon, InfoBar, InfoBarPosition
+    InfoBar, InfoBarPosition
 
-from common.custom_icon import CustomFluentIcon
-from common.file_select_widget import FileSelectWidget
-import core
-from common.tag_widget import TextTagWidget
-from common.utils import copy_tree
+from common.component.custom_icon import CustomFluentIcon
+from common.component.file_select_widget import FileSelectWidget
+from common import core
+from common.component.tag_widget import TextTagWidget
+from common.utils.utils import copy_tree
 from ..dataset_process import check_dataset
 from dataset.dataset_import_widget.dataset_format_doc_widget import DatasetFormatDocWidget
 

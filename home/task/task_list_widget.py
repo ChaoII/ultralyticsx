@@ -11,16 +11,16 @@ from loguru import logger
 from qfluentwidgets import FluentIcon, CaptionLabel, TableWidget, PrimaryPushButton, \
     PopupTeachingTip, TeachingTipTailPosition
 
-import core
-from common.custom_icon import CustomFluentIcon
-from common.custom_process_bar import CustomProcessBar
+from common.core import event_manager
+from common.component.custom_icon import CustomFluentIcon
+from common.component.custom_process_bar import CustomProcessBar
 from common.database.db_helper import db_session
 from common.database.task_helper import db_get_project_id
-from common.delete_ensure_widget import CustomFlyoutView
-from common.fill_tool_button import FillToolButton
-from common.tag_widget import TextTagWidget
-from common.utils import format_datatime, open_directory
-from core.content_widget_base import ContentWidgetBase
+from common.component.delete_ensure_widget import CustomFlyoutView
+from common.component.fill_tool_button import FillToolButton
+from common.component.tag_widget import TextTagWidget
+from common.utils.utils import format_datatime, open_directory
+from common.core.content_widget_base import ContentWidgetBase
 from models.models import Task, Project
 from ..types import TaskStatus
 
@@ -133,7 +133,7 @@ class TaskListWidget(ContentWidgetBase):
 
     def _connect_signals_and_slots(self):
         self.btn_create_task.clicked.connect(self._on_create_task)
-        core.EventManager().train_status_changed.connect(self._on_train_status_changed)
+        event_manager.signal_bridge.train_status_changed.connect(self._on_train_status_changed)
 
     def set_data(self, project_id: str):
         self._current_project_id = project_id

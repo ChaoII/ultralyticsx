@@ -6,7 +6,7 @@ from PySide6.QtGui import QIcon, QPixmap, QCursor
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QListView, QListWidgetItem, QApplication
 from qfluentwidgets import SimpleCardWidget, ComboBox, CheckBox, ListWidget
 
-from common.image_tip_widget import ImageTip
+from common.component.image_tip_widget import ImageTip
 from .dataset_draw_thread_base import DatasetDrawThreadBase
 from ...types import DatasetType
 

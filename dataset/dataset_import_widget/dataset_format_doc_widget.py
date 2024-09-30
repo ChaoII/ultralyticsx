@@ -1,9 +1,9 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
-from qfluentwidgets import BodyLabel, TextWrap, ImageLabel
-from common.collapsible_widget import CollapsibleWidgetItem
-from common.custom_scroll_widget import CustomScrollWidget
-from common.model_type_widget import ModelType
+from qfluentwidgets import BodyLabel, ImageLabel
+from common.component.collapsible_widget import CollapsibleWidgetItem
+from common.component.custom_scroll_widget import CustomScrollWidget
+from common.component.model_type_widget import ModelType
 
 
 class ClassifyDocWidget(QWidget):

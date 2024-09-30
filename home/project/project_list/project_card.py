@@ -5,8 +5,8 @@ from qfluentwidgets import ElevatedCardWidget, StrongBodyLabel, BodyLabel, theme
     isDarkTheme, FluentIcon, CaptionLabel, TeachingTipTailPosition, \
     PopupTeachingTip
 
-from common.delete_ensure_widget import CustomFlyoutView
-from common.tag_widget import TagWidget
+from common.component.delete_ensure_widget import CustomFlyoutView
+from common.component.tag_widget import TagWidget
 from home.project.project_list.new_project_dialog import ProjectInfo
 
 

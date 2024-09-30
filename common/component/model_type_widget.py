@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import themeColor, BodyLabel, SimpleCardWidget
 
 from .custom_icon import CustomFluentIcon
-from .utils import CustomColor
+from common.utils.utils import CustomColor
 
 
 class ModelType(enum.Enum):

@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from loguru import logger
 
-from common.model_type_widget import ModelType
+from common.component.model_type_widget import ModelType
 from .classify.classify_dataset_detail_widget import ClassifyDatasetDetailWidget
 from .common.dataset_detail_widget_base import DatasetDetailWidgetBase
 from .common.datset_header_widget import DatasetHeaderWidget

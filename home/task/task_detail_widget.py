@@ -3,11 +3,11 @@ from pathlib import Path
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QVBoxLayout
 
-from common.collapsible_widget import ToolBox
-from common.custom_scroll_widget import CustomScrollWidget
+from common.component.collapsible_widget import ToolBox
+from common.component.custom_scroll_widget import CustomScrollWidget
 from common.database.db_helper import db_session
-from common.model_type_widget import ModelType
-from core.content_widget_base import ContentWidgetBase
+from common.component.model_type_widget import ModelType
+from common.core.content_widget_base import ContentWidgetBase
 from models.models import Task
 from .task_detail.model_val_widget import ModelValWidget
 from .task_detail.model_parameter_widget import ModelParameterWidget

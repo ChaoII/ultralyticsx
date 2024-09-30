@@ -2,7 +2,7 @@ import numpy as np
 from PySide6.QtCore import QRect, QRectF, QPointF, QPoint
 from PySide6.QtGui import QColor, QPen, QPainter, QImage, QFont, QFontMetrics, QBrush, QPolygonF, Qt
 
-from common.utils import generate_color_map, invert_color, generate_random_color
+from common.utils.utils import generate_color_map, invert_color, generate_random_color
 
 skeleton = [
     [16, 14],

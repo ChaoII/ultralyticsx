@@ -4,7 +4,7 @@ from pathlib import Path
 from PySide6.QtCore import Signal, QRect
 from PySide6.QtGui import QPixmap, QPainter, QFont, QFontMetrics, QPen, QColor
 
-from common.utils import invert_color
+from common.utils.utils import invert_color
 from ..common.dataset_draw_thread_base import DatasetDrawThreadBase
 
 

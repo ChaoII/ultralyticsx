@@ -2,8 +2,8 @@ from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QStackedWidget
 from qfluentwidgets import BreadcrumbBar
 
-from core.content_widget_base import ContentWidgetBase
-from core.interface_base import InterfaceBase
+from common.core.content_widget_base import ContentWidgetBase
+from common.core.interface_base import InterfaceBase
 from .project.project_list.new_project_dialog import ProjectInfo
 from .project.project_list_widget import ProjectListWidget
 from .task.task_detail_widget import TaskDetailWidget

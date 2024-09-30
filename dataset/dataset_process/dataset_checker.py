@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from common.model_type_widget import ModelType
+from common.component.model_type_widget import ModelType
 from dataset.dataset_process.classify.classify_check_dataset import classify_dataset_check
 from dataset.dataset_process.detection.detection_check_dataset import detection_dataset_check
 from dataset.dataset_process.pose.pose_check_dataset import pose_dataset_check

@@ -1,17 +1,14 @@
-from typing import Optional
-
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QWidget, QFormLayout, QVBoxLayout, QHBoxLayout
 from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
-    PrimaryPushButton, StateToolTip, \
-    InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition
+    PrimaryPushButton, InfoBar, InfoBarPosition, ToolTipFilter, ToolTipPosition
 
-from common.collapsible_widget import CollapsibleWidgetItem
-from common.custom_icon import CustomFluentIcon
-from common.file_select_widget import FileSelectWidget
-from common.progress_message_box import ProgressMessageBox
-from core.window_manager import WindowManager
+from common.component.collapsible_widget import CollapsibleWidgetItem
+from common.component.custom_icon import CustomFluentIcon
+from common.component.file_select_widget import FileSelectWidget
+from common.component.progress_message_box import ProgressMessageBox
+from common.core.window_manager import WindowManager
 from ..task_thread.model_export_thread import ModelExportThread
 from ...types import TaskInfo
 

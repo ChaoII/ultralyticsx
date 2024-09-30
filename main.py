@@ -1,20 +1,20 @@
 # coding:utf-8
 import os
 import sys
-from core.window_manager import WindowManager
+from common.core.window_manager import window_manager
 
-from PySide6.QtCore import Qt, QTranslator, QSize, Slot
-from PySide6.QtGui import QIcon, QAction
-from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QSystemTrayIcon, QMenu
-from qfluentwidgets import FluentIcon as FIcon, SystemTrayMenu, Action, MessageBox
+from PySide6.QtCore import Qt, QTranslator, Slot
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QSystemTrayIcon
+from qfluentwidgets import FluentIcon as FIcon, SystemTrayMenu, Action
 from qfluentwidgets import (NavigationItemPosition, FluentWindow,
                             NavigationAvatarWidget, FluentTranslator, SubtitleLabel, setFont,
-                            InfoBadge, InfoBadgePosition, SplashScreen)
+                            InfoBadge, InfoBadgePosition)
 
-from common.close_message_box import CustomMessageBox
-from common.custom_icon import CustomFluentIcon
-from common.utils import show_center
-from core.interface_base import InterfaceBase
+from common.component.close_message_box import CustomMessageBox
+from common.component.custom_icon import CustomFluentIcon
+from common.utils.utils import show_center
+from common.core.interface_base import InterfaceBase
 from dataset import DatasetWidget
 from home import HomeWidget
 from settings import SettingInterface, cfg
@@ -62,7 +62,7 @@ class Window(FluentWindow):
         self._connect_signals_and_slots()
 
         # splash_screen.finish()
-        WindowManager().register_window("main_widget", self)
+        window_manager.register_window("main_widget", self)
 
     def init_system_tray(self):
         self.tray_icon = QSystemTrayIcon(self)
@@ -124,14 +124,14 @@ class Window(FluentWindow):
             target=item,
             position=InfoBadgePosition.NAVIGATION_ITEM
         )
-        # NOTE: enable acrylic effect
-        self.navigationInterface.setAcrylicEnabled(True)
 
     def _connect_signals_and_slots(self):
         self.stackedWidget.currentChanged.connect(self._on_widget_changed)
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
         self.titleBar.closeBtn.clicked.disconnect(self.titleBar.window().close)
         self.titleBar.closeBtn.clicked.connect(self._on_close_clicked)
+        # 设置云母特效
+        cfg.enable_mica_effect.valueChanged.connect(self.setMicaEffectEnabled)
 
     @Slot(QSystemTrayIcon.ActivationReason)
     def on_tray_icon_activated(self, reason):
@@ -193,5 +193,6 @@ if __name__ == '__main__':
     app.installTranslator(settingTranslator)
     # create main window
     w = Window()
+    w.setMicaEffectEnabled(cfg.get(cfg.enable_mica_effect))
     show_center(w)
     app.exec()

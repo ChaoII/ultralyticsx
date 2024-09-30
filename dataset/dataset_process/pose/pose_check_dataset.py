@@ -2,7 +2,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from common.utils import is_empty, is_image
+from common.utils.utils import is_empty, is_image
 
 
 def pose_dataset_check(dataset_dir: Path | str):

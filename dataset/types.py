@@ -1,11 +1,8 @@
 import enum
 from enum import Enum
 
-from PySide6.QtGui import QColor
-from qfluentwidgets import isDarkTheme
-
-from common.model_type_widget import ModelType
-from common.utils import CustomColor
+from common.component.model_type_widget import ModelType
+from common.utils.utils import CustomColor
 
 
 class DatasetStatus(Enum):

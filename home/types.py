@@ -1,8 +1,8 @@
 from enum import Enum
 from pathlib import Path
 
-from common.model_type_widget import ModelType
-from common.utils import CustomColor
+from common.component.model_type_widget import ModelType
+from common.utils.utils import CustomColor
 
 
 class TaskStatus(Enum):

@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout
 from qfluentwidgets import SimpleCardWidget, SubtitleLabel, BodyLabel
 
 from common.database.db_helper import db_session
-from common.tag_widget import TextTagWidget
+from common.component.tag_widget import TextTagWidget
 from models.models import Dataset
 from .dataset_split_widget import DatasetSplitWidget
 from ...dataset_process import split_dataset

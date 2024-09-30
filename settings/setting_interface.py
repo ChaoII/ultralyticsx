@@ -1,32 +1,25 @@
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QFrame, QFontDialog, QFileDialog
+from PySide6.QtWidgets import QFileDialog, QWidget, QVBoxLayout
 from qfluentwidgets import FluentIcon as FIco
-from qfluentwidgets import SettingCardGroup, SwitchSettingCard, OptionsSettingCard, PushSettingCard, ScrollArea, \
-    ComboBoxSettingCard, ExpandLayout, Theme, InfoBar, CustomColorSettingCard, \
-    setTheme, setThemeColor, isDarkTheme
+from qfluentwidgets import SettingCardGroup, SwitchSettingCard, OptionsSettingCard, PushSettingCard, \
+    ComboBoxSettingCard, InfoBar, CustomColorSettingCard, setTheme, setThemeColor
 
-from .config import cfg
+from common.component.custom_scroll_widget import CustomScrollWidget
+from .config import cfg, is_win11
 
 
-class SettingInterface(ScrollArea):
+class SettingInterface(QWidget):
     """ Setting interface """
-
-    checkUpdateSig = Signal()
-    musicFoldersChanged = Signal(list)
-    acrylicEnableChanged = Signal(bool)
-    downloadFolderChanged = Signal(str)
-    minimizeToTrayChanged = Signal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-
+        self.resize(1000, 800)
         self.setObjectName("setting_interface")
-        self.scrollWidget = QFrame()
-        self.expandLayout = ExpandLayout(self.scrollWidget)
+        self.scroll_area = CustomScrollWidget()
+        self.vly_config_card = QVBoxLayout()
 
         # model
         self.model_config_group = SettingCardGroup(
-            self.tr("model settings"), self.scrollWidget)
+            self.tr("model settings"), self.scroll_area)
 
         self.workspace_folder_card = PushSettingCard(
             text=self.tr('choose folder'),
@@ -45,14 +38,15 @@ class SettingInterface(ScrollArea):
         )
 
         # personalization
-        self.personal_group = SettingCardGroup(self.tr('personalization'), self.scrollWidget)
-        self.enable_acrylic_ard = SwitchSettingCard(
+        self.personal_group = SettingCardGroup(self.tr('personalization'), self.scroll_area)
+        self.enable_mica_card = SwitchSettingCard(
             FIco.TRANSPARENT,
-            self.tr("Use Acrylic effect"),
-            self.tr("Acrylic effect has better visual experience, but it may cause the window to become stuck"),
-            configItem=cfg.enable_acrylic_background,
+            self.tr("Use Mica effect"),
+            self.tr("Windows and surfaces appear translucent"),
+            configItem=cfg.enable_mica_effect,
             parent=self.personal_group
         )
+        self.enable_mica_card.setEnabled(is_win11())
         self.theme_card = OptionsSettingCard(
             cfg.themeMode,
             FIco.BRUSH,
@@ -92,7 +86,7 @@ class SettingInterface(ScrollArea):
         )
 
         # main panel
-        self.main_panel_group = SettingCardGroup(self.tr('Main Panel'), self.scrollWidget)
+        self.main_panel_group = SettingCardGroup(self.tr('Main Panel'), self.scroll_area)
         self.minimize_to_tray_card = SwitchSettingCard(
             FIco.MINIMIZE,
             self.tr('Minimize to tray after closing'),
@@ -101,50 +95,26 @@ class SettingInterface(ScrollArea):
             parent=self.main_panel_group
         )
 
-        self._init_widget()
-
-    def _init_widget(self):
-        self.resize(1000, 800)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setViewportMargins(0, 20, 0, 20)
-        self.setWidget(self.scrollWidget)
-        self.setWidgetResizable(True)
-
-        # initialize style sheet
-        self._set_qss()
-
-        # initialize layout
-        self._init_layout()
-        self._connect_signal_to_slot()
-
-    def _init_layout(self):
-        # self.settingLabel.move(60, 63)
-
-        # add cards to group
         self.model_config_group.addSettingCard(self.workspace_folder_card)
         self.model_config_group.addSettingCard(self.enable_tensorboard_card)
-
-        self.personal_group.addSettingCard(self.enable_acrylic_ard)
+        self.personal_group.addSettingCard(self.enable_mica_card)
         self.personal_group.addSettingCard(self.theme_card)
         self.personal_group.addSettingCard(self.theme_color_card)
         self.personal_group.addSettingCard(self.zoom_card)
         self.personal_group.addSettingCard(self.language_card)
-
         self.main_panel_group.addSettingCard(self.minimize_to_tray_card)
 
-        # add setting card group to layout
-        self.expandLayout.setSpacing(28)
-        self.expandLayout.setContentsMargins(60, 10, 60, 0)
-        self.expandLayout.addWidget(self.model_config_group)
-        self.expandLayout.addWidget(self.personal_group)
-        self.expandLayout.addWidget(self.main_panel_group)
+        self.vly_config_card.setSpacing(28)
+        self.vly_config_card.setContentsMargins(20, 10, 20, 0)
+        self.vly_config_card.addWidget(self.model_config_group)
+        self.vly_config_card.addWidget(self.personal_group)
+        self.vly_config_card.addWidget(self.main_panel_group)
+        self.scroll_area.setLayout(self.vly_config_card)
 
-    def _set_qss(self):
-        """ set style sheet """
-        self.scrollWidget.setObjectName('scrollWidget')
-        theme = 'dark' if isDarkTheme() else 'light'
-        with open(f'resource/qss/{theme}/setting_interface.qss', encoding='utf-8') as f:
-            self.setStyleSheet(f.read())
+        self.vly_content = QVBoxLayout(self)
+        self.vly_content.addWidget(self.scroll_area)
+
+        self._connect_signal_to_slot()
 
     def _show_restart_tooltip(self):
         """ show restart tooltip """
@@ -154,48 +124,20 @@ class SettingInterface(ScrollArea):
             parent=self.window()
         )
 
-    def __onDeskLyricFontCardClicked(self):
-        """ desktop lyric font button clicked slot """
-        font, is_ok = QFontDialog.getFont(
-            cfg.desktopLyricFont, self.window(), self.tr("Choose font"))
-        if is_ok:
-            cfg.desktopLyricFont = font
-
     def _on_workspace_folder_card_clicked(self):
-        """ download folder card clicked slot """
-        folder = QFileDialog.getExistingDirectory(
-            self, self.tr("Choose folder"), "./")
-        if not folder or cfg.get(cfg.workspace_folder) == folder:
+        """ workspace directory card clicked slot """
+        directory = QFileDialog.getExistingDirectory(
+            self, self.tr("Workspace directory"), "./")
+        if not directory or cfg.get(cfg.workspace_folder) == directory:
             return
-
-        cfg.set(cfg.workspace_folder, folder)
-        self.workspace_folder_card.setContent(folder)
-
-    def _on_Theme_changed(self, theme: Theme):
-        """ theme changed slot """
-        # change the theme of qfluentwidgets
-        setTheme(theme)
-
-        # chang the theme of setting interface
-        self._set_qss()
+        cfg.set(cfg.workspace_folder, directory)
+        self.workspace_folder_card.setContent(directory)
 
     def _connect_signal_to_slot(self):
         """ connect signal to slot """
         cfg.appRestartSig.connect(self._show_restart_tooltip)
-        cfg.themeChanged.connect(self._on_Theme_changed)
+        cfg.themeChanged.connect(lambda theme: setTheme(theme))
 
         # model
-        self.workspace_folder_card.clicked.connect(
-            self._on_workspace_folder_card_clicked)
-
-        self.enable_tensorboard_card.checkedChanged.connect(
-            self.acrylicEnableChanged)
-
-        # personalization
-        self.enable_acrylic_ard.checkedChanged.connect(
-            self.acrylicEnableChanged)
+        self.workspace_folder_card.clicked.connect(self._on_workspace_folder_card_clicked)
         self.theme_color_card.colorChanged.connect(setThemeColor)
-
-        # main panel
-        self.minimize_to_tray_card.checkedChanged.connect(
-            self.minimizeToTrayChanged)

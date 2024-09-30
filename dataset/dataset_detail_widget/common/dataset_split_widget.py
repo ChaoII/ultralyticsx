@@ -4,7 +4,7 @@ from qfluentwidgets import BodyLabel, CompactSpinBox, FlyoutViewBase, themeColor
     InfoBarIcon, TransparentToolButton, StrongBodyLabel, InfoBarPosition, InfoBar
 from qfluentwidgets import HyperlinkLabel, PopupTeachingTip, TeachingTipTailPosition
 
-from common.custom_label_widget import CustomLabel
+from common.component.custom_label_widget import CustomLabel
 
 
 class SplitDatasetContentWidget(QWidget):

@@ -12,8 +12,8 @@ from qframelesswindow import FramelessDialog
 from sqlalchemy.orm import Query
 
 from common.database.db_helper import db_session
-from common.file_select_widget import FileSelectWidget
-from common.model_type_widget import ModelTypeGroupWidget, ModelType
+from common.component.file_select_widget import FileSelectWidget
+from common.component.model_type_widget import ModelTypeGroupWidget, ModelType
 from home.types import ProjectInfo
 from models.models import Project
 from settings import cfg

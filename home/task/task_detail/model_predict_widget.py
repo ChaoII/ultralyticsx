@@ -1,19 +1,18 @@
 from pathlib import Path
 
-from PySide6.QtCore import Signal
 from PySide6.QtGui import Qt, QFont, QImage, QResizeEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QAbstractItemView, QTableWidgetItem, \
     QSizePolicy
 from qfluentwidgets import BodyLabel, ComboBox, PrimaryPushButton, InfoBar, InfoBarPosition, ToolTipFilter, \
     ToolTipPosition, TableWidget, TextEdit
 
-from common.collapsible_widget import CollapsibleWidgetItem
-from common.custom_icon import CustomFluentIcon
-from common.image_select_widget import ImageSelectWidget
-from common.image_show_widget import ImageShowWidget
-from common.model_type_widget import ModelType
-from common.progress_message_box import ProgressMessageBox
-from core.window_manager import WindowManager
+from common.component.collapsible_widget import CollapsibleWidgetItem
+from common.component.custom_icon import CustomFluentIcon
+from common.component.image_select_widget import ImageSelectWidget
+from common.component.image_show_widget import ImageShowWidget
+from common.component.model_type_widget import ModelType
+from common.component.progress_message_box import ProgressMessageBox
+from common.core.window_manager import window_manager
 from ultralytics.engine.results import Results
 from ..task_thread.model_predict_thread import ModelPredictorThread
 from ...types import TaskInfo
@@ -158,12 +157,12 @@ class ModelPredictWidget(CollapsibleWidgetItem):
                 content=self.tr("Please select a image"),
                 duration=2000,
                 position=InfoBarPosition.TOP_RIGHT,
-                parent=WindowManager().find_window("main_widget")
+                parent=window_manager.find_window("main_widget")
             )
             return
         self._model_predict_thread.set_predict_image(self._current_image_path)
         self._model_predict_thread.start()
-        self._message_box = ProgressMessageBox(indeterminate=True, parent=WindowManager().find_window("main_widget"))
+        self._message_box = ProgressMessageBox(indeterminate=True, parent=window_manager.find_window("main_widget"))
         self._message_box.set_ring_size(100, 100)
         self._message_box.exec()
 
@@ -180,7 +179,7 @@ class ModelPredictWidget(CollapsibleWidgetItem):
             content=err_msg,
             duration=2000,
             position=InfoBarPosition.TOP_RIGHT,
-            parent=WindowManager().find_window("main_widget")
+            parent=window_manager.find_window("main_widget")
         )
 
     def _on_predict_end(self, image: QImage, result: Results):
@@ -284,5 +283,5 @@ class ModelPredictWidget(CollapsibleWidgetItem):
             content=self.tr("Predict successfully"),
             duration=2000,
             position=InfoBarPosition.TOP_RIGHT,
-            parent=WindowManager().find_window("main_widget")
+            parent=window_manager.find_window("main_widget")
         )

@@ -7,11 +7,11 @@ import yaml
 from PySide6.QtCore import Slot, Signal, QThread, QObject
 from loguru import logger
 
-import core
+from common import core
 from common.database.task_helper import db_update_task_epoch_info, db_update_task_finished, db_update_task_pause, \
     db_update_task_started, db_update_task_failed
-from common.model_type_widget import ModelType
-from common.utils import log_info, format_datatime
+from common.component.model_type_widget import ModelType
+from common.utils.utils import log_info, format_datatime
 from ultralytics.engine.trainer import BaseTrainer
 from ultralytics.models.yolo.classify import ClassificationTrainer
 from ultralytics.models.yolo.detect import DetectionTrainer

@@ -11,14 +11,14 @@ from qfluentwidgets import FluentIcon, CaptionLabel, TableWidget, PrimaryPushBut
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Query
 
-from common.custom_icon import CustomFluentIcon
+from common.component.custom_icon import CustomFluentIcon
+from common.core.event_manager import signal_bridge
 from common.database.db_helper import db_session
-from common.delete_ensure_widget import CustomFlyoutView
-from common.fill_tool_button import FillToolButton
-from common.model_type_widget import ModelType
-from common.tag_widget import TextTagWidget
-from common.utils import format_datatime, open_directory
-import core
+from common.component.delete_ensure_widget import CustomFlyoutView
+from common.component.fill_tool_button import FillToolButton
+from common.component.model_type_widget import ModelType
+from common.component.tag_widget import TextTagWidget
+from common.utils.utils import format_datatime, open_directory
 from dataset.dataset_list_widget.new_dataset_dialog import NewDatasetDialog, DatasetInfo
 from dataset.types import DatasetStatus
 from models.models import Dataset
@@ -175,7 +175,7 @@ class DatasetListWidget(QWidget):
         cfg.themeChanged.connect(self._on_theme_changed)
         self.cmb_sort.currentIndexChanged.connect(self._load_dataset_data)
         self.cmb_type.currentIndexChanged.connect(self._load_dataset_data)
-        core.EventManager().import_dataset_finished.connect(self._on_import_dataset_finished)
+        signal_bridge.import_dataset_finished.connect(self._on_import_dataset_finished)
 
     def _on_theme_changed(self):
         # 局部更新优化性能

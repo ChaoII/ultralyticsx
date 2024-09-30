@@ -3,9 +3,9 @@ from pathlib import Path
 from PySide6.QtCore import Signal, QThread
 from PySide6.QtGui import QImage
 
-from common.draw_labels import draw_detect_result, draw_segment_result, draw_obb_result, draw_pose_result, \
+from common.utils.draw_labels import draw_detect_result, draw_segment_result, draw_obb_result, draw_pose_result, \
     draw_classify_result
-from common.model_type_widget import ModelType
+from common.component.model_type_widget import ModelType
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 from ...types import TaskInfo

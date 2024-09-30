@@ -10,10 +10,10 @@ from qfluentwidgets import BodyLabel, ComboBox, themeColor, CompactSpinBox, Comp
     CheckBox, LineEdit, StrongBodyLabel, PushButton, PrimaryPushButton, FluentIcon, InfoBar, InfoBarPosition, \
     ToolTipFilter, ToolTipPosition
 
-from common.collapsible_widget import CollapsibleWidgetItem
+from common.component.collapsible_widget import CollapsibleWidgetItem
 from common.database.db_helper import db_session
-from common.file_select_widget import FileSelectWidget
-from common.model_type_widget import ModelType
+from common.component.file_select_widget import FileSelectWidget
+from common.component.model_type_widget import ModelType
 from models.models import Task
 from ...options import model_type_list_map
 from ...types import TaskInfo, TaskStatus

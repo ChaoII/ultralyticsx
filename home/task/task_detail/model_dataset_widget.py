@@ -3,8 +3,8 @@ from PySide6.QtWidgets import QWidget, QFormLayout
 from qfluentwidgets import BodyLabel, ComboBox, themeColor, PrimaryPushButton
 from sqlalchemy import and_
 
-from common.collapsible_widget import CollapsibleWidgetItem
-from common.custom_icon import CustomFluentIcon
+from common.component.collapsible_widget import CollapsibleWidgetItem
+from common.component.custom_icon import CustomFluentIcon
 from common.database.db_helper import db_session
 from dataset.types import DatasetStatus
 from models.models import Dataset, Task

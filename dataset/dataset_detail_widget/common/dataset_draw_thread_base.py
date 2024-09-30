@@ -4,7 +4,7 @@ import pandas as pd
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtGui import QPixmap, QColor
 
-from common.utils import generate_color_map
+from common.utils.utils import generate_color_map
 
 
 class DatasetDrawThreadBase(QThread):

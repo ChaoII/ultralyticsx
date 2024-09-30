@@ -5,7 +5,7 @@ from PIL.ImageQt import QPixmap
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QFontMetrics, QBrush, QPolygonF
 
-from common.utils import invert_color
+from common.utils.utils import invert_color
 from ..common.dataset_draw_thread_base import DatasetDrawThreadBase
 
 

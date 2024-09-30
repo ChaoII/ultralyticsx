@@ -12,10 +12,10 @@ from pyqtgraph import PlotItem
 from qfluentwidgets import PushButton, PrimaryPushButton, FluentIcon, \
     TextEdit, isDarkTheme, InfoBar, InfoBarPosition
 
-from common.collapsible_widget import CollapsibleWidgetItem
-from common.custom_process_bar import CustomProcessBar
+from common.component.collapsible_widget import CollapsibleWidgetItem
+from common.component.custom_process_bar import CustomProcessBar
 from common.database.db_helper import db_session
-from common.utils import log_warning, log_error
+from common.utils.utils import log_warning, log_error
 from models.models import Task
 from settings import cfg
 from ..task_thread.model_train_thread import ModelTrainThread

@@ -12,9 +12,9 @@ from qframelesswindow import FramelessDialog
 from sqlalchemy.orm import Query
 
 from common.database.db_helper import db_session
-from common.model_type_widget import ModelType
-from common.model_type_widget import ModelTypeGroupWidget
-from common.utils import format_datatime
+from common.component.model_type_widget import ModelType
+from common.component.model_type_widget import ModelTypeGroupWidget
+from common.utils.utils import format_datatime
 from dataset.types import DatasetInfo
 from models.models import Dataset
 from settings import cfg

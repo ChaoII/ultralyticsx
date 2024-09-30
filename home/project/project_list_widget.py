@@ -8,12 +8,12 @@ from qfluentwidgets import BodyLabel, PrimaryPushButton, FluentIcon, \
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import Query
 
-from common.custom_scroll_widget import CustomScrollWidget
+from common.component.custom_scroll_widget import CustomScrollWidget
 from common.database.db_helper import db_session
-from common.model_type_widget import ModelType
-from common.page_widget import PipsPager, PipsScrollButtonDisplayMode
-from common.utils import str_to_datetime, format_datatime
-from core.content_widget_base import ContentWidgetBase
+from common.component.model_type_widget import ModelType
+from common.component.page_widget import PipsPager, PipsScrollButtonDisplayMode
+from common.utils.utils import str_to_datetime, format_datatime
+from common.core.content_widget_base import ContentWidgetBase
 from models.models import Project
 from settings.config import cfg
 from home.project.project_list.new_project_dialog import NewProjectDialog, ProjectInfo
