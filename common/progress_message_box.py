@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QButtonGroup, QVBoxLayout
 from qfluentwidgets import MessageBoxBase, SubtitleLabel, LineEdit, RadioButton, CheckBox, ProgressRing, \
-    FluentStyleSheet, isDarkTheme
+    FluentStyleSheet, isDarkTheme, IndeterminateProgressRing
 from qfluentwidgets.components.dialog_box.mask_dialog_base import MaskDialogBase
 
 from settings import cfg
@@ -47,18 +47,36 @@ class MessageBoxBaseTransparent(MaskDialogBase):
 class ProgressMessageBox(MessageBoxBaseTransparent):
     """ Custom message box """
 
-    def __init__(self, parent=None):
+    def __init__(self, indeterminate=False, parent=None):
         super().__init__(parent)
-        self.pgr = ProgressRing()
+        self._indeterminate = indeterminate
+        if indeterminate:
+            self.pgr = IndeterminateProgressRing()
+        else:
+            self.pgr = ProgressRing()
+            self.pgr.setTextVisible(True)
+            self.pgr.setFormat(f"{self.tr('current progress: ')}%p%")
         self.pgr.setFixedSize(300, 300)
-        self.pgr.setTextVisible(True)
-        self.pgr.setFormat(f"{self.tr('current progress: ')}%p%")
         self.pgr.setStrokeWidth(15)
         # 将组件添加到布局中
         self.viewLayout.addWidget(self.pgr)
 
+    def set_error(self, is_error: bool):
+        self.pgr.setError(is_error)
+
+    def set_stroke_width(self, width: int):
+        self.pgr.setStrokeWidth(width)
+
+    def set_ring_size(self, width, height):
+        self.pgr.setFixedSize(width, height)
+
+    def set_paused(self, is_paused: bool):
+        self.pgr.setPaused(is_paused)
+
     def set_max_value(self, value):
-        self.pgr.setMaximum(value)
+        if not self._indeterminate:
+            self.pgr.setMaximum(value)
 
     def set_value(self, value):
-        self.pgr.setValue(value)
+        if not self._indeterminate:
+            self.pgr.setValue(value)

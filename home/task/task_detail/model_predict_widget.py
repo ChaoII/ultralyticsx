@@ -15,7 +15,7 @@ from common.model_type_widget import ModelType
 from common.progress_message_box import ProgressMessageBox
 from core.window_manager import WindowManager
 from ultralytics.engine.results import Results
-from ..model_trainer_thread.model_predict_thread import ModelPredictorThread
+from ..task_thread.model_predict_thread import ModelPredictorThread
 from ...types import TaskInfo
 
 
@@ -29,25 +29,16 @@ class FixWidthBodyLabel(BodyLabel):
 
 
 class ModelPredictWidget(CollapsibleWidgetItem):
-    export_model_finished = Signal(bool)
 
     def __init__(self, parent=None):
-        super().__init__(self.tr("▌Model predict"), parent=parent)
+        super().__init__(self.tr("▌Model prediction"), parent=parent)
         self.cmb_model_name = ComboBox()
         self.cmb_model_name.setFixedWidth(300)
-
-        self.cmb_model_format = ComboBox()
-        self.cmb_model_format.setFixedWidth(300)
-        self.cmb_model_format.addItems(
-            ['torchscript', 'onnx', 'openvino', 'engine', 'coreml', 'saved_model', 'pb', 'tflite', 'edgetpu', 'tfjs',
-             'paddle', 'ncnn'])
 
         self.hly_export_setting = QHBoxLayout()
         self.hly_export_setting.setSpacing(40)
         self.hly_export_setting.addWidget(FixWidthBodyLabel(self.tr("model name: ")))
         self.hly_export_setting.addWidget(self.cmb_model_name)
-        self.hly_export_setting.addWidget(FixWidthBodyLabel(self.tr("model_format: ")))
-        self.hly_export_setting.addWidget(self.cmb_model_format)
         self.hly_export_setting.addStretch(1)
         self._lbl_image_fix_width = 360
         self._lbl_image_fix_height = 300
@@ -136,8 +127,7 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         if not model_weight_path.exists():
             return
         for item in model_weight_path.iterdir():
-            if item.is_file() and item.suffix == ".pt":
-                self.cmb_model_name.addItem(item.name)
+            self.cmb_model_name.addItem(item.name)
         self.cmb_model_name.setCurrentIndex(0)
 
     def resizeEvent(self, event: QResizeEvent) -> None:
@@ -154,6 +144,12 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self._model_predict_thread.model_predict_end.connect(self._on_predict_end)
         self._model_predict_thread.model_predict_failed.connect(self._on_predict_failed)
 
+    def _close_message_box(self, is_error: bool = False):
+        if self._message_box:
+            if is_error:
+                self._message_box.set_error(True)
+            self._message_box.close()
+
     def predict(self):
         self.create_predict_thread()
         if not self._current_image_path:
@@ -167,8 +163,8 @@ class ModelPredictWidget(CollapsibleWidgetItem):
             return
         self._model_predict_thread.set_predict_image(self._current_image_path)
         self._model_predict_thread.start()
-        self._message_box = ProgressMessageBox(parent=WindowManager().find_window("main_widget"))
-        self._message_box.set_max_value(1)
+        self._message_box = ProgressMessageBox(indeterminate=True, parent=WindowManager().find_window("main_widget"))
+        self._message_box.set_ring_size(100, 100)
         self._message_box.exec()
 
     def _on_image_selected(self, image_path: str):
@@ -178,9 +174,7 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self.predict()
 
     def _on_predict_failed(self, err_msg: str):
-        if self._message_box:
-            self._message_box.pgr.setError(True)
-            self._message_box.close()
+        self._close_message_box(is_error=True)
         InfoBar.error(
             title="",
             content=err_msg,
@@ -190,6 +184,9 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         )
 
     def _on_predict_end(self, image: QImage, result: Results):
+
+        self._close_message_box()
+
         self.lbl_output_image.set_image(image)
         self.lbl_output_result.clear()
         self.lbl_output_result.setVisible(True)
@@ -281,6 +278,11 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         for col in range(self.tb_predict_speed.columnCount()):
             min_width += self.tb_predict_speed.columnWidth(col)
         self.tb_predict_speed.setFixedSize(min_width + 5, min_height + 5)
-        if self._message_box:
-            self._message_box.set_value(1)
-            self._message_box.close()
+
+        InfoBar.success(
+            title="",
+            content=self.tr("Predict successfully"),
+            duration=2000,
+            position=InfoBarPosition.TOP_RIGHT,
+            parent=WindowManager().find_window("main_widget")
+        )

@@ -11,7 +11,7 @@ from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_icon import CustomFluentIcon
 from common.progress_message_box import ProgressMessageBox
 from core.window_manager import WindowManager
-from ..model_trainer_thread.model_val_thread import ModelValThread
+from ..task_thread.model_val_thread import ModelValThread
 from ...types import TaskInfo
 
 

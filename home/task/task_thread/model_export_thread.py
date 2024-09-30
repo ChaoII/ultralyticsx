@@ -13,13 +13,7 @@ class ModelExportThread(QThread):
         super().__init__()
         self._exporter: YOLO | None = None
         self._export_parameters = export_parameters
-        self._task_info: TaskInfo | None = None
-        self._last_model = ""
-
-        self._connect_signals_and_slots()
-
-    def _connect_signals_and_slots(self):
-        pass
+        # self._task_info: TaskInfo | None = None
 
     def init_model_exporter(self) -> bool:
         try:
@@ -32,9 +26,6 @@ class ModelExportThread(QThread):
             self.model_export_failed.emit(error_msg)
             return False
 
-    def get_last_model(self):
-        return self._last_model
-
     def _on_export_start(self, exporter):
         self.model_export_start.emit()
 
@@ -42,8 +33,9 @@ class ModelExportThread(QThread):
         self.model_export_end.emit()
 
     def run(self):
-        if self._exporter:
-            try:
-                self._exporter.export(**self._export_parameters)
-            except Exception as e:
-                self.model_export_failed.emit(str(e))
+        try:
+            if not self.init_model_exporter():
+                return
+            self._exporter.export(**self._export_parameters)
+        except Exception as e:
+            self.model_export_failed.emit(str(e))

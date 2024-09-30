@@ -11,11 +11,11 @@ from models.models import Dataset, Task
 from ...types import TaskInfo, TaskStatus
 
 
-class DatasetSelectWidget(CollapsibleWidgetItem):
+class ModelDatasetWidget(CollapsibleWidgetItem):
     dataset_selected_clicked = Signal(TaskInfo)
 
     def __init__(self, parent=None):
-        super().__init__(self.tr("▌Select Dataset"), parent=parent)
+        super().__init__(self.tr("▌Model dataset"), parent=parent)
         self.content_widget = QWidget(self)
 
         self.lbl_select_dataset = BodyLabel(self.tr("Select dataset: "), self)

@@ -281,12 +281,12 @@ class FixWidthBodyLabel(BodyLabel):
         self.installEventFilter(ToolTipFilter(self, showDelay=300, position=ToolTipPosition.TOP))
 
 
-class TrainParameterWidget(CollapsibleWidgetItem):
+class ModelParameterWidget(CollapsibleWidgetItem):
     parameter_config_finished = Signal(TaskInfo)
     start_training_clicked = Signal(TaskInfo)
 
     def __init__(self, parent=None):
-        super().__init__(self.tr("▌Parameter configuration"), parent=parent)
+        super().__init__(self.tr("▌Model parameter"), parent=parent)
         # ------------------------训练参数-------------------------
         self.cmb_model_name = ComboBox()
         self.cmb_model_name.setFixedWidth(300)

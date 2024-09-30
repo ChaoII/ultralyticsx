@@ -10,7 +10,9 @@ from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
 from common.collapsible_widget import CollapsibleWidgetItem
 from common.custom_icon import CustomFluentIcon
 from common.file_select_widget import FileSelectWidget
-from ..model_trainer_thread.model_export_thread import ModelExportThread
+from common.progress_message_box import ProgressMessageBox
+from core.window_manager import WindowManager
+from ..task_thread.model_export_thread import ModelExportThread
 from ...types import TaskInfo
 
 
@@ -24,7 +26,7 @@ class FixWidthBodyLabel(BodyLabel):
 
 
 class ModelExportWidget(CollapsibleWidgetItem):
-    export_model_finished = Signal(bool)
+    export_model_finished = Signal(TaskInfo)
 
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Model export"), parent=parent)
@@ -131,6 +133,8 @@ class ModelExportWidget(CollapsibleWidgetItem):
 
         self.set_content_widget(self.content_widget)
         self._task_info: TaskInfo | None = None
+        self._model_export_thread: ModelExportThread | None = None
+        self._message_box: ProgressMessageBox | None = None
         self._export_parameter = dict()
         self._state_tool_tip = None
         self._connect_signals_and_slots()
@@ -152,50 +156,46 @@ class ModelExportWidget(CollapsibleWidgetItem):
                 self.cmb_model_name.addItem(item.name)
         self.cmb_model_name.setCurrentIndex(0)
 
-    def create_export_thread(self) -> Optional[ModelExportThread]:
-        model_export_thread = ModelExportThread(self._export_parameter)
-        model_export_thread.model_export_start.connect(self._on_export_start)
-        model_export_thread.model_export_end.connect(self._on_export_end)
-        model_export_thread.model_export_failed.connect(self._on_export_failed)
-
-        if model_export_thread.init_model_exporter():
-            return model_export_thread
-        else:
-            return None
+    def create_export_thread(self):
+        self._model_export_thread = ModelExportThread(self._export_parameter)
+        self._model_export_thread.model_export_start.connect(self._on_export_start)
+        self._model_export_thread.model_export_end.connect(self._on_export_end)
+        self._model_export_thread.model_export_failed.connect(self._on_export_failed)
 
     def _on_export_start(self):
-        self.export_model_finished.emit(False)
         self.btn_export.setEnabled(False)
 
     def _on_export_end(self):
-        self.state_tool_tip.setContent(
-            self.tr('Export Model completed!') + ' 😆')
-        self.state_tool_tip.setState(True)
-        self.state_tool_tip = None
-        self.export_model_finished.emit(True)
+        self._close_message_box()
+        self.export_model_finished.emit(self._task_info)
         self.btn_export.setEnabled(True)
-        # self.fs_export_path.setText(self._task_info.task_dir / "weight")
 
     @Slot(str)
     def _on_export_failed(self, error_msg: str):
-        if self._state_tool_tip:
-            self.state_tool_tip.setState(True)
-            self.state_tool_tip = None
-            self.export_model_finished.emit(True)
-            self.btn_export.setEnabled(True)
-            InfoBar.error(
-                title='',
-                content=self.tr("Export model failed: ") + error_msg,
-                orient=Qt.Orientation.Vertical,  # 内容太长时可使用垂直布局
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=-1,
-                parent=self.parent().parent()
-            )
+        self._close_message_box(is_error=True)
+        self.btn_export.setEnabled(True)
+        InfoBar.error(
+            title='',
+            content=self.tr("Export model failed: ") + error_msg,
+            orient=Qt.Orientation.Vertical,  # 内容太长时可使用垂直布局
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self.parent().parent()
+        )
+
+    def _close_message_box(self, is_error: bool = False):
+        if self._message_box:
+            if is_error:
+                self._message_box.set_error(True)
+            self._message_box.close()
 
     def export(self):
-        task_thread = self.create_export_thread()
-        task_thread.start()
+        self.create_export_thread()
+        self._model_export_thread.start()
+        self._message_box = ProgressMessageBox(indeterminate=True, parent=WindowManager().find_window("main_widget"))
+        self._message_box.set_ring_size(200, 200)
+        self._message_box.exec()
 
     def _on_export_clicked(self):
         parameter = dict(
@@ -212,7 +212,3 @@ class ModelExportWidget(CollapsibleWidgetItem):
         )
         self._export_parameter = parameter
         self.export()
-        self.state_tool_tip = StateToolTip(
-            self.tr('Model is exporting '), self.tr('Please wait patiently'), self.window())
-        self.state_tool_tip.move(self.state_tool_tip.getSuitablePos())
-        self.state_tool_tip.show()

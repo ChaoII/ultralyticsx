@@ -18,9 +18,23 @@ from common.database.db_helper import db_session
 from common.utils import log_warning, log_error
 from models.models import Task
 from settings import cfg
-from ..model_trainer_thread.model_trainer_thread import ModelTrainThread
-from ..task_threads import TaskThreadMap
+from ..task_thread.model_train_thread import ModelTrainThread
 from ...types import TaskInfo, TaskStatus
+
+
+class ModelTrainThreadMap:
+    def __init__(self):
+        self._max_map_len = 5
+        self._thread_map: dict[str, ModelTrainThread] = dict()
+
+    def update_thread(self, thread_map: dict[str, ModelTrainThread]):
+        self._thread_map.update(thread_map)
+
+    def get_thread_map(self) -> dict[str, ModelTrainThread]:
+        return self._thread_map
+
+    def get_thread_by_task_id(self, task_id) -> Optional[ModelTrainThread]:
+        return self._thread_map.get(task_id, None)
 
 
 class GraphicsLayoutWidget(pg.GraphicsLayoutWidget):
@@ -126,7 +140,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         # 继续训练还是重新训练
         self._is_retrain = True
 
-        self._task_thread_map = TaskThreadMap()
+        self._task_thread_map = ModelTrainThreadMap()
         self._current_thread: ModelTrainThread | None = None
 
     def _connect_signals_and_slot(self):
