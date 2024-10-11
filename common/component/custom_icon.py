@@ -5,7 +5,7 @@ from qfluentwidgets import getIconColor, Theme, FluentIconBase
 
 class CustomFluentIcon(FluentIconBase, Enum):
     """ Custom icons """
-
+    CIRCLE = "circle"
     CLASSIFY = "classify"
     DATASET = "dataset"
     DATASET1 = "dataset1"
@@ -13,13 +13,18 @@ class CustomFluentIcon(FluentIconBase, Enum):
     DETAIL1 = "detail1"
     DETECT = "detect"
     EXIT = "exit"
+    FILE = "file"
     FILL_DIRECTORY = "fill_directory"
     FOLD = "fold"
     IMPORT = "import"
     IMPORT1 = "import1"
+    LINE = "line"
     MODEL_EXPORT = "model_export"
+    MOUSE_POINTER = "mouse_pointer"
     NEXT = "next"
     OBB = "obb"
+    POINT = "point"
+    POLYGON = "polygon"
     POSE = "pose"
     SEGMENT = "segment"
     SHOW = "show"

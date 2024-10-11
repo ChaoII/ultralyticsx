@@ -1,6 +1,8 @@
 # coding:utf-8
 import os
 import sys
+
+from annotation.annotation_interface import AnnotationInterface
 from common.core.window_manager import window_manager
 
 from PySide6.QtCore import Qt, QTranslator, Slot
@@ -46,8 +48,8 @@ class Window(FluentWindow):
 
         # create sub interface
         self.home_interface = HomeWidget(self)
-        self.dataset_interface1 = DatasetWidget(self)
-        self.dataset_interface = Widget('Interface1', self)
+        self.dataset_interface = DatasetWidget(self)
+        self.annotation_interface = AnnotationInterface(self)
         self.train_interface = Widget('Interface2', self)
         self.val_interface = Widget('Val Interface', self)
         self.export_interface = Widget('Export Interface', self)
@@ -97,8 +99,8 @@ class Window(FluentWindow):
     def init_navigation(self):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
         self.navigationInterface.addSeparator()
-        self.addSubInterface(self.dataset_interface1, CustomFluentIcon.DATASET1, self.tr('dataset1'))
-        self.addSubInterface(self.dataset_interface, FIcon.PHOTO, self.tr('dataset'))
+        self.addSubInterface(self.dataset_interface, CustomFluentIcon.DATASET1, self.tr('dataset'))
+        self.addSubInterface(self.annotation_interface, FIcon.PHOTO, self.tr('annotation'))
         self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('model train'))
         self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('model valid'))
         self.addSubInterface(self.export_interface, FIcon.UP, self.tr('model export'))

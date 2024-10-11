@@ -2,7 +2,7 @@
     "personalization": {
         "dpi_scale": "auto",
         "enable_mica_effect": true,
-        "language": "Auto",
+        "language": "en_US",
         "minimize_to_tray": true,
         "remember_quit_status": true
     },
