@@ -6,7 +6,7 @@ from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTrans
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsLineItem
 from qfluentwidgets import isDarkTheme
 
-from annotation.shape import RectangleItem, ShapeType, LineItem
+from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonLineItem
 
 # dark_theme/light theme
 VIEW_BACKGROUND_COLOR = [QColor(53, 53, 53), QColor(53, 53, 53)]
@@ -41,7 +41,10 @@ class InteractiveCanvas(QGraphicsView):
         self.start_pos = None
         self.end_pos = None
         self.scale_factor = 1
-        self.line_ensure_point_num = 0
+        self.ensure_point_num = 0
+        self.polygon_points = QPolygonF()
+        self.polygon_first_point_hover = False
+        self.polygon_press_close = True
 
         # 临时图形
         self.temp_item = None
@@ -75,60 +78,90 @@ class InteractiveCanvas(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self.is_drawing = True
             self.start_pos = self.mapToScene(event.pos())
             self.end_pos = self.start_pos
             if self.current_shape_type == ShapeType.Rectangle:
                 self.temp_item = RectangleItem()
                 self.scene.addItem(self.temp_item)
             elif self.current_shape_type == ShapeType.Circle:
-                self.temp_item = self.scene.addEllipse(QRectF(), QPen(Qt.GlobalColor.red))
+                self.temp_item = CircleItem()
+                self.scene.addItem(self.temp_item)
             elif self.current_shape_type == ShapeType.Polygon:
-                self.temp_item = self.scene.addPolygon(QRectF(), QPen(Qt.GlobalColor.red))
+                if not self.polygon_first_point_hover and not self.is_drawing:
+                    self.temp_item = PolygonLineItem()
+                    self.scene.addItem(self.temp_item)
+                    self.polygon_points = QPolygonF()
+                    self.polygon_points.append(self.start_pos)
+            elif self.current_shape_type == ShapeType.Point:
+                self.temp_item = PointItem()
+                self.scene.addItem(self.temp_item)
             elif self.current_shape_type == ShapeType.Line:
-                # self.temp_item = LineItem()
-                # self.scene.addItem(self.temp_item)
-                self.temp_item = self.scene.addLine(QLineF())
+                self.temp_item = LineItem()
+                self.scene.addItem(self.temp_item)
+            self.is_drawing = True
             self.update_temp_item()
-        self.update()
 
     def mouseMoveEvent(self, event):
-        # if self.is_drawing and event.buttons() & Qt.MouseButton.LeftButton:
         if self.is_drawing:
             self.end_pos = self.mapToScene(event.pos())
             self.update_temp_item()
-        self.update()
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton and self.is_drawing:
             self.end_pos = self.mapToScene(event.pos())
             self.update_temp_item()
-            if self.current_shape_type == ShapeType.Rectangle or self.current_shape_type == ShapeType.Circle or self.current_shape_type == ShapeType.Point:
-                self.is_drawing = False
-                self.temp_item = None
-            if self.current_shape_type == ShapeType.Line:
-                self.line_ensure_point_num += 1
-                if self.line_ensure_point_num == 2:
-                    self.line_ensure_point_num = 0
+            self.ensure_point_num += 1
+            if self.current_shape_type == ShapeType.Line or self.current_shape_type == ShapeType.Rectangle or self.current_shape_type == ShapeType.Circle:
+                if self.ensure_point_num == 2:
+                    self.ensure_point_num = 0
                     self.is_drawing = False
                     self.temp_item = None
-        self.update()
+            elif self.current_shape_type == ShapeType.Point:
+                if self.ensure_point_num == 1:
+                    self.ensure_point_num = 0
+                    self.is_drawing = False
+                    self.temp_item = None
+            elif self.current_shape_type == ShapeType.Polygon:
+                if self.polygon_first_point_hover:
+                    self.ensure_point_num = 0
+                    # 丢弃最后一个点直接闭合曲线
+                    self.polygon_points.pop_back()
+                    self.polygon_points.append(self.polygon_points.value(0))
+                    self.temp_item.set_polygon(self.polygon_points)
+                    self.is_drawing = False
+                    self.temp_item.set_first_point_hover(False)
+                    self.temp_item = None
+                    self.polygon_first_point_hover = False
+                else:
+                    self.polygon_points.append(self.end_pos)
 
     def update_temp_item(self):
         if self.current_shape_type == ShapeType.Rectangle:
             rect = QRectF(self.start_pos, self.end_pos)
             self.temp_item.set_rect(rect)
         elif self.current_shape_type == ShapeType.Circle:
-            rect = QRectF(self.start_pos, self.end_pos)
-            self.temp_item.setRect(rect)
+            self.temp_item.set_points([self.start_pos, self.end_pos])
         elif self.current_shape_type == ShapeType.Polygon:
-            points = [QPointF(self.start_pos), QPointF(self.end_pos)]
-            polygon = QPolygonF(points)
-            self.temp_item.setPolygon(polygon)
+            points = self.polygon_points.toList()
+            if points and len(points) >= 2:
+                points[-1] = self.end_pos
+                self.polygon_points = QPolygonF(points)
+                d_point = self.polygon_points.value(0) - self.polygon_points.value(self.polygon_points.size() - 1)
+                distance = math.sqrt(d_point.x() ** 2 + d_point.y() ** 2)
+                if distance < 8:
+                    self.polygon_first_point_hover = True
+                    self.temp_item.set_first_point_hover(True)
+                else:
+                    self.polygon_first_point_hover = False
+                    self.temp_item.set_first_point_hover(False)
+            self.temp_item.set_polygon(self.polygon_points)
+            self.temp_item.update()
+            # self.polygon_points.pop_back()
+        elif self.current_shape_type == ShapeType.Point:
+            self.temp_item.set_point(self.end_pos)
         elif self.current_shape_type == ShapeType.Line:
             line = QLineF(self.start_pos, self.end_pos)
-            self.temp_item.setLine(line)
-
+            self.temp_item.set_line(line)
         self.temp_item.update()
 
     def drawBackground(self, painter: QPainter, rect) -> None:
