@@ -41,6 +41,7 @@ class PolygonLineItem(QGraphicsItem):
         return self.polygon_points.boundingRect()
 
     def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setBrush(Qt.GlobalColor.blue)
         painter.setPen(Qt.GlobalColor.blue)
         path = QPainterPath()

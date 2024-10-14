@@ -10,6 +10,11 @@ from common.component.custom_icon import CustomFluentIcon
 
 
 class AnnotationCommandBar(CommandBar):
+    save_annotation_clicked = Signal()
+    delete_image_clicked = Signal()
+    pre_image_clicked = Signal()
+    next_image_clicked = Signal()
+
     shape_selected = Signal(ShapeType)
     current_path_changed = Signal(Path)
     scale_down_clicked = Signal()
@@ -23,11 +28,16 @@ class AnnotationCommandBar(CommandBar):
         self.action_openfile = Action(CustomFluentIcon.FILE, self.tr("Open file"))
         self.action_openfile.triggered.connect(self.on_open_file)
         self.action_open_directory = Action(FluentIcon.FOLDER, self.tr("Open directory"))
+        self.action_open_directory.triggered.connect(self.on_open_directory)
         self.action_save_image = Action(FluentIcon.SAVE, self.tr("Save"))
+        self.action_save_image.setShortcut("Ctrl+S")
+        self.action_save_image.triggered.connect(self.on_save_annotation_clicked)
         self.action_delete = Action(FluentIcon.DELETE, self.tr("Delete"))
-
+        self.action_delete.triggered.connect(self.on_delete_image_clicked)
         self.action_pre_image = Action(FluentIcon.LEFT_ARROW, self.tr("Prev"))
+        self.action_pre_image.triggered.connect(self.on_pre_image_clicked)
         self.action_next_image = Action(FluentIcon.RIGHT_ARROW, self.tr("Next"))
+        self.action_next_image.triggered.connect(self.on_next_image_clicked)
 
         # 鼠标指针
         self.action_select = Action(CustomFluentIcon.MOUSE_POINTER, self.tr("Select"))
@@ -105,6 +115,20 @@ class AnnotationCommandBar(CommandBar):
 
         self._cur_file_path: Path | None = None
         self._cur_directory_path: Path | None = None
+
+    def on_pre_image_clicked(self):
+
+
+        self.pre_image_clicked.emit()
+
+    def on_next_image_clicked(self):
+        self.next_image_clicked.emit()
+
+    def on_save_annotation_clicked(self):
+        self.save_annotation_clicked.emit()
+
+    def on_delete_image_clicked(self):
+        self.delete_image_clicked.emit()
 
     def on_select_polygon(self, toggled: bool):
         if toggled:

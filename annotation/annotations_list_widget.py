@@ -15,10 +15,14 @@ class AnnotationListItemWidget(QWidget):
         self.hly.setContentsMargins(0, 0, 0, 0)
 
         color_btn = CustomColorButton(generate_random_color())
-        color_btn.set_border_radius(12)
+        color_btn.setFixedSize(16, 16)
+        color_btn.set_border_radius(8)
 
         self.hly.addWidget(color_btn)
         self.hly.addWidget(BodyLabel(text=annotation))
+
+    def get_label(self):
+        return self.hly.itemAt(1).widget().text()
 
 
 class AnnotationListWidget(SimpleCardWidget):
@@ -32,6 +36,12 @@ class AnnotationListWidget(SimpleCardWidget):
         self.vly_content = QVBoxLayout(self)
         self.vly_content.addWidget(self.lbl_title)
         self.vly_content.addWidget(self.list_widget)
+
+    def connect_signals_and_slots(self):
+        self.list_widget.itemChanged.connect(self.on_item_changed)
+
+    def on_item_changed(self, item: QListWidgetItem):
+        self.list_widget.itemWidget(item)
 
     def add_annotation(self, annotation):
         item = QListWidgetItem()

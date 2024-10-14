@@ -4,7 +4,7 @@ from pathlib import Path
 from PySide6.QtCore import QRectF, QPointF, QLineF
 from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsLineItem
-from qfluentwidgets import isDarkTheme
+from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
 
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonLineItem
 
@@ -31,6 +31,7 @@ class InteractiveCanvas(QGraphicsView):
         # 必须加不加的话刷新不及时，有残影
         self.setMouseTracking(True)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
+        self.scrollDelegate = SmoothScrollDelegate(self)
         # 当前形状类型
         self.current_shape_type = ShapeType.Rectangle
         self.inter_line_color = QColor(Qt.GlobalColor.red)
@@ -59,9 +60,14 @@ class InteractiveCanvas(QGraphicsView):
             self.inter_line_color = VIEW_INTER_LINE_COLOR[1]
             self.border_line_color = VIEW_BORDER_LINE_COLOR[1]
 
+    def clear(self):
+        self.scene.clear()
+        self.scene.setSceneRect(0, 0, 800, 600)
+
     def set_image(self, image_path: str | Path):
         pix = QPixmap(image_path)
         image_item = QGraphicsPixmapItem(pix)
+        self.scene.clear()
         self.setSceneRect(pix.rect())
         self.scene.addItem(image_item)
 
