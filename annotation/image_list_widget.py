@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, QModelIndex, QEvent
+from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QVBoxLayout, QListWidgetItem, QWidget, QHBoxLayout
 from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel, ListWidget
 
@@ -51,55 +52,69 @@ class ImageListWidget(SimpleCardWidget):
         self.vly_content.addWidget(self.list_widget)
         self.connect_signals_and_slots()
         self.last_item = QListWidgetItem()
+        self.item_widgets = []
 
     def connect_signals_and_slots(self):
         self.list_widget.itemClicked.connect(self.on_item_clicked)
 
     def on_item_clicked(self, item: QListWidgetItem):
-
         row = self.list_widget.indexFromItem(item).row()
-
         if row == 0:
             self.item_ending_status_changed.emit(0)
         elif row == self.list_widget.count() - 1:
             self.item_ending_status_changed.emit(1)
         else:
             self.item_ending_status_changed.emit(2)
-        # last_widget = self.list_widget.itemWidget(self.last_item)
-        # if isinstance(last_widget, ImageListItemWidget):
-        #     if last_widget.get_image_labeled_info()[1]:
-        #         widget = self.list_widget.itemWidget(item)
-        #         if isinstance(widget, ImageListItemWidget):
-        #             self.image_item_changed.emit(widget.get_image_path())
-        #     else:
+        widget = self.list_widget.itemWidget(item)
+        if isinstance(widget, ImageListItemWidget):
+            self.image_item_changed.emit(widget.get_image_path())
 
-    def set_image_dir_path(self, image_dir_path: Path):
-        if image_dir_path.exists():
-            has_label_list = []
-            annotation_path = image_dir_path / "annotations"
-            if annotation_path.exists():
-                for annotation in annotation_path.iterdir():
-                    has_label_list.append(annotation.resolve().as_posix())
-            for image_path in image_dir_path.iterdir():
-                if image_path.suffix in [".jpg", ".png", ".jpeg"]:
-                    self.add_image_item(image_path.absolute(),
-                                        image_path.resolve().as_posix().split(".")[0] + ".txt" in has_label_list)
+    def set_image_dir_path(self, image_path_list: list[Path], annotation_list: list):
+        if len(image_path_list) == 0:
+            self.item_ending_status_changed.emit(3)
+            return
+        elif len(annotation_list) == 1:
+            self.item_ending_status_changed.emit(3)
+        else:
+            self.item_ending_status_changed.emit(0)
+        for image_path in image_path_list:
+            self.add_image_item(image_path, image_path.stem in annotation_list)
         self.list_widget.setCurrentIndex(self.list_widget.model().index(0, 0))
         self.last_item = self.list_widget.item(0)
         widget = self.list_widget.itemWidget(self.last_item)
         if isinstance(widget, ImageListItemWidget):
             self.image_item_changed.emit(widget.get_image_path())
-        self.item_ending_status_changed.emit(0)
 
     def clear(self):
         self.list_widget.clear()
+        self.update_item_widgets()
 
     def add_image_item(self, image_path, labeled=False):
         item = QListWidgetItem()
         image_list_item_widget = ImageListItemWidget(image_path.resolve().as_posix())
         image_list_item_widget.set_label_status(labeled)
+        image_list_item_widget.installEventFilter(self)
         self.list_widget.addItem(item)
         self.list_widget.setItemWidget(item, image_list_item_widget)
+        self.update_item_widgets()
+
+    def delete_current_image_item(self):
+        item = self.list_widget.currentItem()
+        widget = self.list_widget.itemWidget(item)
+        if isinstance(widget, ImageListItemWidget):
+            self.list_widget.removeItemWidget(item)
+            self.list_widget.takeItem(self.list_widget.row(item))
+        item = self.list_widget.currentItem()
+        widget = self.list_widget.itemWidget(item)
+        if isinstance(widget, ImageListItemWidget):
+            self.image_item_changed.emit(widget.get_image_path())
+        self.update_item_widgets()
+
+    def update_item_widgets(self):
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            widget = self.list_widget.itemWidget(item)
+            self.item_widgets.append(widget)
 
     def next_item(self):
         current_index = self.list_widget.currentIndex()
@@ -150,3 +165,15 @@ class ImageListWidget(SimpleCardWidget):
         if isinstance(widget, ImageListItemWidget):
             return widget.get_image_labeled_info()
         return "", False
+
+    def eventFilter(self, obj, e):
+        if e.type() == QEvent.Type.MouseButtonPress:
+            if obj in self.item_widgets:
+                item = self.list_widget.currentItem()
+                widget = self.list_widget.itemWidget(item)
+                if isinstance(widget, ImageListItemWidget):
+                    label = widget.get_image_labeled_info()[1]
+                    # 如果未标注直接拦截
+                    if not label:
+                        return True
+        return super().eventFilter(obj, e)

@@ -31,13 +31,17 @@ class AnnotationCommandBar(CommandBar):
         self.action_open_directory.triggered.connect(self.on_open_directory)
         self.action_save_image = Action(FluentIcon.SAVE, self.tr("Save"))
         self.action_save_image.setShortcut("Ctrl+S")
+        self.action_save_image.setEnabled(False)
         self.action_save_image.triggered.connect(self.on_save_annotation_clicked)
         self.action_delete = Action(FluentIcon.DELETE, self.tr("Delete"))
+        self.action_delete.setEnabled(False)
         self.action_delete.triggered.connect(self.on_delete_image_clicked)
         self.action_pre_image = Action(FluentIcon.LEFT_ARROW, self.tr("Prev"))
         self.action_pre_image.triggered.connect(self.on_pre_image_clicked)
+        self.action_pre_image.setEnabled(False)
         self.action_next_image = Action(FluentIcon.RIGHT_ARROW, self.tr("Next"))
         self.action_next_image.triggered.connect(self.on_next_image_clicked)
+        self.action_next_image.setEnabled(False)
 
         # 鼠标指针
         self.action_select = Action(CustomFluentIcon.MOUSE_POINTER, self.tr("Select"))
@@ -117,7 +121,6 @@ class AnnotationCommandBar(CommandBar):
         self._cur_directory_path: Path | None = None
 
     def on_pre_image_clicked(self):
-
 
         self.pre_image_clicked.emit()
 

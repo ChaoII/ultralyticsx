@@ -10,7 +10,7 @@ from annotation.canvas_widget import InteractiveCanvas
 from annotation.image_list_widget import ImageListWidget
 from annotation.labels_settings_widget import LabelSettingsWidget
 from common.core.interface_base import InterfaceBase
-from common.utils.utils import is_image
+from common.utils.utils import is_image, generate_random_color
 
 
 class AnnotationInterface(InterfaceBase):
@@ -44,9 +44,9 @@ class AnnotationInterface(InterfaceBase):
         self.vly.addWidget(self.cb_label)
         self.vly.addLayout(self.hly)
         self.connect_signals_and_slots()
-
+        self.is_editing = False
         self.current_dataset_path: Path | None = None
-        self.labels = []
+        self.labels_color = dict()
 
     def connect_signals_and_slots(self):
         self.cb_label.save_annotation_clicked.connect(self.save_current_annotation)
@@ -63,12 +63,27 @@ class AnnotationInterface(InterfaceBase):
         self.image_list_widget.item_ending_status_changed.connect(self.on_move_ending_status)
 
     def on_add_label(self, label: str):
-        self.labels.append(label)
-        self.label_widget.set_labels(self.labels)
+        if label in self.labels_color:
+            w = Dialog(self.tr("Warning"),
+                       self.tr("There is a same label in labels?"), self)
+            w.cancelButton.hide()
+            w.exec()
+            return
+        self.labels_color.update({label: generate_random_color()})
+        self.label_widget.set_labels(self.labels_color)
+        self.update_label_file()
 
     def on_delete_label(self, label: str):
-        self.labels.remove(label)
-        self.label_widget.set_labels(self.labels)
+        self.labels_color.pop(label)
+        self.label_widget.set_labels(self.labels_color)
+        self.update_label_file()
+
+    def update_label_file(self):
+        if not self.current_dataset_path:
+            return
+        with open(self.current_dataset_path / "classes.txt", "w") as f:
+            for label in self.labels_color.keys():
+                f.write(f"{label}\n")
 
     def on_move_ending_status(self, status: int):
         if status == 0:
@@ -80,6 +95,9 @@ class AnnotationInterface(InterfaceBase):
         elif status == 2:
             self.cb_label.action_pre_image.setEnabled(True)
             self.cb_label.action_next_image.setEnabled(True)
+        elif status == 3:
+            self.cb_label.action_pre_image.setEnabled(False)
+            self.cb_label.action_next_image.setEnabled(False)
 
     def on_image_item_changed(self, image_path: str):
         self.canvas.set_image(image_path)
@@ -88,7 +106,18 @@ class AnnotationInterface(InterfaceBase):
         self.save_current_annotation()
 
     def on_delete_image_clicked(self):
-        pass
+        w = Dialog(self.tr("Warning"),
+                   self.tr("Completely delete local data? Clicking [Yes] will delete the local data, "
+                           "and clicking [No] will ignore the image"), self)
+        w.yesButton.setText(self.tr("Yes"))
+        w.cancelButton.setText(self.tr("No"))
+        if w.exec():
+            self.image_list_widget.delete_current_image_item()
+            image_path = Path(self.image_list_widget.get_current_image_labeled()[0])
+            if image_path.exists():
+                image_path.unlink()
+        else:
+            self.image_list_widget.delete_current_image_item()
 
     def on_pre_image_clicked(self):
         _, labeled = self.image_list_widget.get_current_image_labeled()
@@ -111,26 +140,55 @@ class AnnotationInterface(InterfaceBase):
             w.yesButton.setText(self.tr("Save"))
             if w.exec():
                 self.save_current_annotation()
-                self.image_list_widget.set_current_image_labeled()
             else:
                 return
         self.image_list_widget.next_item()
 
     def on_current_path_changed(self, path: Path):
+        image_path, labeled = self.image_list_widget.get_current_image_labeled()
+        # 如果存在图片并且未保存
+        if image_path and not labeled:
+            w = Dialog(self.tr("Warning"),
+                       self.tr("Current annotation is not saved. Do you want to save it?"), self)
+            w.yesButton.setText(self.tr("Save"))
+            if w.exec():
+                self.save_current_annotation()
+            else:
+                return
+
         if path.exists():
             if path.is_file() and is_image(path):
                 self.canvas.set_image(path)
                 self.current_dataset_path = path.parent
+                self.cb_label.action_pre_image.setEnabled(False)
+                self.cb_label.action_next_image.setEnabled(False)
             elif path.is_dir():
                 self.label_widget.clear()
                 self.canvas.clear()
                 self.image_list_widget.clear()
-                self.image_list_widget.set_image_dir_path(path)
+                annotation_path = path / "annotations"
+                annotation_list = []
+                if annotation_path.exists():
+                    for annotation in annotation_path.iterdir():
+                        annotation_list.append(annotation.stem)
+                image_path_list = []
+                for image_path in path.iterdir():
+                    if image_path.suffix in [".jpg", ".png", ".jpeg"]:
+                        image_path_list.append(image_path)
+                self.image_list_widget.set_image_dir_path(image_path_list, annotation_list)
                 self.current_dataset_path = path
                 label_file_path = path / "classes.txt"
                 if label_file_path.exists():
-                    self.labels = open(label_file_path).read().splitlines()
-                    self.label_widget.set_labels(self.labels)
+                    labels = open(label_file_path).read().splitlines()
+                    self.labels_color = {label: generate_random_color() for label in labels}
+                    self.label_widget.set_labels(self.labels_color)
+                if len(image_path_list) > 0:
+                    self.cb_label.action_save_image.setEnabled(True)
+                    self.cb_label.action_delete.setEnabled(True)
+                else:
+                    self.cb_label.action_save_image.setEnabled(False)
+                    self.cb_label.action_delete.setEnabled(False)
+            self.label_widget.cus_add_label.setEnabled(True)
 
     def save_current_annotation(self):
         if self.current_dataset_path:
@@ -145,13 +203,9 @@ class AnnotationInterface(InterfaceBase):
                         annotation_dir.mkdir(exist_ok=True)
                     else:
                         return
-            label_file_path = self.current_dataset_path / "classes.txt"
-            with open(label_file_path, "w", encoding="utf8") as f:
-                f.writelines([""])
-
+            self.update_label_file()
             annotation_name = Path(self.image_list_widget.get_current_image_labeled()[0])
-            annotation_path = self.current_dataset_path / "annotations" / (annotation_name.name + ".txt")
+            annotation_path = self.current_dataset_path / "annotations" / (annotation_name.stem + ".txt")
             with open(annotation_path, "w", encoding="utf8") as f:
                 f.writelines(["1", "2", "3", "4"])
-
             self.image_list_widget.set_current_image_labeled()

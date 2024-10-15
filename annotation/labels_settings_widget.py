@@ -32,11 +32,11 @@ class CustomMessageBox(MessageBoxBase):
 class LabelSettingsListItemWidget(QWidget):
     item_deleted = Signal(str)
 
-    def __init__(self, label: str, parent=None):
+    def __init__(self, label: str, color: QColor, parent=None):
         super().__init__(parent=parent)
         self.hly = QHBoxLayout(self)
         self.hly.setContentsMargins(0, 0, 0, 0)
-        self.cb_label_status = ColorPickerButton(generate_random_color(), "")
+        self.cb_label_status = ColorPickerButton(color, "")
         self.cb_label_status.setFixedSize(16, 16)
         self.hly.addWidget(self.cb_label_status)
         self.hly.addWidget(BodyLabel(text=label))
@@ -85,6 +85,7 @@ class LabelSettingsWidget(SimpleCardWidget):
         self.lbl_title.setFixedHeight(20)
         self.cus_add_label = TransparentToolButton(FluentIcon.ADD, self)
         self.cus_add_label.setFixedSize(20, 20)
+        self.cus_add_label.setEnabled(False)
 
         self.list_widget = ListWidget()
         self.list_widget.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
@@ -97,7 +98,7 @@ class LabelSettingsWidget(SimpleCardWidget):
         self.vly_content.addLayout(self.hly_lbl)
         self.vly_content.addWidget(self.list_widget)
 
-        self.labels = []
+        self.labels_color = dict()
 
         self.connect_signals_and_slots()
 
@@ -113,14 +114,14 @@ class LabelSettingsWidget(SimpleCardWidget):
     def clear(self):
         self.list_widget.clear()
 
-    def set_labels(self, labels: list[str]):
-        self.labels = labels
+    def set_labels(self, labels_color: dict):
         self.clear()
-        for label in labels:
+        self.labels_color = labels_color
+        for label, color in labels_color.items():
             item = QListWidgetItem()
             item.setSizeHint(QSize(item.sizeHint().width(), 100))
             self.list_widget.addItem(item)
-            label_item = LabelSettingsListItemWidget(label)
+            label_item = LabelSettingsListItemWidget(label, color)
             label_item.item_deleted.connect(self.on_delete_item)
             self.list_widget.setItemWidget(item, label_item)
 
