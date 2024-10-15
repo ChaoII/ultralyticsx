@@ -5,6 +5,7 @@ from PySide6.QtGui import QActionGroup
 from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import CommandBar, FluentIcon, Action
 
+from annotation.canvas_widget import DrawingStatus
 from annotation.shape import ShapeType
 from common.component.custom_icon import CustomFluentIcon
 
@@ -15,6 +16,7 @@ class AnnotationCommandBar(CommandBar):
     pre_image_clicked = Signal()
     next_image_clicked = Signal()
 
+    drawing_status_selected = Signal(DrawingStatus)
     shape_selected = Signal(ShapeType)
     current_path_changed = Signal(Path)
     scale_down_clicked = Signal()
@@ -47,9 +49,11 @@ class AnnotationCommandBar(CommandBar):
         self.action_select = Action(CustomFluentIcon.MOUSE_POINTER, self.tr("Select"))
         self.action_select.setCheckable(True)
         self.action_select.setChecked(True)
+        self.action_select.toggled.connect(self.on_select_select)
         # 编辑
         self.action_edit = Action(FluentIcon.EDIT, self.tr("Edit"))
         self.action_edit.setCheckable(True)
+        self.action_edit.toggled.connect(self.on_select_edit)
         # 多边形
         self.action_polygon = Action(CustomFluentIcon.POLYGON, self.tr("Polygon"))
         self.action_polygon.setCheckable(True)
@@ -121,7 +125,6 @@ class AnnotationCommandBar(CommandBar):
         self._cur_directory_path: Path | None = None
 
     def on_pre_image_clicked(self):
-
         self.pre_image_clicked.emit()
 
     def on_next_image_clicked(self):
@@ -132,6 +135,14 @@ class AnnotationCommandBar(CommandBar):
 
     def on_delete_image_clicked(self):
         self.delete_image_clicked.emit()
+
+    def on_select_select(self, toggled: bool):
+        if toggled:
+            self.drawing_status_selected.emit(DrawingStatus.Select)
+
+    def on_select_edit(self, toggled: bool):
+        if toggled:
+            self.drawing_status_selected.emit(DrawingStatus.Edit)
 
     def on_select_polygon(self, toggled: bool):
         if toggled:

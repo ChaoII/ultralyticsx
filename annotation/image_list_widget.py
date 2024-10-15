@@ -3,7 +3,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt, Signal, QModelIndex, QEvent
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QVBoxLayout, QListWidgetItem, QWidget, QHBoxLayout
-from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel, ListWidget
+from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel, ListWidget, Dialog
 
 from common.component.custom_color_button import CustomColorButton
 from common.utils.utils import generate_random_color
@@ -39,6 +39,7 @@ class ImageListItemWidget(QWidget):
 class ImageListWidget(SimpleCardWidget):
     image_item_changed = Signal(str)
     item_ending_status_changed = Signal(int)
+    save_annotation_clicked = Signal()
 
     def __init__(self, image_dir_path=Path("."), parent=None):
         super().__init__(parent=parent)
@@ -175,5 +176,8 @@ class ImageListWidget(SimpleCardWidget):
                     label = widget.get_image_labeled_info()[1]
                     # 如果未标注直接拦截
                     if not label:
-                        return True
+                        w = Dialog(self.tr("Warning"),
+                                   self.tr("Current annotation is not saved. Do you want to save it?"), self)
+                        if w.exec():
+                            self.save_annotation_clicked.emit()
         return super().eventFilter(obj, e)

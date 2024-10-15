@@ -59,7 +59,8 @@ class PolygonLineItem(QGraphicsItem):
 class RectangleItem(QGraphicsItem):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlags(
+            QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsFocusable)
         self.setAcceptHoverEvents(True)
         self.rect = QRectF()
         self.color = Qt.GlobalColor.red
@@ -72,11 +73,8 @@ class RectangleItem(QGraphicsItem):
         self.corner_radius = 8
 
     def set_rect(self, rect: QRectF):
-        self.rect = rect
-
-    def boundingRect(self) -> QRectF:
-        p1 = self.rect.topLeft()
-        p2 = self.rect.bottomRight()
+        p1 = rect.topLeft()
+        p2 = rect.bottomRight()
 
         x1 = min(p1.x(), p2.x())
         y1 = min(p1.y(), p2.y())
@@ -84,8 +82,19 @@ class RectangleItem(QGraphicsItem):
         y2 = max(p1.y(), p2.y())
         rect = QRectF(x1, y1, x2 - x1, y2 - y1)
 
-        return rect.adjusted(self.corner_radius / 2, self.corner_radius / 2,
-                             self.corner_radius / 2, self.corner_radius / 2)
+        self.rect = rect
+
+    def boundingRect(self) -> QRectF:
+        # p1 = self.rect.topLeft()
+        # p2 = self.rect.bottomRight()
+        #
+        # x1 = min(p1.x(), p2.x())
+        # y1 = min(p1.y(), p2.y())
+        # x2 = max(p1.x(), p2.x())
+        # y2 = max(p1.y(), p2.y())
+        # rect = QRectF(x1, y1, x2 - x1, y2 - y1)
+        return self.rect.adjusted(-self.corner_radius / 2, -self.corner_radius / 2,
+                                  self.corner_radius / 2, self.corner_radius / 2)
 
     def shape(self) -> QPainterPath:
         path = QPainterPath()
@@ -100,6 +109,7 @@ class RectangleItem(QGraphicsItem):
             painter.setPen(Qt.GlobalColor.blue)
         if self.is_selected:
             painter.setPen(Qt.GlobalColor.blue)
+
         painter.drawRect(self.rect)
         painter.drawEllipse(self.rect.topLeft(), self.corner_radius, self.corner_radius)
         painter.drawEllipse(self.rect.bottomRight(), self.corner_radius, self.corner_radius)
@@ -108,7 +118,8 @@ class RectangleItem(QGraphicsItem):
 class CircleItem(QGraphicsItem):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlags(
+            QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsFocusable)
         self.setAcceptHoverEvents(True)
         self.points = [QPointF(), QPointF()]
         self.color = Qt.GlobalColor.red

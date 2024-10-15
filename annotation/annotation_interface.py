@@ -6,9 +6,10 @@ from qfluentwidgets import Dialog
 
 from annotation.annotation_command_bar import AnnotationCommandBar
 from annotation.annotations_list_widget import AnnotationListWidget
-from annotation.canvas_widget import InteractiveCanvas
+from annotation.canvas_widget import InteractiveCanvas, DrawingStatus
 from annotation.image_list_widget import ImageListWidget
 from annotation.labels_settings_widget import LabelSettingsWidget
+from annotation.shape import ShapeType
 from common.core.interface_base import InterfaceBase
 from common.utils.utils import is_image, generate_random_color
 
@@ -53,14 +54,17 @@ class AnnotationInterface(InterfaceBase):
         self.cb_label.delete_image_clicked.connect(self.on_delete_image_clicked)
         self.cb_label.pre_image_clicked.connect(self.on_pre_image_clicked)
         self.cb_label.next_image_clicked.connect(self.on_next_image_clicked)
-        self.cb_label.shape_selected.connect(lambda x: self.canvas.set_shape_type(x))
+        self.cb_label.shape_selected.connect(self.on_shape_clicked)
+        self.cb_label.drawing_status_selected.connect(lambda x: self.canvas.set_drawing_status(x))
         self.cb_label.scale_down_clicked.connect(lambda: self.canvas.scale_down())
         self.cb_label.scale_up_clicked.connect(lambda: self.canvas.scale_up())
         self.cb_label.current_path_changed.connect(self.on_current_path_changed)
+        self.canvas.is_drawing_changed.connect(self.on_is_drawing_changed)
         self.label_widget.add_label_clicked.connect(self.on_add_label)
         self.label_widget.delete_label_clicked.connect(self.on_delete_label)
         self.image_list_widget.image_item_changed.connect(self.on_image_item_changed)
         self.image_list_widget.item_ending_status_changed.connect(self.on_move_ending_status)
+        self.image_list_widget.save_annotation_clicked.connect(lambda: self.save_current_annotation())
 
     def on_add_label(self, label: str):
         if label in self.labels_color:
@@ -77,6 +81,24 @@ class AnnotationInterface(InterfaceBase):
         self.labels_color.pop(label)
         self.label_widget.set_labels(self.labels_color)
         self.update_label_file()
+
+    def on_is_drawing_changed(self, is_drawing: bool):
+        if is_drawing:
+            self.cb_label.action_select.setEnabled(False)
+            self.cb_label.action_edit.setEnabled(False)
+            self.cb_label.action_rectangle.setEnabled(False)
+            self.cb_label.action_polygon.setEnabled(False)
+            self.cb_label.action_circle.setEnabled(False)
+            self.cb_label.action_point.setEnabled(False)
+            self.cb_label.action_line.setEnabled(False)
+        else:
+            self.cb_label.action_select.setEnabled(True)
+            self.cb_label.action_edit.setEnabled(True)
+            self.cb_label.action_rectangle.setEnabled(True)
+            self.cb_label.action_polygon.setEnabled(True)
+            self.cb_label.action_circle.setEnabled(True)
+            self.cb_label.action_point.setEnabled(True)
+            self.cb_label.action_line.setEnabled(True)
 
     def update_label_file(self):
         if not self.current_dataset_path:
@@ -143,6 +165,10 @@ class AnnotationInterface(InterfaceBase):
             else:
                 return
         self.image_list_widget.next_item()
+
+    def on_shape_clicked(self, shape_type: ShapeType):
+        self.canvas.set_shape_type(shape_type)
+        self.canvas.set_drawing_status(DrawingStatus.Draw)
 
     def on_current_path_changed(self, path: Path):
         image_path, labeled = self.image_list_widget.get_current_image_labeled()
