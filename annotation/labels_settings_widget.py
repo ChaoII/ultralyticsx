@@ -1,15 +1,12 @@
 from PySide6.QtCore import Qt, QSize, Signal
-from PySide6.QtGui import QColor, QMouseEvent
-from PySide6.QtWidgets import QVBoxLayout, QFormLayout, QWidget, QHBoxLayout, QListWidgetItem, QTableWidget
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QListWidgetItem, QTableWidget
 from qfluentwidgets import ColorPickerButton, BodyLabel, SimpleCardWidget, StrongBodyLabel, ListWidget, FluentIcon, \
     TransparentToolButton, PopupTeachingTip, TeachingTipTailPosition, MessageBoxBase, LineEdit
 
-from common.component.custom_icon import CustomFluentIcon
-from common.component.custom_scroll_widget import CustomScrollWidget
 from common.component.delete_ensure_widget import CustomFlyoutView
 from common.component.fill_tool_button import FillToolButton
 from common.core.window_manager import window_manager
-from common.utils.utils import generate_random_color
 
 
 class CustomMessageBox(MessageBoxBase):
@@ -27,6 +24,60 @@ class CustomMessageBox(MessageBoxBase):
         self.viewLayout.addWidget(self.title_label)
         self.viewLayout.addWidget(self.le_label)
         self.widget.setFixedSize(300, 200)
+
+
+class LabelListItemWidget(QWidget):
+    def __init__(self, label: str, color: QColor, parent=None):
+        super().__init__(parent=parent)
+        self.hly = QHBoxLayout(self)
+        self.hly.setContentsMargins(0, 0, 0, 0)
+        self.cb_label_status = ColorPickerButton(color, "")
+        self.cb_label_status.setFixedSize(16, 16)
+        self.hly.addWidget(self.cb_label_status)
+        self.hly.addWidget(BodyLabel(text=label))
+        self.label = label
+
+    def get_label(self):
+        return self.label
+
+
+class AnnotationEnsureMessageBox(MessageBoxBase):
+    """ Custom message box """
+
+    def __init__(self, labels_color: dict, parent=None):
+        super().__init__(parent)
+        self.title_label = StrongBodyLabel(self.tr("Select the label"), self)
+        self.le_label = LineEdit()
+        self.list_widget = ListWidget()
+        # 将组件添加到布局中
+        self.viewLayout.addWidget(self.title_label)
+        self.viewLayout.addWidget(self.le_label)
+        self.viewLayout.addWidget(self.list_widget)
+        # self.widget.setFixedSize(300, 200)
+        self.set_labels(labels_color)
+        self.list_widget.itemClicked.connect(self.on_label_item_clicked)
+
+    def set_labels(self, labels_color: dict):
+        self.list_widget.clear()
+        for label, color in labels_color.items():
+            item = QListWidgetItem()
+            item.setSizeHint(QSize(item.sizeHint().width(), 100))
+            self.list_widget.addItem(item)
+            label_item = LabelListItemWidget(label, color)
+            self.list_widget.setItemWidget(item, label_item)
+
+        labels = list(labels_color.keys())
+        if len(labels) > 0:
+            self.list_widget.setCurrentIndex(self.list_widget.model().index(0, 0))
+            self.le_label.setText(labels[0])
+
+    def on_label_item_clicked(self, item: QListWidgetItem):
+        widget = self.list_widget.itemWidget(item)
+        if isinstance(widget, LabelListItemWidget):
+            self.le_label.setText(widget.get_label())
+
+    def get_label(self):
+        return self.le_label.text()
 
 
 class LabelSettingsListItemWidget(QWidget):
@@ -51,9 +102,6 @@ class LabelSettingsListItemWidget(QWidget):
     def connect_signals_and_slots(self):
         self.btn_delete.clicked.connect(self._on_delete_clicked)
 
-    def set_label_status(self, labeled=False):
-        self.cb_label_status.setColor(Qt.GlobalColor.green if labeled else Qt.GlobalColor.red)
-
     def _on_delete_clicked(self):
         self.view = CustomFlyoutView(content=self.tr("Are you sure to delete this label?"))
         self.popup_tip = PopupTeachingTip.make(
@@ -69,6 +117,9 @@ class LabelSettingsListItemWidget(QWidget):
         if accepted:
             self.item_deleted.emit(self.label)
         self.popup_tip.close()
+
+    def get_label(self):
+        return self.label
 
 
 class LabelSettingsWidget(SimpleCardWidget):

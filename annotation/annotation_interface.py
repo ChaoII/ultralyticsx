@@ -8,8 +8,8 @@ from annotation.annotation_command_bar import AnnotationCommandBar
 from annotation.annotations_list_widget import AnnotationListWidget
 from annotation.canvas_widget import InteractiveCanvas, DrawingStatus
 from annotation.image_list_widget import ImageListWidget
-from annotation.labels_settings_widget import LabelSettingsWidget
-from annotation.shape import ShapeType
+from annotation.labels_settings_widget import LabelSettingsWidget, AnnotationEnsureMessageBox
+from annotation.shape import ShapeType, ShapeItem
 from common.core.interface_base import InterfaceBase
 from common.utils.utils import is_image, generate_random_color
 
@@ -60,6 +60,7 @@ class AnnotationInterface(InterfaceBase):
         self.cb_label.scale_up_clicked.connect(lambda: self.canvas.scale_up())
         self.cb_label.current_path_changed.connect(self.on_current_path_changed)
         self.canvas.is_drawing_changed.connect(self.on_is_drawing_changed)
+        self.canvas.draw_finished.connect(self.on_draw_finished)
         self.label_widget.add_label_clicked.connect(self.on_add_label)
         self.label_widget.delete_label_clicked.connect(self.on_delete_label)
         self.image_list_widget.image_item_changed.connect(self.on_image_item_changed)
@@ -99,6 +100,17 @@ class AnnotationInterface(InterfaceBase):
             self.cb_label.action_circle.setEnabled(True)
             self.cb_label.action_point.setEnabled(True)
             self.cb_label.action_line.setEnabled(True)
+
+    def on_draw_finished(self, shape_item: ShapeItem):
+        cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color, parent=self)
+        if cus_message_box.exec():
+            label = cus_message_box.get_label()
+            if label:
+                if not self.labels_color.get(label, None):
+                    self.labels_color.update({label: generate_random_color()})
+                    self.label_widget.set_labels(self.labels_color)
+                color = self.labels_color[label]
+                self.annotation_widget.add_annotation(label, color)
 
     def update_label_file(self):
         if not self.current_dataset_path:

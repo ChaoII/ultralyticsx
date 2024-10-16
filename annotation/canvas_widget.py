@@ -2,12 +2,12 @@ import enum
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QRectF, QLineF, Signal
-from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent
+from PySide6.QtCore import QRectF, QLineF, Signal, QPointF
+from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
-
-from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonLineItem
+from .core import drawing_status_manager, DrawingStatus
+from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonLineItem, ShapeItem
 
 # dark_theme/light theme
 VIEW_BACKGROUND_COLOR = [QColor(53, 53, 53), QColor(53, 53, 53)]
@@ -21,14 +21,9 @@ SCALE_RANGE = [0.3, 4.0]
 SCALE_STEP = 1.1
 
 
-class DrawingStatus(enum.Enum):
-    Select = 0
-    Draw = 1
-    Edit = 2
-
-
 class InteractiveCanvas(QGraphicsView):
     is_drawing_changed = Signal(bool)
+    draw_finished = Signal(ShapeItem)
 
     def __init__(self):
         super().__init__()
@@ -51,7 +46,6 @@ class InteractiveCanvas(QGraphicsView):
         # 当前形状类型
         self.current_shape_type = ShapeType.Rectangle
         # 绘制状态
-        self.draw_status = DrawingStatus.Select
         self.is_drawing = False
         self.start_pos = None
         self.end_pos = None
@@ -62,7 +56,7 @@ class InteractiveCanvas(QGraphicsView):
         self.polygon_press_close = True
 
         # 临时图形
-        self.temp_item = None
+        self.temp_item: ShapeItem | None = None
 
     def update_background_color(self):
         if isDarkTheme():
@@ -86,7 +80,7 @@ class InteractiveCanvas(QGraphicsView):
         self.scene.addItem(image_item)
 
     def set_drawing_status(self, status: DrawingStatus):
-        self.draw_status = status
+        drawing_status_manager.set_drawing_status(status)
         if status != DrawingStatus.Draw:
             self.is_drawing = False
 
@@ -107,7 +101,12 @@ class InteractiveCanvas(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            if self.draw_status == DrawingStatus.Draw and not self.is_drawing:
+            if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+                for item in self.scene.items():
+                    if isinstance(item, ShapeItem):
+                        item.set_selected(False)
+
+            if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw and not self.is_drawing:
                 self.start_pos = self.mapToScene(event.pos())
                 self.end_pos = self.start_pos
                 if self.current_shape_type == ShapeType.Rectangle:
@@ -149,12 +148,14 @@ class InteractiveCanvas(QGraphicsView):
                 if self.ensure_point_num == 2:
                     self.ensure_point_num = 0
                     self.set_is_drawing(False)
+                    self.draw_finished.emit(self.temp_item)
                 else:
                     self.set_is_drawing(True)
             elif self.current_shape_type == ShapeType.Point:
                 if self.ensure_point_num == 1:
                     self.ensure_point_num = 0
                     self.set_is_drawing(False)
+                    self.draw_finished.emit(self.temp_item)
                 else:
                     self.set_is_drawing(True)
             elif self.current_shape_type == ShapeType.Polygon:
@@ -167,6 +168,7 @@ class InteractiveCanvas(QGraphicsView):
                     self.set_is_drawing(False)
                     self.temp_item.set_first_point_hover(False)
                     self.polygon_first_point_hover = False
+                    self.draw_finished.emit(self.temp_item)
                 else:
                     self.polygon_points.append(self.end_pos)
                     self.set_is_drawing(True)
@@ -174,10 +176,9 @@ class InteractiveCanvas(QGraphicsView):
 
     def update_temp_item(self):
         if self.current_shape_type == ShapeType.Rectangle:
-            rect = QRectF(self.start_pos, self.end_pos)
-            self.temp_item.set_rect(rect)
+            self.temp_item.update_points([self.start_pos, self.end_pos])
         elif self.current_shape_type == ShapeType.Circle:
-            self.temp_item.set_points([self.start_pos, self.end_pos])
+            self.temp_item.update_points([self.start_pos, self.end_pos])
         elif self.current_shape_type == ShapeType.Polygon:
             points = self.polygon_points.toList()
             if points and len(points) >= 2:
@@ -191,14 +192,12 @@ class InteractiveCanvas(QGraphicsView):
                 else:
                     self.polygon_first_point_hover = False
                     self.temp_item.set_first_point_hover(False)
-            self.temp_item.set_polygon(self.polygon_points)
-            self.temp_item.update()
+            self.temp_item.update_points(self.polygon_points.toList())
             # self.polygon_points.pop_back()
         elif self.current_shape_type == ShapeType.Point:
-            self.temp_item.set_point(self.end_pos)
+            self.temp_item.update_points([self.end_pos])
         elif self.current_shape_type == ShapeType.Line:
-            line = QLineF(self.start_pos, self.end_pos)
-            self.temp_item.set_line(line)
+            self.temp_item.update_points([self.start_pos, self.end_pos])
         self.temp_item.update()
 
     def drawBackground(self, painter: QPainter, rect) -> None:

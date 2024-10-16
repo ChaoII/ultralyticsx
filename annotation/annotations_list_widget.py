@@ -1,28 +1,23 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QVBoxLayout, QFormLayout, QListWidgetItem, QWidget, QHBoxLayout
-from qfluentwidgets import ColorPickerButton, BodyLabel, SimpleCardWidget, StrongBodyLabel, ListWidget
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QVBoxLayout, QListWidgetItem, QWidget, QHBoxLayout
+from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel, ListWidget
 
 from common.component.custom_color_button import CustomColorButton
-from common.component.custom_scroll_widget import CustomScrollWidget
-from common.utils.utils import generate_random_color
 
 
 class AnnotationListItemWidget(QWidget):
 
-    def __init__(self, annotation: str):
-        super().__init__()
+    def __init__(self, annotation: str, color: QColor, parent=None):
+        super().__init__(parent=parent)
         self.hly = QHBoxLayout(self)
         self.hly.setContentsMargins(0, 0, 0, 0)
 
-        color_btn = CustomColorButton(generate_random_color())
+        color_btn = CustomColorButton(color)
         color_btn.setFixedSize(16, 16)
         color_btn.set_border_radius(8)
 
         self.hly.addWidget(color_btn)
         self.hly.addWidget(BodyLabel(text=annotation))
-
-    def get_label(self):
-        return self.hly.itemAt(1).widget().text()
 
 
 class AnnotationListWidget(SimpleCardWidget):
@@ -43,7 +38,7 @@ class AnnotationListWidget(SimpleCardWidget):
     def on_item_changed(self, item: QListWidgetItem):
         self.list_widget.itemWidget(item)
 
-    def add_annotation(self, annotation):
+    def add_annotation(self, annotation: str, color: QColor):
         item = QListWidgetItem()
         self.list_widget.addItem(item)
-        self.list_widget.setItemWidget(item, AnnotationListItemWidget(annotation))
+        self.list_widget.setItemWidget(item, AnnotationListItemWidget(annotation, color))
