@@ -31,13 +31,26 @@ class ShapeItem(QGraphicsItem):
         self.operation_type = ShapeItem.OperationType.Move
         self.color = themeColor()
         self.is_hover = False
-        self.is_selected = False
         self.corner_radius = 4
         self.hover_index = -1
         self.points: list[QPointF] = []
         # 记录鼠标点击时所在的点
         self.press_point = QPointF()
         self.press_points: list[QPointF] = []
+        self._annotation_id = ""
+        self._annotation = ""
+
+    def set_id(self, annotation_id: str):
+        self._annotation_id = annotation_id
+
+    def get_id(self) -> str:
+        return self._annotation_id
+
+    def set_annotation(self, annotation: str):
+        self._annotation = annotation
+
+    def get_annotation(self) -> str:
+        return self._annotation
 
     @staticmethod
     def get_shape_type() -> ShapeType:
@@ -59,9 +72,6 @@ class ShapeItem(QGraphicsItem):
     def set_hover(self, is_hover: bool):
         self.is_hover = is_hover
 
-    def set_selected(self, is_selected: bool):
-        self.is_selected = is_selected
-
     def move_by(self, offset: QPointF):
         for i in range(len(self.points)):
             self.points[i] = self.points[i] + offset
@@ -69,14 +79,13 @@ class ShapeItem(QGraphicsItem):
         self.update()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        super().mousePressEvent(event)
         if event.button() == Qt.MouseButton.LeftButton \
                 and drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             if self.operation_type == RectangleItem.OperationType.Move:
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
                 self.press_point = event.pos()
                 self.press_points = self.points.copy()
-            self.is_selected = True
-        super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         super().mouseMoveEvent(event)
@@ -92,10 +101,10 @@ class ShapeItem(QGraphicsItem):
         self.update()
 
     def mouseReleaseEvent(self, event) -> None:
+        super().mouseReleaseEvent(event)
         if event.button() == Qt.MouseButton.LeftButton and \
                 drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             self.setCursor(Qt.CursorShape.OpenHandCursor)
-        super().mouseReleaseEvent(event)
 
     def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent):
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
@@ -188,7 +197,7 @@ class PolygonItem(ShapeItem):
             brush_color.setAlpha(100)
             painter.setBrush(brush_color)
             corner_radius = self.corner_radius + 2
-        if self.is_selected:
+        if self.isSelected():
             painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
         painter.drawPolygon(self.polygon)
         painter.setBrush(self.color)
@@ -244,7 +253,7 @@ class RectangleItem(ShapeItem):
             brush_color.setAlpha(100)
             painter.setBrush(brush_color)
             corner_radius = self.corner_radius + 2
-        if self.is_selected:
+        if self.isSelected() :
             painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
         painter.drawRect(self.rect)
         painter.setBrush(self.color)
@@ -305,7 +314,7 @@ class CircleItem(ShapeItem):
             brush_color.setAlpha(100)
             painter.setBrush(brush_color)
             corner_radius = self.corner_radius + 2
-        if self.is_selected:
+        if self.isSelected():
             painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
         radius = self.calculate_radius()
         painter.drawEllipse(self.points[0], radius, radius)
@@ -434,7 +443,7 @@ class LineItem(ShapeItem):
         if self.is_hover:
             painter.setPen(QPen(self.color, 2, Qt.PenStyle.SolidLine))
             corner_radius = self.corner_radius + 2
-        if self.is_selected:
+        if self.isSelected() and drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             painter.setPen(QPen(self.color, 2, Qt.PenStyle.DashLine))
         painter.drawLine(self.line)
         painter.setBrush(self.color)

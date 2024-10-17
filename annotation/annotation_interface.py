@@ -1,14 +1,15 @@
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QObject
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
 from qfluentwidgets import Dialog
 
 from annotation.annotation_command_bar import AnnotationCommandBar
+from annotation.annotation_ensure_message_box import AnnotationEnsureMessageBox
 from annotation.annotations_list_widget import AnnotationListWidget
 from annotation.canvas_widget import InteractiveCanvas, DrawingStatus
 from annotation.image_list_widget import ImageListWidget
-from annotation.labels_settings_widget import LabelSettingsWidget, AnnotationEnsureMessageBox
+from annotation.labels_settings_widget import LabelSettingsWidget
 from annotation.shape import ShapeType, ShapeItem
 from common.core.interface_base import InterfaceBase
 from common.utils.utils import is_image, generate_random_color
@@ -61,8 +62,13 @@ class AnnotationInterface(InterfaceBase):
         self.cb_label.current_path_changed.connect(self.on_current_path_changed)
         self.canvas.is_drawing_changed.connect(self.on_is_drawing_changed)
         self.canvas.draw_finished.connect(self.on_draw_finished)
+        self.canvas.shape_item_selected_changed.connect(self.on_shape_item_selected_changed)
+        self.canvas.delete_shape_item_clicked.connect(lambda x: self.annotation_widget.delete_annotation_item(x))
         self.label_widget.add_label_clicked.connect(self.on_add_label)
         self.label_widget.delete_label_clicked.connect(self.on_delete_label)
+        self.label_widget.label_item_color_changed.connect(self.on_label_item_color_changed)
+        self.annotation_widget.delete_annotation_clicked.connect(lambda x: self.canvas.delete_shape_item(x))
+        self.annotation_widget.annotation_item_selected_changed.connect(self.on_annotation_item_selected_changed)
         self.image_list_widget.image_item_changed.connect(self.on_image_item_changed)
         self.image_list_widget.item_ending_status_changed.connect(self.on_move_ending_status)
         self.image_list_widget.save_annotation_clicked.connect(lambda: self.save_current_annotation())
@@ -81,7 +87,13 @@ class AnnotationInterface(InterfaceBase):
     def on_delete_label(self, label: str):
         self.labels_color.pop(label)
         self.label_widget.set_labels(self.labels_color)
+        self.annotation_widget.delete_annotation_item_by_annotation(label)
         self.update_label_file()
+
+    def on_label_item_color_changed(self, label: str, color: QColor):
+        self.labels_color[label] = color
+        self.annotation_widget.update_annotation_item_color(label, color)
+        self.canvas.update_shape_item_color(label, color)
 
     def on_is_drawing_changed(self, is_drawing: bool):
         if is_drawing:
@@ -110,7 +122,16 @@ class AnnotationInterface(InterfaceBase):
                     self.labels_color.update({label: generate_random_color()})
                     self.label_widget.set_labels(self.labels_color)
                 color = self.labels_color[label]
-                self.annotation_widget.add_annotation(label, color)
+                shape_item.set_color(color)
+                shape_item.set_annotation(label)
+                self.annotation_widget.add_annotation(shape_item.get_id(), label, color)
+        self.canvas.scene.clearSelection()
+
+    def on_shape_item_selected_changed(self, uid: str):
+        self.annotation_widget.set_selected_item(uid)
+
+    def on_annotation_item_selected_changed(self, uid: str):
+        self.canvas.set_shape_item_selected(uid)
 
     def update_label_file(self):
         if not self.current_dataset_path:
@@ -203,6 +224,7 @@ class AnnotationInterface(InterfaceBase):
             elif path.is_dir():
                 self.label_widget.clear()
                 self.canvas.clear()
+                self.annotation_widget.clear()
                 self.image_list_widget.clear()
                 annotation_path = path / "annotations"
                 annotation_list = []

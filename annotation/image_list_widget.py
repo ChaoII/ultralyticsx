@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal, QModelIndex, QEvent
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtWidgets import QVBoxLayout, QListWidgetItem, QWidget, QHBoxLayout
-from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel, ListWidget, Dialog
+from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel, Dialog
 
 from common.component.custom_color_button import CustomColorButton
+from common.component.custom_list_widget import CustomListWidget
 from common.utils.utils import generate_random_color
 
 
@@ -41,13 +41,13 @@ class ImageListWidget(SimpleCardWidget):
     item_ending_status_changed = Signal(int)
     save_annotation_clicked = Signal()
 
-    def __init__(self, image_dir_path=Path("."), parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setObjectName("imageListWidget")
         self.setFixedWidth(200)
         self.setMinimumHeight(200)
         self.lbl_title = StrongBodyLabel(text=self.tr("Image list"))
-        self.list_widget = ListWidget()
+        self.list_widget = CustomListWidget()
         self.vly_content = QVBoxLayout(self)
         self.vly_content.addWidget(self.lbl_title)
         self.vly_content.addWidget(self.list_widget)
