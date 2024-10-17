@@ -7,7 +7,7 @@ from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTrans
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
 from .core import drawing_status_manager, DrawingStatus
-from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonLineItem, ShapeItem
+from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem
 
 # dark_theme/light theme
 VIEW_BACKGROUND_COLOR = [QColor(53, 53, 53), QColor(53, 53, 53)]
@@ -32,8 +32,8 @@ class InteractiveCanvas(QGraphicsView):
         self.scene = QGraphicsScene(self)
         self.scene.setSceneRect(0, 0, 800, 600)
         self.setScene(self.scene)
-        # 必须加不加的话刷新不及时，有残影
         self.setMouseTracking(True)
+        # 必须加不加的话刷新不及时，有残影
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
         self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -53,8 +53,6 @@ class InteractiveCanvas(QGraphicsView):
         self.ensure_point_num = 0
         self.polygon_points = QPolygonF()
         self.polygon_first_point_hover = False
-        self.polygon_press_close = True
-
         # 临时图形
         self.temp_item: ShapeItem | None = None
 
@@ -117,7 +115,7 @@ class InteractiveCanvas(QGraphicsView):
                     self.scene.addItem(self.temp_item)
                 elif self.current_shape_type == ShapeType.Polygon:
                     if not self.polygon_first_point_hover and not self.is_drawing:
-                        self.temp_item = PolygonLineItem()
+                        self.temp_item = PolygonItem()
                         self.scene.addItem(self.temp_item)
                         self.polygon_points = QPolygonF()
                         self.polygon_points.append(self.start_pos)
@@ -144,7 +142,9 @@ class InteractiveCanvas(QGraphicsView):
             self.end_pos = self.mapToScene(event.pos())
             self.update_temp_item()
             self.ensure_point_num += 1
-            if self.current_shape_type == ShapeType.Line or self.current_shape_type == ShapeType.Rectangle or self.current_shape_type == ShapeType.Circle:
+            if self.current_shape_type == ShapeType.Line or self.current_shape_type == ShapeType.Rectangle or \
+                    self.current_shape_type == ShapeType.Circle:
+                # 两点即可绘制出图形
                 if self.ensure_point_num == 2:
                     self.ensure_point_num = 0
                     self.set_is_drawing(False)
@@ -163,10 +163,11 @@ class InteractiveCanvas(QGraphicsView):
                     self.ensure_point_num = 0
                     # 丢弃最后一个点直接闭合曲线
                     self.polygon_points.pop_back()
-                    self.polygon_points.append(self.polygon_points.value(0))
-                    self.temp_item.set_polygon(self.polygon_points)
+                    # self.polygon_points.append(self.polygon_points.value(0))
+                    self.temp_item.update_points(self.polygon_points.toList())
                     self.set_is_drawing(False)
-                    self.temp_item.set_first_point_hover(False)
+                    if isinstance(self.temp_item, PolygonItem):
+                        self.temp_item.set_first_point_hover(False)
                     self.polygon_first_point_hover = False
                     self.draw_finished.emit(self.temp_item)
                 else:
@@ -188,10 +189,12 @@ class InteractiveCanvas(QGraphicsView):
                 distance = math.sqrt(d_point.x() ** 2 + d_point.y() ** 2)
                 if distance < 8:
                     self.polygon_first_point_hover = True
-                    self.temp_item.set_first_point_hover(True)
+                    if isinstance(self.temp_item, PolygonItem):
+                        self.temp_item.set_first_point_hover(True)
                 else:
                     self.polygon_first_point_hover = False
-                    self.temp_item.set_first_point_hover(False)
+                    if isinstance(self.temp_item, PolygonItem):
+                        self.temp_item.set_first_point_hover(False)
             self.temp_item.update_points(self.polygon_points.toList())
             # self.polygon_points.pop_back()
         elif self.current_shape_type == ShapeType.Point:
