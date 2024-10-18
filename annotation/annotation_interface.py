@@ -114,17 +114,21 @@ class AnnotationInterface(InterfaceBase):
             self.cb_label.action_line.setEnabled(True)
 
     def on_draw_finished(self, shape_item: ShapeItem):
-        cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color, parent=self)
-        if cus_message_box.exec():
-            label = cus_message_box.get_label()
-            if label:
-                if not self.labels_color.get(label, None):
-                    self.labels_color.update({label: generate_random_color()})
-                    self.label_widget.set_labels(self.labels_color)
-                color = self.labels_color[label]
-                shape_item.set_color(color)
-                shape_item.set_annotation(label)
-                self.annotation_widget.add_annotation(shape_item.get_id(), label, color)
+        label = ""
+        if not shape_item.get_is_drawing_history():
+            cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color, parent=self)
+            if cus_message_box.exec():
+                label = cus_message_box.get_label()
+        else:
+            label = shape_item.get_annotation()
+        if label:
+            if not self.labels_color.get(label, None):
+                self.labels_color.update({label: generate_random_color()})
+                self.label_widget.set_labels(self.labels_color)
+            color = self.labels_color[label]
+            shape_item.set_color(color)
+            shape_item.set_annotation(label)
+            self.annotation_widget.add_annotation(shape_item.get_id(), label, color)
         self.canvas.scene.clearSelection()
 
     def on_shape_item_selected_changed(self, uid: str):
@@ -154,8 +158,21 @@ class AnnotationInterface(InterfaceBase):
             self.cb_label.action_pre_image.setEnabled(False)
             self.cb_label.action_next_image.setEnabled(False)
 
-    def on_image_item_changed(self, image_path: str):
-        self.canvas.set_image(image_path)
+    def set_history_image_and_annotations(self, image_path: Path):
+        annotation_path = image_path.parent / "annotations" / (image_path.stem + ".txt")
+        annotations = []
+        if annotation_path.exists():
+            with annotation_path.open("r") as f:
+                for line in f.readlines():
+                    annotation_data = line.strip().split(" ")
+                    annotation = [float(x) for x in annotation_data]
+                    annotations.append(annotation)
+        self.canvas.set_image_and_draw_annotations(image_path, annotations, self.labels_color)
+
+    def on_image_item_changed(self, image_path: str | Path):
+        if isinstance(image_path, str):
+            image_path = Path(image_path)
+        self.set_history_image_and_annotations(image_path)
 
     def on_save_current_annotation(self):
         self.save_current_annotation()
@@ -217,15 +234,22 @@ class AnnotationInterface(InterfaceBase):
 
         if path.exists():
             if path.is_file() and is_image(path):
-                self.canvas.set_image(path)
+                self.set_history_image_and_annotations(path)
                 self.current_dataset_path = path.parent
                 self.cb_label.action_pre_image.setEnabled(False)
                 self.cb_label.action_next_image.setEnabled(False)
             elif path.is_dir():
+                self.current_dataset_path = path
                 self.label_widget.clear()
                 self.canvas.clear()
                 self.annotation_widget.clear()
                 self.image_list_widget.clear()
+                label_file_path = path / "classes.txt"
+                if label_file_path.exists():
+                    labels = open(label_file_path).read().splitlines()
+                    self.labels_color = {label: generate_random_color() for label in labels}
+                    self.label_widget.set_labels(self.labels_color)
+
                 annotation_path = path / "annotations"
                 annotation_list = []
                 if annotation_path.exists():
@@ -236,12 +260,6 @@ class AnnotationInterface(InterfaceBase):
                     if image_path.suffix in [".jpg", ".png", ".jpeg"]:
                         image_path_list.append(image_path)
                 self.image_list_widget.set_image_dir_path(image_path_list, annotation_list)
-                self.current_dataset_path = path
-                label_file_path = path / "classes.txt"
-                if label_file_path.exists():
-                    labels = open(label_file_path).read().splitlines()
-                    self.labels_color = {label: generate_random_color() for label in labels}
-                    self.label_widget.set_labels(self.labels_color)
                 if len(image_path_list) > 0:
                     self.cb_label.action_save_image.setEnabled(True)
                     self.cb_label.action_delete.setEnabled(True)
@@ -266,6 +284,22 @@ class AnnotationInterface(InterfaceBase):
             self.update_label_file()
             annotation_name = Path(self.image_list_widget.get_current_image_labeled()[0])
             annotation_path = self.current_dataset_path / "annotations" / (annotation_name.stem + ".txt")
+            annotations = []
+            pix = self.canvas.get_background_pix()
+            w = pix.width()
+            h = pix.height()
+            for item in self.canvas.get_shape_items():
+                if isinstance(item, ShapeItem):
+                    annotation = str(list(self.labels_color.keys()).index(item.get_annotation()))
+                    shape_data = item.get_shape_data()
+                    for index, data in enumerate(shape_data):
+                        if index % 2 == 0:
+                            data /= w
+                        else:
+                            data /= h
+                        annotation += f" {data:.4f}"
+                    annotation += "\n"
+                    annotations.append(annotation)
             with open(annotation_path, "w", encoding="utf8") as f:
-                f.writelines(["1", "2", "3", "4"])
+                f.writelines(annotations)
             self.image_list_widget.set_current_image_labeled()

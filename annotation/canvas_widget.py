@@ -1,13 +1,14 @@
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QLineF, Signal
+from PySide6.QtCore import QLineF, Signal, QPointF
 from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsItem
 from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
 from PySide6.QtCore import QUuid
 
-from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem
+from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
+    ImageItem
 from .core import drawing_status_manager, DrawingStatus
 
 # dark_theme/light theme
@@ -50,6 +51,7 @@ class InteractiveCanvas(QGraphicsView):
         # 当前形状类型
         self.current_shape_type = ShapeType.Rectangle
         # 绘制状态
+        self.background_pix = QPixmap()
         self.is_drawing = False
         self.start_pos = None
         self.end_pos = None
@@ -68,6 +70,9 @@ class InteractiveCanvas(QGraphicsView):
 
     def get_shape_items(self):
         return self.scene.items()
+
+    def get_background_pix(self):
+        return self.background_pix
 
     def delete_shape_item(self, uid):
         shape_item = self.shape_item_map.get(uid, None)
@@ -107,12 +112,34 @@ class InteractiveCanvas(QGraphicsView):
         self.scene.clear()
         self.scene.setSceneRect(0, 0, 800, 600)
 
-    def set_image(self, image_path: str | Path):
-        pix = QPixmap(image_path)
-        image_item = QGraphicsPixmapItem(pix)
+    def set_image_and_draw_annotations(self, image_path: str | Path, annotations: list[list[float]],
+                                       labels_color: dict):
+        self.background_pix = QPixmap(image_path)
+        image_item = ImageItem(self.background_pix)
         self.scene.clear()
-        self.setSceneRect(pix.rect())
+        self.setSceneRect(self.background_pix.rect())
         self.scene.addItem(image_item)
+        for annotation in annotations:
+            label_index = int(annotation[0])
+            shape_data = annotation[1:]
+            label = list(labels_color.keys())[label_index]
+            color = labels_color[label]
+            if len(shape_data) == 4:
+                shape_item = RectangleItem()
+                x_center = float(shape_data[0]) * self.background_pix.width()
+                y_center = float(shape_data[1]) * self.background_pix.height()
+                w = float(shape_data[2]) * self.background_pix.width()
+                h = float(shape_data[3]) * self.background_pix.height()
+                p1 = QPointF(x_center - w / 2, y_center - h / 2)
+                p2 = QPointF(x_center + w / 2, y_center + h / 2)
+                shape_item.update_points([p1, p2])
+                shape_item.set_annotation(label)
+                shape_item.set_color(color)
+                shape_item.set_is_drawing_history(True)
+                self.scene.addItem(shape_item)
+                self.send_draw_finished_signal(shape_item)
+            else:
+                raise NotImplementedError
 
     def set_drawing_status(self, status: DrawingStatus):
         drawing_status_manager.set_drawing_status(status)
@@ -144,20 +171,20 @@ class InteractiveCanvas(QGraphicsView):
                     if isinstance(item, ShapeItem):
                         self.delete_shape_item_clicked.emit(item.get_id())
                         self.scene.removeItem(item)
-                        self.shape_item_map.pop(item.get_id())
+                        if item.get_id() in self.shape_item_map:
+                            self.shape_item_map.pop(item.get_id())
+
+        super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             if event.key() == Qt.Key.Key_Shift:
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
 
+        super().keyReleaseEvent(event)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            # if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
-            #     for item in self.scene.items():
-            #         if isinstance(item, ShapeItem):
-            #             item.set_selected(False)
-
             if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw and not self.is_drawing:
                 self.start_pos = self.mapToScene(event.pos())
                 self.end_pos = self.start_pos
@@ -181,8 +208,6 @@ class InteractiveCanvas(QGraphicsView):
                     self.scene.addItem(self.temp_item)
                 self.set_is_drawing(True)
                 self.update_temp_item()
-            # else:
-            #     self.is_drawing = False
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):

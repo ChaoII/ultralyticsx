@@ -2,7 +2,8 @@ import enum
 import math
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QLineF, QSizeF
-from PySide6.QtGui import QPolygonF, QPainterPath, QPainter, QColor, QPen, QKeyEvent, QTransform
+from PySide6.QtGui import QPolygonF, QPainterPath, QPainter, QColor, QPen, QKeyEvent, QTransform, QPainterPathStroker, \
+    QPixmap, QCursor
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsSceneHoverEvent
 from qfluentwidgets import themeColor
 
@@ -21,13 +22,13 @@ class ShapeItem(QGraphicsItem):
     class OperationType(enum.Enum):
         Move = 0
         Edit = 1
+        Rotate = 2
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setFlags(
             QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
             QGraphicsItem.GraphicsItemFlag.ItemIsFocusable)
-
         self.operation_type = ShapeItem.OperationType.Move
         self.color = themeColor()
         self.is_hover = False
@@ -39,6 +40,13 @@ class ShapeItem(QGraphicsItem):
         self.press_points: list[QPointF] = []
         self._annotation_id = ""
         self._annotation = ""
+        self._is_drawing_history = False
+
+    def set_is_drawing_history(self, is_drawing_history: bool):
+        self._is_drawing_history = is_drawing_history
+
+    def get_is_drawing_history(self) -> bool:
+        return self._is_drawing_history
 
     def set_id(self, annotation_id: str):
         self._annotation_id = annotation_id
@@ -79,40 +87,49 @@ class ShapeItem(QGraphicsItem):
         self.update()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
-        super().mousePressEvent(event)
+        self.prepareGeometryChange()
         if event.button() == Qt.MouseButton.LeftButton \
                 and drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             if self.operation_type == RectangleItem.OperationType.Move:
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
                 self.press_point = event.pos()
                 self.press_points = self.points.copy()
+        super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        super().mouseMoveEvent(event)
-        if self.operation_type == RectangleItem.OperationType.Move and \
-                drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+        self.prepareGeometryChange()
+        if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw:
+            return
+        if self.operation_type == RectangleItem.OperationType.Move:
             delta = event.pos() - self.press_point
             self.points.clear()
             for point in self.press_points:
                 self.points.append(point + delta)
-        else:
+        elif self.operation_type == ShapeItem.OperationType.Edit:
             self.points[self.hover_index] = event.pos()
+        else:
+            pass
         self.update_shape()
         self.update()
+        super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event) -> None:
-        super().mouseReleaseEvent(event)
+        self.prepareGeometryChange()
         if event.button() == Qt.MouseButton.LeftButton and \
                 drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             self.setCursor(Qt.CursorShape.OpenHandCursor)
+        super().mouseReleaseEvent(event)
 
     def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent):
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+            self.prepareGeometryChange()
             self.is_hover = True
             self.update()
+        super().hoverEnterEvent(event)
 
     def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+            self.prepareGeometryChange()
             pad = [-8, -8, 8, 8]
             is_point_hover = False
             for index, point in enumerate(self.points):
@@ -127,14 +144,17 @@ class ShapeItem(QGraphicsItem):
                 self.setCursor(Qt.CursorShape.OpenHandCursor)
                 self.operation_type = RectangleItem.OperationType.Move
                 self.hover_index = -1
-        self.update()
+            self.update()
+        super().hoverMoveEvent(event)
 
     def hoverLeaveEvent(self, event):
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+            self.prepareGeometryChange()
             self.is_hover = False
             self.hover_index = -1
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.update()
+        super().hoverLeaveEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key.Key_Left:
@@ -181,8 +201,18 @@ class PolygonItem(ShapeItem):
     def shape(self) -> QPainterPath:
         path = QPainterPath()
         path.addPolygon(self.polygon)
-        path.closeSubpath()
-        return path
+        # 创建一个描边工具
+        stroker = QPainterPathStroker()
+        stroker.setWidth(2 * 10)  # 描边宽度为 2 * pixels
+        # 生成扩大的路径
+        expanded_path = stroker.createStroke(path)
+        expanded_path.addPath(path)  # 将原始路径添加到扩大的路径中
+        # 获取扩大的多边形
+        expanded_polygon = expanded_path.toFillPolygon()
+        p1 = QPainterPath()
+        p1.addPolygon(expanded_polygon)
+        p1.closeSubpath()
+        return p1
 
     def set_first_point_hover(self, first_point_hover: bool):
         self.first_point_hover = first_point_hover
@@ -193,6 +223,7 @@ class PolygonItem(ShapeItem):
         painter.setBrush(Qt.BrushStyle.NoBrush)
         brush_color = QColor(self.color)
         corner_radius = self.corner_radius
+
         if self.is_hover:
             brush_color.setAlpha(100)
             painter.setBrush(brush_color)
@@ -214,6 +245,9 @@ class RectangleItem(ShapeItem):
         super().__init__(parent)
         self.setAcceptHoverEvents(True)
         self.rect = QRectF()
+        self.rotate_handler_line_length = 30
+        self.rotate_handler_point = QPointF()
+        self.is_handler_hover = False
 
     @staticmethod
     def get_shape_type() -> ShapeType:
@@ -225,6 +259,8 @@ class RectangleItem(ShapeItem):
         x2 = max(self.points[0].x(), self.points[1].x())
         y2 = max(self.points[0].y(), self.points[1].y())
         self.rect = QRectF(x1, y1, x2 - x1, y2 - y1)
+        self.rotate_handler_point = self.rect.center() - \
+                                    QPointF(0, self.rect.height() / 2) - QPointF(0, self.rotate_handler_line_length)
 
     def get_shape_data(self):
         # x_center, y_center, w, h
@@ -234,14 +270,42 @@ class RectangleItem(ShapeItem):
                 self.rect.height()]
 
     def boundingRect(self) -> QRectF:
-        return self.rect.adjusted(-self.corner_radius, -self.corner_radius,
+        return self.rect.adjusted(-self.corner_radius, -self.corner_radius - self.rotate_handler_line_length,
                                   self.corner_radius, self.corner_radius)
 
     def shape(self) -> QPainterPath:
         path = QPainterPath()
-        path.addRect(self.rect.adjusted(-self.corner_radius, -self.corner_radius,
+        path.addRect(self.rect.adjusted(-self.corner_radius, -self.corner_radius - self.rotate_handler_line_length,
                                         self.corner_radius, self.corner_radius))
         return path
+
+    def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
+        if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+            self.prepareGeometryChange()
+            pad = [-8, -8, 8, 8]
+            is_point_hover = False
+            for index, point in enumerate(self.points):
+                if QRectF(point, QSizeF(8, 8)).adjusted(*pad).contains(event.pos()):
+                    self.hover_index = index
+                    is_point_hover = True
+                    break
+
+            self.handler_area = QRectF(self.rotate_handler_point, QSizeF(1, 1)).adjusted(-20, -20, 20, 20)
+
+            if is_point_hover:
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+                self.operation_type = RectangleItem.OperationType.Edit
+            else:
+                self.setCursor(Qt.CursorShape.OpenHandCursor)
+                self.operation_type = RectangleItem.OperationType.Move
+                self.hover_index = -1
+            if self.handler_area.contains(event.pos()):
+                self.hover_index = -1
+                pix = QPixmap("./resource/images/rotate.png")
+                self.setCursor(QCursor(pix))
+                self.operation_type = RectangleItem.OperationType.Rotate
+            self.update()
+        # super().hoverMoveEvent(event)
 
     def paint(self, painter, option, widget=None):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -249,20 +313,27 @@ class RectangleItem(ShapeItem):
         painter.setBrush(Qt.BrushStyle.NoBrush)
         brush_color = QColor(self.color)
         corner_radius = self.corner_radius
-        if self.is_hover:
+        if self.isSelected():
+            painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
+        if self.is_hover or self.isSelected():
             brush_color.setAlpha(100)
             painter.setBrush(brush_color)
             corner_radius = self.corner_radius + 2
-        if self.isSelected() :
-            painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
         painter.drawRect(self.rect)
         painter.setBrush(self.color)
-
+        painter.drawRect(QRectF(self.rotate_handler_point, QSizeF(1, 1)).adjusted(-20, -20, 20, 20))
         for index, point in enumerate(self.points):
             if index == self.hover_index:
                 painter.drawEllipse(point, self.corner_radius * 2, self.corner_radius * 2)
             else:
                 painter.drawEllipse(point, corner_radius, corner_radius)
+
+        if self.isSelected():
+            painter.drawLine(self.rect.center() - QPointF(0, self.rect.height() / 2),
+                             self.rect.center() - QPointF(0, self.rect.height() / 2) -
+                             QPointF(0, self.rotate_handler_line_length))
+            painter.drawEllipse(self.rotate_handler_point,
+                                corner_radius, corner_radius)
 
 
 class CircleItem(ShapeItem):
@@ -452,3 +523,27 @@ class LineItem(ShapeItem):
                 painter.drawEllipse(point, self.corner_radius * 2, self.corner_radius * 2)
             else:
                 painter.drawEllipse(point, corner_radius, corner_radius)
+
+
+class ImageItem(QGraphicsItem):
+
+    def __init__(self, pix, parent=None):
+        super().__init__(parent)
+        self.pix = pix
+
+    def set_pixmap(self, pix: QPixmap):
+        self.pix = pix
+
+    def boundingRect(self) -> QRectF:
+        rect = self.pix.rect().toRectF()
+        return rect
+
+    def shape(self) -> QPainterPath:
+        path = QPainterPath()
+        path.addRect(self.pix.rect())
+
+        return path
+
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.drawPixmap(0, 0, self.pix)
