@@ -8,7 +8,7 @@ from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
 from PySide6.QtCore import QUuid
 
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
-    ImageItem
+    ImageItem, RotatedRectangleItem
 from .core import drawing_status_manager, DrawingStatus
 
 # dark_theme/light theme
@@ -49,7 +49,7 @@ class InteractiveCanvas(QGraphicsView):
         self.border_line_color = QColor(Qt.GlobalColor.cyan)
         self.update_background_color()
         # 当前形状类型
-        self.current_shape_type = ShapeType.Rectangle
+        self.current_shape_type = ShapeType.RotatedRectangle
         # 绘制状态
         self.background_pix = QPixmap()
         self.is_drawing = False
@@ -57,6 +57,7 @@ class InteractiveCanvas(QGraphicsView):
         self.end_pos = None
         self.scale_factor = 1
         self.ensure_point_num = 0
+        self.rotated_rect_points = QPolygonF()
         self.polygon_points = QPolygonF()
         self.polygon_first_point_hover = False
         # 临时图形
@@ -147,7 +148,8 @@ class InteractiveCanvas(QGraphicsView):
             self.is_drawing = False
 
     def set_shape_type(self, shape_type: ShapeType):
-        self.current_shape_type = shape_type
+        # self.current_shape_type = shape_type
+        self.current_shape_type = ShapeType.RotatedRectangle
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         super().wheelEvent(event)
@@ -200,6 +202,12 @@ class InteractiveCanvas(QGraphicsView):
                         self.scene.addItem(self.temp_item)
                         self.polygon_points = QPolygonF()
                         self.polygon_points.append(self.start_pos)
+                elif self.current_shape_type == ShapeType.RotatedRectangle:
+                    if not self.is_drawing:
+                        self.temp_item = RotatedRectangleItem()
+                        self.scene.addItem(self.temp_item)
+                        self.rotated_rect_points = QPolygonF()
+                        self.rotated_rect_points.append(self.start_pos)
                 elif self.current_shape_type == ShapeType.Point:
                     self.temp_item = PointItem()
                     self.scene.addItem(self.temp_item)
@@ -251,6 +259,14 @@ class InteractiveCanvas(QGraphicsView):
                 else:
                     self.polygon_points.append(self.end_pos)
                     self.set_is_drawing(True)
+            elif self.current_shape_type == ShapeType.RotatedRectangle:
+                if self.ensure_point_num == 3:
+                    self.ensure_point_num = 0
+                    self.set_is_drawing(False)
+                    self.send_draw_finished_signal(self.temp_item)
+                else:
+                    self.rotated_rect_points.append(self.end_pos)
+                    self.set_is_drawing(True)
         super().mouseReleaseEvent(event)
 
     def update_temp_item(self):
@@ -274,6 +290,13 @@ class InteractiveCanvas(QGraphicsView):
                     if isinstance(self.temp_item, PolygonItem):
                         self.temp_item.set_first_point_hover(False)
             self.temp_item.update_points(self.polygon_points.toList())
+        elif self.current_shape_type == ShapeType.RotatedRectangle:
+            points = self.rotated_rect_points.toList()
+            if len(points) >= 2:
+                points[-1] = self.end_pos
+                self.rotated_rect_points = QPolygonF(points)
+            self.temp_item.update_points(self.rotated_rect_points.toList())
+            self.temp_item.update_points(points)
         elif self.current_shape_type == ShapeType.Point:
             self.temp_item.update_points([self.end_pos])
         elif self.current_shape_type == ShapeType.Line:

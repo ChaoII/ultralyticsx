@@ -12,10 +12,11 @@ from annotation.core import DrawingStatus, drawing_status_manager
 
 class ShapeType(enum.Enum):
     Rectangle = 0
-    Polygon = 1
-    Circle = 2
-    Line = 3
-    Point = 4
+    RotatedRectangle = 1
+    Polygon = 2
+    Circle = 3
+    Line = 4
+    Point = 5
 
 
 class ShapeItem(QGraphicsItem):
@@ -245,9 +246,6 @@ class RectangleItem(ShapeItem):
         super().__init__(parent)
         self.setAcceptHoverEvents(True)
         self.rect = QRectF()
-        self.rotate_handler_line_length = 30
-        self.rotate_handler_point = QPointF()
-        self.is_handler_hover = False
 
     @staticmethod
     def get_shape_type() -> ShapeType:
@@ -259,53 +257,24 @@ class RectangleItem(ShapeItem):
         x2 = max(self.points[0].x(), self.points[1].x())
         y2 = max(self.points[0].y(), self.points[1].y())
         self.rect = QRectF(x1, y1, x2 - x1, y2 - y1)
-        self.rotate_handler_point = self.rect.center() - \
-                                    QPointF(0, self.rect.height() / 2) - QPointF(0, self.rotate_handler_line_length)
 
     def get_shape_data(self):
         # x_center, y_center, w, h
-        return [self.rect.x() + self.rect.width() / 2,
-                self.rect.y() + self.rect.height() / 2,
-                self.rect.width(),
-                self.rect.height()]
+        x_center = self.rect.center().x()
+        y_center = self.rect.center().y()
+        w = self.rect.width()
+        h = self.rect.height()
+        return [x_center, y_center, w, h]
 
     def boundingRect(self) -> QRectF:
-        return self.rect.adjusted(-self.corner_radius, -self.corner_radius - self.rotate_handler_line_length,
+        return self.rect.adjusted(-self.corner_radius, -self.corner_radius,
                                   self.corner_radius, self.corner_radius)
 
     def shape(self) -> QPainterPath:
         path = QPainterPath()
-        path.addRect(self.rect.adjusted(-self.corner_radius, -self.corner_radius - self.rotate_handler_line_length,
+        path.addRect(self.rect.adjusted(-self.corner_radius, -self.corner_radius,
                                         self.corner_radius, self.corner_radius))
         return path
-
-    def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
-        if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
-            self.prepareGeometryChange()
-            pad = [-8, -8, 8, 8]
-            is_point_hover = False
-            for index, point in enumerate(self.points):
-                if QRectF(point, QSizeF(8, 8)).adjusted(*pad).contains(event.pos()):
-                    self.hover_index = index
-                    is_point_hover = True
-                    break
-
-            self.handler_area = QRectF(self.rotate_handler_point, QSizeF(1, 1)).adjusted(-20, -20, 20, 20)
-
-            if is_point_hover:
-                self.setCursor(Qt.CursorShape.PointingHandCursor)
-                self.operation_type = RectangleItem.OperationType.Edit
-            else:
-                self.setCursor(Qt.CursorShape.OpenHandCursor)
-                self.operation_type = RectangleItem.OperationType.Move
-                self.hover_index = -1
-            if self.handler_area.contains(event.pos()):
-                self.hover_index = -1
-                pix = QPixmap("./resource/images/rotate.png")
-                self.setCursor(QCursor(pix))
-                self.operation_type = RectangleItem.OperationType.Rotate
-            self.update()
-        # super().hoverMoveEvent(event)
 
     def paint(self, painter, option, widget=None):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -321,19 +290,142 @@ class RectangleItem(ShapeItem):
             corner_radius = self.corner_radius + 2
         painter.drawRect(self.rect)
         painter.setBrush(self.color)
-        painter.drawRect(QRectF(self.rotate_handler_point, QSizeF(1, 1)).adjusted(-20, -20, 20, 20))
         for index, point in enumerate(self.points):
             if index == self.hover_index:
                 painter.drawEllipse(point, self.corner_radius * 2, self.corner_radius * 2)
             else:
                 painter.drawEllipse(point, corner_radius, corner_radius)
 
+
+class RotatedRectangleItem(ShapeItem):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptHoverEvents(True)
+        self.polygon = QPolygonF()
+        self.angle = 0
+        self.draw_line = True
+        self.is_rotated = False
+        self.w = 0
+        self.h = 0
+        self.direction = 0
+
+    @staticmethod
+    def get_shape_type() -> ShapeType:
+        return ShapeType.RotatedRectangle
+
+    @staticmethod
+    def distance_point_to_line(point: QPointF, line: QLineF) -> float:
+        x1, y1 = line.p1().x(), line.p1().y()
+        x2, y2 = line.p2().x(), line.p2().y()
+        x3, y3 = point.x(), point.y()
+
+        # 计算直线方程的系数
+        A = y2 - y1
+        B = x1 - x2
+        C = x2 * y1 - x1 * y2
+
+        # 计算点到直线的距离
+        numerator = abs(A * x3 + B * y3 + C)
+        denominator = math.sqrt(A ** 2 + B ** 2)
+        distance = numerator / denominator
+
+        return distance
+
+    @staticmethod
+    def is_point_left_of_line(point: QPointF, line: QLineF) -> bool:
+        x1, y1 = line.p1().x(), line.p1().y()
+        x2, y2 = line.p2().x(), line.p2().y()
+        x3, y3 = point.x(), point.y()
+
+        # 计算向量 v1 和 v2
+        v1_x, v1_y = x2 - x1, y2 - y1
+        v2_x, v2_y = x3 - x1, y3 - y1
+
+        # 计算叉乘
+        cross_product = v1_x * v2_y - v1_y * v2_x
+
+        # 判断点的位置
+        return cross_product > 0
+
+    def update_shape(self):
+        if len(self.points) == 2:
+            self.draw_line = True
+            p1 = self.points[0]
+            p2 = self.points[1]
+            p3_ = p2
+            p4_ = p1
+        elif len(self.points) == 3:
+            self.draw_line = False
+            p1 = self.points[0]
+            p2 = self.points[1]
+            p3 = self.points[2]
+            l1 = QLineF(p1, p2)
+            self.w = l1.length()
+            self.h = self.distance_point_to_line(p3, l1)
+            self.angle = l1.angle()
+            p_delta = QPointF(self.h * math.sin(math.radians(self.angle)),
+                              self.h * math.cos(math.radians(self.angle)))
+            if self.is_point_left_of_line(p3, l1):
+                p3_ = p2 + p_delta
+                p4_ = p1 + p_delta
+            else:
+                p3_ = p2 - p_delta
+                p4_ = p1 - p_delta
+            # 让控制点吸附在矩形边的中间
+            self.points[2] = (QPointF((p3_.x() + p4_.x()) / 2, (p3_.y() + p4_.y()) / 2))
+        else:
+            return
+        self.polygon = QPolygonF([p1, p2, p3_, p4_])
+
+    def set_rotated(self, is_rotated: bool):
+        self.is_rotated = is_rotated
+
+    def get_shape_data(self):
+        data = []
+        for point in self.polygon.toList():
+            data += [point.x(), point.y()]
+        return data
+
+    def boundingRect(self) -> QRectF:
+
+        return self.polygon.boundingRect().adjusted(-self.corner_radius, -self.corner_radius,
+                                                    self.corner_radius, self.corner_radius)
+
+    def shape(self) -> QPainterPath:
+        path = QPainterPath()
+        path.addPolygon(self.polygon)
+        # 创建一个描边工具
+        stroker = QPainterPathStroker()
+        stroker.setWidth(2 * 10)  # 描边宽度为 2 * pixels
+        # 生成扩大的路径
+        expanded_path = stroker.createStroke(path)
+        expanded_path.addPath(path)  # 将原始路径添加到扩大的路径中
+        # 获取扩大的多边形
+        expanded_polygon = expanded_path.toFillPolygon()
+        p1 = QPainterPath()
+        p1.addPolygon(expanded_polygon)
+        p1.closeSubpath()
+        return p1
+
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(QPen(self.color, 1, Qt.PenStyle.SolidLine))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        brush_color = QColor(self.color)
+        corner_radius = self.corner_radius
         if self.isSelected():
-            painter.drawLine(self.rect.center() - QPointF(0, self.rect.height() / 2),
-                             self.rect.center() - QPointF(0, self.rect.height() / 2) -
-                             QPointF(0, self.rotate_handler_line_length))
-            painter.drawEllipse(self.rotate_handler_point,
-                                corner_radius, corner_radius)
+            painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
+        if self.is_hover or self.isSelected():
+            brush_color.setAlpha(100)
+            painter.setBrush(brush_color)
+            corner_radius = self.corner_radius + 2
+        painter.drawPolygon(self.polygon)
+        painter.setBrush(self.color)
+        for index, point in enumerate(self.points):
+            if index == self.hover_index:
+                painter.drawEllipse(point, self.corner_radius * 2, self.corner_radius * 2)
+            else:
+                painter.drawEllipse(point, corner_radius, corner_radius)
 
 
 class CircleItem(ShapeItem):
