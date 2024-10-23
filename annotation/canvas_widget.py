@@ -140,6 +140,7 @@ class InteractiveCanvas(QGraphicsView):
                 self.scene.addItem(shape_item)
                 self.send_draw_finished_signal(shape_item)
             else:
+                # todo other shape type
                 raise NotImplementedError
 
     def set_drawing_status(self, status: DrawingStatus):
@@ -148,8 +149,7 @@ class InteractiveCanvas(QGraphicsView):
             self.is_drawing = False
 
     def set_shape_type(self, shape_type: ShapeType):
-        # self.current_shape_type = shape_type
-        self.current_shape_type = ShapeType.RotatedRectangle
+        self.current_shape_type = shape_type
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         super().wheelEvent(event)
@@ -164,7 +164,7 @@ class InteractiveCanvas(QGraphicsView):
         self.is_drawing_changed.emit(self.is_drawing)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+        if drawing_status_manager.get_drawing_status() == DrawingStatus.Select:
             if event.key() == Qt.Key.Key_Shift:
                 self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
@@ -179,7 +179,7 @@ class InteractiveCanvas(QGraphicsView):
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
-        if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+        if drawing_status_manager.get_drawing_status() == DrawingStatus.Select:
             if event.key() == Qt.Key.Key_Shift:
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
 
@@ -228,16 +228,18 @@ class InteractiveCanvas(QGraphicsView):
         if event.button() == Qt.MouseButton.LeftButton and self.is_drawing:
             self.end_pos = self.mapToScene(event.pos())
             self.update_temp_item()
+            # 鼠标按下后再释放，记录完成了一个点
             self.ensure_point_num += 1
+            # 两点即可绘制出矩形，圆形，直线
             if self.current_shape_type == ShapeType.Line or self.current_shape_type == ShapeType.Rectangle or \
                     self.current_shape_type == ShapeType.Circle:
-                # 两点即可绘制出图形
                 if self.ensure_point_num == 2:
                     self.ensure_point_num = 0
                     self.set_is_drawing(False)
                     self.send_draw_finished_signal(self.temp_item)
                 else:
                     self.set_is_drawing(True)
+            # 一点即可绘制一个点
             elif self.current_shape_type == ShapeType.Point:
                 if self.ensure_point_num == 1:
                     self.ensure_point_num = 0
@@ -245,6 +247,7 @@ class InteractiveCanvas(QGraphicsView):
                     self.send_draw_finished_signal(self.temp_item)
                 else:
                     self.set_is_drawing(True)
+            # 多点绘制多边形，绘制完成则闭合，通过闭合条件判断绘制完成
             elif self.current_shape_type == ShapeType.Polygon:
                 if self.polygon_first_point_hover:
                     self.ensure_point_num = 0
@@ -259,6 +262,7 @@ class InteractiveCanvas(QGraphicsView):
                 else:
                     self.polygon_points.append(self.end_pos)
                     self.set_is_drawing(True)
+            # 三点绘制旋转矩形
             elif self.current_shape_type == ShapeType.RotatedRectangle:
                 if self.ensure_point_num == 3:
                     self.ensure_point_num = 0

@@ -4,7 +4,6 @@ import enum
 class DrawingStatus(enum.Enum):
     Select = 0
     Draw = 1
-    Edit = 2
 
 
 class DrawingStatusManager:

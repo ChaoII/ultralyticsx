@@ -98,16 +98,16 @@ class AnnotationInterface(InterfaceBase):
     def on_is_drawing_changed(self, is_drawing: bool):
         if is_drawing:
             self.cb_label.action_select.setEnabled(False)
-            self.cb_label.action_edit.setEnabled(False)
             self.cb_label.action_rectangle.setEnabled(False)
+            self.cb_label.action_rotated_rectangle.setEnabled(False)
             self.cb_label.action_polygon.setEnabled(False)
             self.cb_label.action_circle.setEnabled(False)
             self.cb_label.action_point.setEnabled(False)
             self.cb_label.action_line.setEnabled(False)
         else:
             self.cb_label.action_select.setEnabled(True)
-            self.cb_label.action_edit.setEnabled(True)
             self.cb_label.action_rectangle.setEnabled(True)
+            self.cb_label.action_rotated_rectangle.setEnabled(True)
             self.cb_label.action_polygon.setEnabled(True)
             self.cb_label.action_circle.setEnabled(True)
             self.cb_label.action_point.setEnabled(True)

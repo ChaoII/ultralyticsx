@@ -50,18 +50,22 @@ class AnnotationCommandBar(CommandBar):
         self.action_select.setCheckable(True)
         self.action_select.setChecked(True)
         self.action_select.toggled.connect(self.on_select_select)
-        # 编辑
-        self.action_edit = Action(FluentIcon.EDIT, self.tr("Edit"))
-        self.action_edit.setCheckable(True)
-        self.action_edit.toggled.connect(self.on_select_edit)
-        # 多边形
-        self.action_polygon = Action(CustomFluentIcon.POLYGON, self.tr("Polygon"))
-        self.action_polygon.setCheckable(True)
-        self.action_polygon.toggled.connect(self.on_select_polygon)
+
         # 矩形
         self.action_rectangle = Action(CustomFluentIcon.DETECT, self.tr("Rectangle"))
         self.action_rectangle.setCheckable(True)
         self.action_rectangle.toggled.connect(self.on_select_rectangle)
+
+        # 旋转矩形
+        self.action_rotated_rectangle = Action(CustomFluentIcon.OBB, self.tr("Rotate rectangle"))
+        self.action_rotated_rectangle.setCheckable(True)
+        self.action_rotated_rectangle.toggled.connect(self.on_select_rotated_rectangle)
+
+        # 多边形
+        self.action_polygon = Action(CustomFluentIcon.POLYGON, self.tr("Polygon"))
+        self.action_polygon.setCheckable(True)
+        self.action_polygon.toggled.connect(self.on_select_polygon)
+
         # 圆形
         self.action_circle = Action(CustomFluentIcon.CIRCLE, self.tr("Circle"))
         self.action_circle.setCheckable(True)
@@ -77,8 +81,8 @@ class AnnotationCommandBar(CommandBar):
 
         self.action_group = QActionGroup(self)
         self.action_group.addAction(self.action_select)
-        self.action_group.addAction(self.action_edit)
         self.action_group.addAction(self.action_rectangle)
+        self.action_group.addAction(self.action_rotated_rectangle)
         self.action_group.addAction(self.action_polygon)
         self.action_group.addAction(self.action_circle)
         self.action_group.addAction(self.action_point)
@@ -106,8 +110,8 @@ class AnnotationCommandBar(CommandBar):
 
         self.addActions([
             self.action_select,
-            self.action_edit,
             self.action_rectangle,
+            self.action_rotated_rectangle,
             self.action_polygon,
             self.action_circle,
             self.action_point,
@@ -140,17 +144,17 @@ class AnnotationCommandBar(CommandBar):
         if toggled:
             self.drawing_status_selected.emit(DrawingStatus.Select)
 
-    def on_select_edit(self, toggled: bool):
+    def on_select_rectangle(self, toggled):
         if toggled:
-            self.drawing_status_selected.emit(DrawingStatus.Edit)
+            self.shape_selected.emit(ShapeType.Rectangle)
+
+    def on_select_rotated_rectangle(self, toggled):
+        if toggled:
+            self.shape_selected.emit(ShapeType.RotatedRectangle)
 
     def on_select_polygon(self, toggled: bool):
         if toggled:
             self.shape_selected.emit(ShapeType.Polygon)
-
-    def on_select_rectangle(self, toggled):
-        if toggled:
-            self.shape_selected.emit(ShapeType.Rectangle)
 
     def on_select_circle(self, toggled):
         if toggled:
