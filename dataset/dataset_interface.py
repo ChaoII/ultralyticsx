@@ -11,7 +11,7 @@ from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
 
 class DatasetWidget(InterfaceBase):
     def __init__(self, parent=None):
-        super(DatasetWidget, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         self.setObjectName("dataset_widget")
         self.vly = QVBoxLayout(self)
         self.vly.setSpacing(9)

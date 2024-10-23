@@ -16,7 +16,7 @@ from common.component.collapsible_widget import CollapsibleWidgetItem
 from common.component.custom_process_bar import CustomProcessBar
 from common.database.db_helper import db_session
 from common.utils.utils import log_warning, log_error
-from models.models import Task
+from models.models import TrainTask
 from settings import cfg
 from ..task_thread.model_train_thread import ModelTrainThread
 from ...types import TaskInfo, TaskStatus
@@ -251,7 +251,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._current_thread.start()
         self._task_info.task_status = TaskStatus.TRAINING
         with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
         if self._task_info.task_status != TaskStatus.TRN_FINISHED:
             self.btn_next_step.setVisible(False)

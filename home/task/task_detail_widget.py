@@ -8,7 +8,7 @@ from common.component.custom_scroll_widget import CustomScrollWidget
 from common.database.db_helper import db_session
 from common.component.model_type_widget import ModelType
 from common.core.content_widget_base import ContentWidgetBase
-from models.models import Task
+from models.models import TrainTask
 from .task_detail.model_val_widget import ModelValWidget
 from .task_detail.model_parameter_widget import ModelParameterWidget
 from .task_detail.model_dataset_widget import ModelDatasetWidget
@@ -104,7 +104,7 @@ class TaskDetailWidget(ContentWidgetBase):
     def update_widget(self):
         task_info = TaskInfo()
         with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_id).first()
+            task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_id).first()
             task_info.task_id = task.task_id
             task_info.dataset_id = task.dataset_id
             task_info.project_id = task.project_id

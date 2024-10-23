@@ -25,7 +25,7 @@ class Dataset(Base):
     create_time = Column(DateTime, default=datetime.now())
     split_rate = Column(String, default="70_20_10")
     dataset_total = Column(Integer, default=0)
-    tasks = relationship("Task", back_populates="dataset")
+    tasks = relationship("TrainTask", back_populates="dataset")
 
     projects = relationship("Project", secondary=projects_to_datasets, back_populates="datasets")
 
@@ -40,13 +40,11 @@ class Project(Base):
     model_type = Column(Integer)
     project_dir = Column(String)
     create_time = Column(DateTime, default=datetime.now())
-
-    tasks = relationship("Task", back_populates="project", cascade="all, delete")
-
+    tasks = relationship("TrainTask", back_populates="project", cascade="all, delete")
     datasets = relationship("Dataset", secondary=projects_to_datasets, back_populates="projects")
 
 
-class Task(Base):
+class TrainTask(Base):
     __tablename__ = "tb_tasks"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -62,6 +60,22 @@ class Task(Base):
     create_time = Column(DateTime, default=datetime.now())
     project = relationship("Project", back_populates="tasks")
     dataset = relationship("Dataset", back_populates="tasks")
+
+
+class AnnotationTask(Base):
+    __tablename__ = "tb_annotation_tasks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    task_id = Column(String)
+    task_name = Column(String)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    elapsed = Column(String)
+    task_status = Column(Integer, default=0)
+    cur_num = Column(Integer, default=0)
+    total = Column(Integer, default=0)
+    data_dir = Column(String)
+    create_time = Column(DateTime, default=datetime.now())
 
 
 Base.metadata.create_all(engine)

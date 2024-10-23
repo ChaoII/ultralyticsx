@@ -7,7 +7,7 @@ from common.component.collapsible_widget import CollapsibleWidgetItem
 from common.component.custom_icon import CustomFluentIcon
 from common.database.db_helper import db_session
 from dataset.types import DatasetStatus
-from models.models import Dataset, Task
+from models.models import Dataset, TrainTask
 from ...types import TaskInfo, TaskStatus
 
 
@@ -90,7 +90,7 @@ class ModelDatasetWidget(CollapsibleWidgetItem):
     def _load_current_dataset_info(self):
         self.dataset_detail.setVisible(True)
         with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
             train_rate, val_rate, test_rate = task.dataset.split_rate.split("_")
             dataset_total = task.dataset.dataset_total
             train_num = round(int(train_rate) * dataset_total / 100)
@@ -105,7 +105,7 @@ class ModelDatasetWidget(CollapsibleWidgetItem):
     def _on_select_dataset_index_changed(self, index: int):
         if index != -1:
             with db_session() as session:
-                task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+                task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
                 self._task_info.dataset_id = self.cmb_select_dataset.currentText()
                 self._task_info.task_status = TaskStatus.DS_SELECTED
                 task.dataset_id = self.cmb_select_dataset.currentText()

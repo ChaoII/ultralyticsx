@@ -14,7 +14,7 @@ from common.component.collapsible_widget import CollapsibleWidgetItem
 from common.database.db_helper import db_session
 from common.component.file_select_widget import FileSelectWidget
 from common.component.model_type_widget import ModelType
-from models.models import Task
+from models.models import TrainTask
 from ...options import model_type_list_map
 from ...types import TaskInfo, TaskStatus
 
@@ -697,7 +697,7 @@ class ModelParameterWidget(CollapsibleWidgetItem):
             device = self.cus_device.get_current_device()[1]
 
         with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
             if task.project.model_type == ModelType.CLASSIFY.value:
                 data = (Path(task.dataset.dataset_dir) / "split").resolve().as_posix()
             elif task.project.model_type == ModelType.DETECT.value:
@@ -784,7 +784,7 @@ class ModelParameterWidget(CollapsibleWidgetItem):
         with open(self._task_info.task_dir / "train_config.yaml", 'w', encoding="utf8") as file:
             yaml.dump(parameter, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
         with db_session() as session:
-            task: Task = session.query(Task).filter_by(task_id=self._task_info.task_id).first()
+            task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = TaskStatus.CFG_FINISHED.value
         self._task_info.task_status = TaskStatus.CFG_FINISHED
 
