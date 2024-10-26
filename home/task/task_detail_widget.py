@@ -15,7 +15,7 @@ from .task_detail.model_dataset_widget import ModelDatasetWidget
 from .task_detail.model_export_widget import ModelExportWidget
 from .task_detail.model_train_widget import ModelTrainWidget
 from .task_detail.model_predict_widget import ModelPredictWidget
-from ..types import TaskInfo, TaskStatus
+from ..types import TrainTaskInfo, TrainTaskStatus
 
 
 class TaskDetailWidget(ContentWidgetBase):
@@ -61,38 +61,38 @@ class TaskDetailWidget(ContentWidgetBase):
         self.model_val_widget.next_step_clicked.connect(self._on_val_finish_and_next_clicked)
         self.model_export_widget.export_model_finished.connect(self._on_model_export_finish)
 
-    @Slot(TaskInfo)
+    @Slot(TrainTaskInfo)
     def _on_dataset_selected_clicked(self, task_info):
         self.tool_box.set_current_item(self.model_parameter_widget)
         self.model_parameter_widget.setEnabled(True)
         self.model_train_widget.set_task_info(task_info)
 
-    @Slot(TaskInfo)
-    def _on_parameter_config_finished(self, task_info: TaskInfo):
+    @Slot(TrainTaskInfo)
+    def _on_parameter_config_finished(self, task_info: TrainTaskInfo):
         self.tool_box.set_current_item(self.model_train_widget)
         self.model_train_widget.setEnabled(True)
         self.model_train_widget.set_task_info(task_info)
 
-    @Slot(TaskInfo)
-    def _on_start_training_clicked(self, task_info: TaskInfo):
+    @Slot(TrainTaskInfo)
+    def _on_start_training_clicked(self, task_info: TrainTaskInfo):
         self.tool_box.set_current_item(self.model_train_widget)
         self.model_train_widget.setEnabled(True)
         self.model_train_widget.set_task_info(task_info)
         self.model_train_widget.start_train()
 
-    @Slot(TaskInfo)
-    def _on_train_finish_and_next_clicked(self, task_info: TaskInfo):
+    @Slot(TrainTaskInfo)
+    def _on_train_finish_and_next_clicked(self, task_info: TrainTaskInfo):
         self.tool_box.set_current_item(self.model_val_widget)
         self.model_val_widget.setEnabled(True)
         self.model_val_widget.set_task_info(task_info)
 
-    def _on_val_finish_and_next_clicked(self, task_info: TaskInfo):
+    def _on_val_finish_and_next_clicked(self, task_info: TrainTaskInfo):
         self.tool_box.set_current_item(self.model_export_widget)
         self.model_export_widget.setEnabled(True)
         self.model_export_widget.set_task_info(task_info)
 
     @Slot(bool)
-    def _on_model_export_finish(self, task_info: TaskInfo):
+    def _on_model_export_finish(self, task_info: TrainTaskInfo):
         self.tool_box.set_current_item(self.model_predict_widget)
         self.model_predict_widget.set_task_info(task_info)
 
@@ -102,17 +102,17 @@ class TaskDetailWidget(ContentWidgetBase):
         # self.update_widget()
 
     def update_widget(self):
-        task_info = TaskInfo()
+        task_info = TrainTaskInfo()
         with db_session() as session:
             task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_id).first()
             task_info.task_id = task.task_id
             task_info.dataset_id = task.dataset_id
             task_info.project_id = task.project_id
-            task_info.task_status = TaskStatus(task.task_status)
+            task_info.task_status = TrainTaskStatus(task.task_status)
             task_info.model_type = ModelType(task.project.model_type)
             task_info.task_dir = Path(task.project.project_dir) / self._task_id
 
-        if task_info.task_status == TaskStatus.INITIALIZING:
+        if task_info.task_status == TrainTaskStatus.INITIALIZING:
             self.tool_box.set_current_item(self.model_dataset_widget)
             self.model_dataset_widget.setEnabled(True)
             self.model_parameter_widget.setEnabled(False)
@@ -120,7 +120,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
             self.model_predict_widget.setEnabled(False)
-        if task_info.task_status == TaskStatus.DS_SELECTED:
+        if task_info.task_status == TrainTaskStatus.DS_SELECTED:
             self.tool_box.set_current_item(self.model_parameter_widget)
             self.model_dataset_widget.setEnabled(True)
             self.model_parameter_widget.setEnabled(True)
@@ -128,7 +128,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
             self.model_predict_widget.setEnabled(False)
-        if task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
+        if task_info.task_status.value >= TrainTaskStatus.CFG_FINISHED.value:
             self.tool_box.set_current_item(self.model_train_widget)
             self.model_dataset_widget.setEnabled(True)
             self.model_parameter_widget.setEnabled(True)
@@ -136,7 +136,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_val_widget.setEnabled(False)
             self.model_export_widget.setEnabled(False)
             self.model_predict_widget.setEnabled(False)
-        if task_info.task_status.value >= TaskStatus.TRN_FINISHED.value:
+        if task_info.task_status.value >= TrainTaskStatus.TRN_FINISHED.value:
             self.tool_box.set_current_item(self.model_val_widget)
             self.model_dataset_widget.setEnabled(True)
             self.model_parameter_widget.setEnabled(True)
@@ -144,7 +144,7 @@ class TaskDetailWidget(ContentWidgetBase):
             self.model_val_widget.setEnabled(True)
             self.model_export_widget.setEnabled(True)
             self.model_predict_widget.setEnabled(True)
-        if task_info.task_status.value >= TaskStatus.VAL_FINISHED.value:
+        if task_info.task_status.value >= TrainTaskStatus.VAL_FINISHED.value:
             self.tool_box.set_current_item(self.model_predict_widget)
             self.model_dataset_widget.setEnabled(True)
             self.model_parameter_widget.setEnabled(True)

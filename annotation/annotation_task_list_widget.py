@@ -19,6 +19,7 @@ from common.core.content_widget_base import ContentWidgetBase
 from common.database.db_helper import db_session
 from common.utils.utils import format_datatime, open_directory
 from models.models import AnnotationTask
+from .new_annotation_task_dialog import NewAnnotationTaskDialog
 from .types import AnnotationStatus
 
 COLUMN_TASK_ID = 0
@@ -114,7 +115,7 @@ class AnnotationTaskListWidget(ContentWidgetBase):
 
     def __init__(self):
         super().__init__()
-        self.setObjectName("annotation_list_widget")
+        self.setObjectName("annotation_task_list_widget")
         self.vly = QVBoxLayout(self)
         self.vly.setSpacing(9)
         self.hly_btn = QHBoxLayout()
@@ -126,9 +127,10 @@ class AnnotationTaskListWidget(ContentWidgetBase):
         self.vly.addWidget(self.tb_task)
         self._connect_signals_and_slots()
         self._task_id_to_row_index = dict()
+        self.update_widget()
 
     def _connect_signals_and_slots(self):
-        self.btn_create_task.clicked.connect(self._on_create_annotation_task)
+        self.btn_create_task.clicked.connect(self._on_create_annotation_task_clicked)
         # event_manager.signal_bridge.train_status_changed.connect(self._on_train_status_changed)
 
     def update_widget(self):
@@ -235,18 +237,24 @@ class AnnotationTaskListWidget(ContentWidgetBase):
             open_directory(directory)
 
     @Slot()
-    def _on_create_annotation_task(self):
-        # 创建任务路径
-        with db_session() as session:
-            task_id = self.get_task_id()
-            try:
-                task = AnnotationTask(
-                    task_id=task_id,
-                    task_status=AnnotationStatus.Initialing.value,
-                    cur_num=0,
-                    total=0
-                )
-                session.add(task)
-            except Exception as e:
-                logger.error(f"Failed to create annotation task {task_id} error: {e}")
-        self.update_widget()
+    def _on_create_annotation_task_clicked(self):
+        self.new_annotation_dialog = NewAnnotationTaskDialog(self)
+        self.new_annotation_dialog.annotation_task_created.connect(self._on_add_new_annotation_task)
+        self.new_annotation_dialog.exec()
+        # # 创建任务路径
+        # with db_session() as session:
+        #     task_id = self.get_task_id()
+        #     try:
+        #         task = AnnotationTask(
+        #             task_id=task_id,
+        #             task_status=AnnotationStatus.Initialing.value,
+        #             cur_num=0,
+        #             total=0
+        #         )
+        #         session.add(task)
+        #     except Exception as e:
+        #         logger.error(f"Failed to create annotation task {task_id} error: {e}")
+        # self.update_widget()
+
+    def _on_add_new_annotation_task(self):
+        pass

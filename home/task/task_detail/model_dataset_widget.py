@@ -8,11 +8,11 @@ from common.component.custom_icon import CustomFluentIcon
 from common.database.db_helper import db_session
 from dataset.types import DatasetStatus
 from models.models import Dataset, TrainTask
-from ...types import TaskInfo, TaskStatus
+from ...types import TrainTaskInfo, TrainTaskStatus
 
 
 class ModelDatasetWidget(CollapsibleWidgetItem):
-    dataset_selected_clicked = Signal(TaskInfo)
+    dataset_selected_clicked = Signal(TrainTaskInfo)
 
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Model dataset"), parent=parent)
@@ -46,9 +46,9 @@ class ModelDatasetWidget(CollapsibleWidgetItem):
         self.set_content_widget(self.content_widget)
         self._is_select_dataset_connect_signal_and_slots = False
         self._connect_signals_and_slots()
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self.cmb_select_dataset.clear()
         self.cmb_select_dataset.setEnabled(True)
         self.dataset_detail.setVisible(False)
@@ -60,7 +60,7 @@ class ModelDatasetWidget(CollapsibleWidgetItem):
             self.cmb_select_dataset.currentIndexChanged.disconnect(self._on_select_dataset_index_changed)
             self._is_select_dataset_connect_signal_and_slots = False
         self.cmb_select_dataset.setIcon(self._task_info.model_type.icon.icon(color=themeColor()))
-        if self._task_info.task_status.value >= TaskStatus.DS_SELECTED.value:
+        if self._task_info.task_status.value >= TrainTaskStatus.DS_SELECTED.value:
             self.cmb_select_dataset.addItem(self._task_info.dataset_id,
                                             self._task_info.model_type.icon.icon(themeColor()))
             self.cmb_select_dataset.setCurrentIndex(0)
@@ -107,7 +107,7 @@ class ModelDatasetWidget(CollapsibleWidgetItem):
             with db_session() as session:
                 task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
                 self._task_info.dataset_id = self.cmb_select_dataset.currentText()
-                self._task_info.task_status = TaskStatus.DS_SELECTED
+                self._task_info.task_status = TrainTaskStatus.DS_SELECTED
                 task.dataset_id = self.cmb_select_dataset.currentText()
-                task.task_status = TaskStatus.DS_SELECTED.value
+                task.task_status = TrainTaskStatus.DS_SELECTED.value
             self._load_current_dataset_info()

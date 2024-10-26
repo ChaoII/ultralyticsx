@@ -8,7 +8,7 @@ from common.utils.draw_labels import draw_detect_result, draw_segment_result, dr
 from common.component.model_type_widget import ModelType
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
-from ...types import TaskInfo
+from ...types import TrainTaskInfo
 
 
 class ModelPredictorThread(QThread):
@@ -19,10 +19,10 @@ class ModelPredictorThread(QThread):
         super().__init__()
         self._predictor: YOLO | None = None
         self._model_path = model_path
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
         self._image_path: Path | None = None
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
 
     def set_predict_image(self, image_path: Path):

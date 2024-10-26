@@ -15,7 +15,7 @@ from common.component.progress_message_box import ProgressMessageBox
 from common.core.window_manager import window_manager
 from ultralytics.engine.results import Results
 from ..task_thread.model_predict_thread import ModelPredictorThread
-from ...types import TaskInfo
+from ...types import TrainTaskInfo
 
 
 class FixWidthBodyLabel(BodyLabel):
@@ -100,7 +100,7 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self.vly_content.addLayout(self.hly_btn)
 
         self.set_content_widget(self.content_widget)
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
         self._model_predict_thread: ModelPredictorThread | None = None
         self._current_image_path: Path | None = None
         self._message_box: ProgressMessageBox | None = None
@@ -110,7 +110,7 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self.btn_predict.clicked.connect(self._on_predict_clicked)
         self.lbl_input_image.image_selected.connect(self._on_image_selected)
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
         self._init_model_name()
         self.tb_predict_speed.clear()

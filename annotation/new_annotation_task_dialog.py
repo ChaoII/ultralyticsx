@@ -1,7 +1,4 @@
-import os
-import re
 from datetime import datetime
-from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QLabel, QPushButton
@@ -9,19 +6,18 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
 from qfluentwidgets import BodyLabel, FluentStyleSheet, PrimaryPushButton, \
     LineEdit, TextEdit, InfoBar, InfoBarPosition
 from qframelesswindow import FramelessDialog
+from sqlalchemy import desc
 from sqlalchemy.orm import Query
 
-from common.database.db_helper import db_session
 from common.component.file_select_widget import FileSelectWidget
 from common.component.model_type_widget import ModelTypeGroupWidget, ModelType
-from home.types import ProjectInfo
-from models.models import Project
-from settings import cfg
+from common.database.db_helper import db_session
+from models.models import Project, AnnotationTask
+from .types import AnnotationTaskInfo
 
 
-class NewProjectDialog(FramelessDialog):
-    project_created = Signal(ProjectInfo)
-    cancelSignal = Signal()
+class NewAnnotationTaskDialog(FramelessDialog):
+    annotation_task_created = Signal(AnnotationTaskInfo)
 
     def __init__(self, parent=None):
         super().__init__()
@@ -48,21 +44,24 @@ class NewProjectDialog(FramelessDialog):
         self.hly_btn.setSpacing(12)
         self.hly_btn.setContentsMargins(24, 24, 24, 24)
 
-        self.lbl_name = BodyLabel(text=self.tr("Project name:"))
+        self.lbl_name = BodyLabel(text=self.tr("Task name:"))
         self.le_name = LineEdit()
         self.le_name.setMaxLength(16)
-        self.lbl_description = BodyLabel(text=self.tr("Project description:"))
+        self.lbl_description = BodyLabel(text=self.tr("Task description:"))
         self.ted_description = TextEdit()
         self.lbl_type = BodyLabel(text=self.tr("model type:"))
         self.model_type = ModelTypeGroupWidget()
-        self.lbl_workspace_dir = BodyLabel(text=self.tr("workspace directory:"))
-        self.workdir_select = FileSelectWidget()
+        self.lbl_image_dir = BodyLabel(text=self.tr("image directory:"))
+        self.image_dir_select = FileSelectWidget()
+        self.lbl_annotation_dir = BodyLabel(text=self.tr("annotation directory:"))
+        self.annotation_dir_select = FileSelectWidget()
         self.fly_content = QFormLayout()
         self.fly_content.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.fly_content.addRow(self.lbl_name, self.le_name)
         self.fly_content.addRow(self.lbl_description, self.ted_description)
         self.fly_content.addRow(self.lbl_type, self.model_type)
-        self.fly_content.addRow(self.lbl_workspace_dir, self.workdir_select)
+        self.fly_content.addRow(self.lbl_image_dir, self.image_dir_select)
+        self.fly_content.addRow(self.lbl_annotation_dir, self.annotation_dir_select)
 
         self.vBoxLayout = QVBoxLayout(self)
         self.vBoxLayout.setSpacing(9)
@@ -72,17 +71,16 @@ class NewProjectDialog(FramelessDialog):
 
         self.vBoxLayout.addLayout(self.hly_btn)
         self.vBoxLayout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)
-        self.project_info = ProjectInfo()
-        self.workdir_select.setText(cfg.get(cfg.workspace_folder))
-        self.project_root_dir = Path(cfg.get(cfg.workspace_folder)) / "project"
-        os.makedirs(self.project_root_dir, exist_ok=True)
+        self.annotation_task_info = AnnotationTaskInfo()
+
         self._initWidget()
         self._connect_signals_and_slots()
 
     def _connect_signals_and_slots(self):
-        self.model_type.model_type_selected.connect(self._on_project_type_selected)
-        self.workdir_select.path_selected.connect(self._on_workdir_selected)
+        self.model_type.model_type_selected.connect(self._on_annotation_task_type_selected)
         self.ted_description.textChanged.connect(self._on_description_text_changed)
+        self.image_dir_select.path_selected.connect(self._on_image_dir_selected)
+        self.annotation_dir_select.path_selected.connect(self._on_annotation_dir_selected)
 
     @Slot(str)
     def _on_description_text_changed(self):
@@ -101,12 +99,16 @@ class NewProjectDialog(FramelessDialog):
             self.ted_description.setPlainText(self.ted_description.toPlainText()[:100])
 
     @Slot(str)
-    def _on_workdir_selected(self, workspace_idr):
-        self.project_info.workspace_dir = workspace_idr
+    def _on_image_dir_selected(self, image_dir):
+        self.annotation_task_info.image_dir = image_dir
+
+    @Slot(str)
+    def _on_annotation_dir_selected(self, annotation_dir):
+        self.annotation_task_info.annotation_dir = annotation_dir
 
     @Slot(ModelType)
-    def _on_project_type_selected(self, project_type: ModelType):
-        self.project_info.model_type = project_type
+    def _on_annotation_task_type_selected(self, annotation_task_type: ModelType):
+        self.annotation_task_info.model_type = annotation_task_type
 
     def _initWidget(self):
         self._setQss()
@@ -119,7 +121,6 @@ class NewProjectDialog(FramelessDialog):
 
     def _onCancelButtonClicked(self):
         self.reject()
-        self.cancelSignal.emit()
 
     def _onYesButtonClicked(self):
         with db_session(True) as session:
@@ -136,19 +137,21 @@ class NewProjectDialog(FramelessDialog):
                 )
                 return
         self.accept()
-        self.project_info.project_id = self._get_project_id()
-        self.project_info.project_name = self.le_name.text()
-        self.project_info.project_description = self.ted_description.toPlainText()
-        self.project_info.project_dir = (self.project_root_dir / self.project_info.project_id).resolve().as_posix()
-        self.project_info.create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.project_created.emit(self.project_info)
+        self.annotation_task_info.annotation_task_id = self.get_task_id()
+        self.annotation_task_info.annotation_task_name = self.le_name.text()
+        self.annotation_task_info.annotation_task_description = self.ted_description.toPlainText()
+        self.annotation_task_info.create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.annotation_task_created.emit(self.annotation_task_info)
 
-    def _get_project_id(self) -> str:
-        project_id = f"P{0:06d}"
-        for item in self.project_root_dir.iterdir():
-            if item.is_dir() and re.match(r'^P\d{6}$', item.name):
-                project_id = f"P{int(item.name[1:]) + 1:06d}"
-        return project_id
+    @staticmethod
+    def get_task_id() -> str:
+        with db_session() as session:
+            latest_task: AnnotationTask = session.query(AnnotationTask).order_by(desc(AnnotationTask.task_id)).first()
+            if latest_task is None:
+                task_id = "A000001"
+            else:
+                task_id = f"A{int(latest_task.task_id[1:]) + 1:06d}"
+        return task_id
 
     def _setQss(self):
         self.titleLabel.setObjectName("titleLabel")

@@ -5,7 +5,7 @@ from common.component.model_type_widget import ModelType
 from common.utils.utils import CustomColor
 
 
-class TaskStatus(Enum):
+class TrainTaskStatus(Enum):
     INITIALIZING = 0
     # dataset selected
     DS_SELECTED = 1
@@ -21,14 +21,14 @@ class TaskStatus(Enum):
     @property
     def color(self):
         _color_map = {
-            TaskStatus.INITIALIZING: CustomColor.BLUE.value,
-            TaskStatus.DS_SELECTED: CustomColor.BROWN.value,
-            TaskStatus.CFG_FINISHED: CustomColor.YELLOW.value,
-            TaskStatus.TRAINING: CustomColor.GRAY.value,
-            TaskStatus.TRN_FAILED: CustomColor.PURPLE.value,
-            TaskStatus.TRN_PAUSE: CustomColor.RED.value,
-            TaskStatus.TRN_FINISHED: CustomColor.GREEN.value,
-            TaskStatus.VAL_FINISHED: CustomColor.CYAN1.value,
+            TrainTaskStatus.INITIALIZING: CustomColor.BLUE.value,
+            TrainTaskStatus.DS_SELECTED: CustomColor.BROWN.value,
+            TrainTaskStatus.CFG_FINISHED: CustomColor.YELLOW.value,
+            TrainTaskStatus.TRAINING: CustomColor.GRAY.value,
+            TrainTaskStatus.TRN_FAILED: CustomColor.PURPLE.value,
+            TrainTaskStatus.TRN_PAUSE: CustomColor.RED.value,
+            TrainTaskStatus.TRN_FINISHED: CustomColor.GREEN.value,
+            TrainTaskStatus.VAL_FINISHED: CustomColor.CYAN1.value,
         }
         return _color_map[self]
 
@@ -42,11 +42,11 @@ class ProjectInfo:
     create_time: str
 
 
-class TaskInfo:
+class TrainTaskInfo:
     task_id: str
     project_id: str
     dataset_id: str
     model_type: ModelType
-    task_status: TaskStatus
+    task_status: TrainTaskStatus
     task_dir: Path
     create_time: str

@@ -12,7 +12,7 @@ from common.component.custom_icon import CustomFluentIcon
 from common.component.progress_message_box import ProgressMessageBox
 from common.core.window_manager import WindowManager
 from ..task_thread.model_val_thread import ModelValThread
-from ...types import TaskInfo
+from ...types import TrainTaskInfo
 
 
 class FixWidthBodyLabel(BodyLabel):
@@ -26,7 +26,7 @@ class FixWidthBodyLabel(BodyLabel):
 
 class ModelValWidget(CollapsibleWidgetItem):
     val_model_finished = Signal(bool)
-    next_step_clicked = Signal(TaskInfo)
+    next_step_clicked = Signal(TrainTaskInfo)
 
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Model validation"), parent=parent)
@@ -153,7 +153,7 @@ class ModelValWidget(CollapsibleWidgetItem):
         self.vly_content.addLayout(self.hly_tb_speed)
 
         self.set_content_widget(self.content_widget)
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
         self._model_val_thread: ModelValThread | None = None
         self._export_parameter = dict()
         self._state_tool_tip = None
@@ -164,7 +164,7 @@ class ModelValWidget(CollapsibleWidgetItem):
         self.btn_val.clicked.connect(self._on_val_clicked)
         self.btn_next_step.clicked.connect(self._on_next_step_clicked)
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
         self._init_model_name()
         self.tb_val_result.setVisible(False)

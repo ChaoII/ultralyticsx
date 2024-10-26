@@ -16,7 +16,7 @@ from common.component.file_select_widget import FileSelectWidget
 from common.component.model_type_widget import ModelType
 from models.models import TrainTask
 from ...options import model_type_list_map
-from ...types import TaskInfo, TaskStatus
+from ...types import TrainTaskInfo, TrainTaskStatus
 
 
 class BatchStatus(enum.Enum):
@@ -282,8 +282,8 @@ class FixWidthBodyLabel(BodyLabel):
 
 
 class ModelParameterWidget(CollapsibleWidgetItem):
-    parameter_config_finished = Signal(TaskInfo)
-    start_training_clicked = Signal(TaskInfo)
+    parameter_config_finished = Signal(TrainTaskInfo)
+    start_training_clicked = Signal(TrainTaskInfo)
 
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Model parameter"), parent=parent)
@@ -678,7 +678,7 @@ class ModelParameterWidget(CollapsibleWidgetItem):
         self.vly_content.addLayout(self.hly_btn)
 
         self.set_content_widget(self.content_widget)
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
         self.stateTooltip = None
         self._connect_signals_and_slots()
 
@@ -785,8 +785,8 @@ class ModelParameterWidget(CollapsibleWidgetItem):
             yaml.dump(parameter, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
         with db_session() as session:
             task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
-            task.task_status = TaskStatus.CFG_FINISHED.value
-        self._task_info.task_status = TaskStatus.CFG_FINISHED
+            task.task_status = TrainTaskStatus.CFG_FINISHED.value
+        self._task_info.task_status = TrainTaskStatus.CFG_FINISHED
 
     def _on_train_clicked(self):
         self._save_config()
@@ -805,7 +805,7 @@ class ModelParameterWidget(CollapsibleWidgetItem):
             parent=self.parent().parent()
         )
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
         self.update_train_btn_status(False, self._task_info.task_id)
         self.fs_save_dir.setText(self._task_info.task_dir.resolve().as_posix())
@@ -825,7 +825,7 @@ class ModelParameterWidget(CollapsibleWidgetItem):
     def _init_parameter_on_widget(self):
         self.cmb_model_name.clear()
         self.cmb_model_name.addItems(model_type_list_map[self._task_info.model_type])
-        if self._task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
+        if self._task_info.task_status.value >= TrainTaskStatus.CFG_FINISHED.value:
             with open(self._task_info.task_dir / "train_config.yaml", 'r', encoding="utf8") as file:
                 parameter = yaml.safe_load(file)
 

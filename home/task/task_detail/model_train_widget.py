@@ -19,7 +19,7 @@ from common.utils.utils import log_warning, log_error
 from models.models import TrainTask
 from settings import cfg
 from ..task_thread.model_train_thread import ModelTrainThread
-from ...types import TaskInfo, TaskStatus
+from ...types import TrainTaskInfo, TrainTaskStatus
 
 
 class ModelTrainThreadMap:
@@ -87,7 +87,7 @@ class RichTextLogWidget(TextEdit):
 
 class ModelTrainWidget(CollapsibleWidgetItem):
     is_training_signal = Signal(bool, str)
-    next_step_clicked = Signal(TaskInfo)
+    next_step_clicked = Signal(TrainTaskInfo)
 
     def __init__(self, parent=None):
         super(ModelTrainWidget, self).__init__(self.tr("▌Model training"), parent=parent)
@@ -136,7 +136,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._train_parameter: dict = dict()
         self._train_config_file_path: Path | None = None
         self._last_model = ""
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
         # 继续训练还是重新训练
         self._is_retrain = True
 
@@ -148,12 +148,12 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self.btn_stop_train.clicked.connect(self._on_stop_train_clicked)
         self.btn_next_step.clicked.connect(self._on_next_step_clicked)
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
-        if task_info.task_status.value < TaskStatus.CFG_FINISHED.value:
+        if task_info.task_status.value < TrainTaskStatus.CFG_FINISHED.value:
             return
         self.btn_next_step.setVisible(False)
-        if TaskStatus.TRAINING.value != task_info.task_status.value >= TaskStatus.CFG_FINISHED.value:
+        if TrainTaskStatus.TRAINING.value != task_info.task_status.value >= TrainTaskStatus.CFG_FINISHED.value:
             self.ted_train_log.clear()
             self.pg_widget.clear()
 
@@ -175,7 +175,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
                 self.psb_train.set_value(len(list(train_metric.values())[1]) - 1)
                 self.load_graph(train_loss, train_metric)
 
-        if task_info.task_status == TaskStatus.TRAINING:
+        if task_info.task_status == TrainTaskStatus.TRAINING:
             self.btn_start_train.setEnabled(False)
             self.btn_stop_train.setEnabled(True)
             if self._task_info.task_id in self._task_thread_map.get_thread_map():
@@ -193,11 +193,11 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self._current_thread = None
 
         # 如果
-        if task_info.task_status.value > TaskStatus.TRAINING.value:
+        if task_info.task_status.value > TrainTaskStatus.TRAINING.value:
             self.btn_start_train.setEnabled(True)
             self.btn_stop_train.setEnabled(False)
             self.btn_start_train.setText(self.tr("Resume train"))
-        if task_info.task_status == TaskStatus.TRN_FINISHED:
+        if task_info.task_status == TrainTaskStatus.TRN_FINISHED:
             self.btn_start_train.setText(self.tr("Retrain"))
             self.btn_next_step.setVisible(True)
 
@@ -233,7 +233,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         #         log_error("status is training but not find the train thread")
         #         return
         # else:
-        if self._task_info.task_status != TaskStatus.TRAINING:
+        if self._task_info.task_status != TrainTaskStatus.TRAINING:
             if self._is_retrain:
                 self.ted_train_log.clear()
                 self.psb_train.set_value(0)
@@ -249,11 +249,11 @@ class ModelTrainWidget(CollapsibleWidgetItem):
 
         self._disable_btn_to_train_status()
         self._current_thread.start()
-        self._task_info.task_status = TaskStatus.TRAINING
+        self._task_info.task_status = TrainTaskStatus.TRAINING
         with db_session() as session:
             task: TrainTask = session.query(TrainTask).filter_by(task_id=self._task_info.task_id).first()
             task.task_status = self._task_info.task_status.value
-        if self._task_info.task_status != TaskStatus.TRN_FINISHED:
+        if self._task_info.task_status != TrainTaskStatus.TRN_FINISHED:
             self.btn_next_step.setVisible(False)
 
     @Slot(str)
@@ -333,15 +333,15 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         self._last_model = self._current_thread.get_last_model()
         self.psb_train.set_value(epoch)
 
-    @Slot(TaskInfo)
-    def on_handle_train_end(self, task_info: TaskInfo):
+    @Slot(TrainTaskInfo)
+    def on_handle_train_end(self, task_info: TrainTaskInfo):
         if self.sender() == self._current_thread:
             self._enable_btn_to_train_status()
-            if task_info.task_status == TaskStatus.TRN_FINISHED:
+            if task_info.task_status == TrainTaskStatus.TRN_FINISHED:
                 self.btn_start_train.setText(self.tr("ReTrain"))
                 self._is_retrain = True
                 self.btn_next_step.setVisible(True)
-            if task_info.task_status == TaskStatus.TRN_PAUSE:
+            if task_info.task_status == TrainTaskStatus.TRN_PAUSE:
                 self.btn_start_train.setText(self.tr("Resume"))
                 self._is_retrain = False
             self._task_info.task_status = task_info.task_status
@@ -352,7 +352,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         if self.sender() == self._current_thread:
             self.ted_train_log.append(log_error(error_info))
             self._enable_btn_to_train_status()
-            self._task_info.task_status = TaskStatus.TRN_FAILED
+            self._task_info.task_status = TrainTaskStatus.TRN_FAILED
 
             InfoBar.error(
                 title='',

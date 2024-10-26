@@ -1,7 +1,7 @@
 from PySide6.QtCore import Signal, QThread
 
 from ultralytics import YOLO
-from ...types import TaskInfo
+from ...types import TrainTaskInfo
 
 
 class ModelExportThread(QThread):

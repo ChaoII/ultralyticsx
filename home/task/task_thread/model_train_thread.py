@@ -18,7 +18,7 @@ from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.models.yolo.obb import OBBTrainer
 from ultralytics.models.yolo.pose import PoseTrainer
 from ultralytics.models.yolo.segment import SegmentationTrainer
-from ...types import TaskInfo, TaskStatus
+from ...types import TrainTaskInfo, TrainTaskStatus
 
 
 class CustomLogs(QObject):
@@ -101,7 +101,7 @@ class CustomPlotData(QObject):
 class ModelTrainThread(QThread):
     train_start_signal = Signal(dict, dict)
     train_epoch_end = Signal(int)
-    model_train_end = Signal(TaskInfo)
+    model_train_end = Signal(TrainTaskInfo)
     model_train_failed = Signal(str)
 
     log_changed_signal = Signal(str)
@@ -114,7 +114,7 @@ class ModelTrainThread(QThread):
         self._train_parameters = train_parameters
         self._stop = False
         self._metric_num = 0
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
         self._loss_data = CustomPlotData()
         self._metric_data = CustomPlotData()
         self._train_loss_path: Path | None = None
@@ -130,7 +130,7 @@ class ModelTrainThread(QThread):
         self._loss_data.plot_data_changed.connect(lambda loss: self.loss_changed_signal.emit(loss))
         self._metric_data.plot_data_changed.connect(lambda metric: self.metric_changed_signal.emit(metric))
 
-    def init_model_trainer(self, task_info: TaskInfo) -> bool:
+    def init_model_trainer(self, task_info: TrainTaskInfo) -> bool:
         try:
             if task_info.model_type == ModelType.CLASSIFY:
                 self.trainer = ClassificationTrainer(overrides=self._train_parameters)
@@ -182,7 +182,7 @@ class ModelTrainThread(QThread):
             self._logs.append(error_msg)
             return False
 
-    def get_task_info(self) -> TaskInfo:
+    def get_task_info(self) -> TrainTaskInfo:
         return self._task_info
 
     def get_log_lines(self) -> list[str]:
@@ -219,7 +219,7 @@ class ModelTrainThread(QThread):
             self._metric_data.init_plot_data(metrics)
         self.train_start_signal.emit(self._loss_data.raw_data(), self._metric_data.raw_data())
         core.EventManager().train_status_changed.emit(self._task_info.task_id, 0, epochs, format_datatime(
-            datetime.fromtimestamp(self._start_time)), None, None, TaskStatus.TRAINING)
+            datetime.fromtimestamp(self._start_time)), None, None, TrainTaskStatus.TRAINING)
         db_update_task_started(self._task_info.task_id, datetime.fromtimestamp(self._start_time))
 
     def _on_train_epoch_start(self, trainer):
@@ -239,7 +239,7 @@ class ModelTrainThread(QThread):
         self.train_epoch_end.emit(epoch)
 
         core.EventManager().train_status_changed.emit(self._task_info.task_id, epoch, epochs, format_datatime(
-            datetime.fromtimestamp(self._start_time)), None, None, TaskStatus.TRAINING)
+            datetime.fromtimestamp(self._start_time)), None, None, TrainTaskStatus.TRAINING)
 
         db_update_task_epoch_info(self._task_info.task_id, epoch, epochs)
 
@@ -314,13 +314,13 @@ class ModelTrainThread(QThread):
             elapsed_time = f"{elapsed_time / 60:.2f}min"
         if current_epoch == self._train_parameters["epochs"] and not self._stop:
             self._train_parameters["resume"] = ""
-            self._task_info.task_status = TaskStatus.TRN_FINISHED
+            self._task_info.task_status = TrainTaskStatus.TRN_FINISHED
             self._logs.append(log_info(f"{self.tr('train finished')} epoch = {current_epoch}"))
             db_update_task_finished(self._task_info.task_id, datetime.fromtimestamp(end_time), elapsed_time)
         else:
             if self._last_model:
                 self._train_parameters["resume"] = self._last_model
-            self._task_info.task_status = TaskStatus.TRN_PAUSE
+            self._task_info.task_status = TrainTaskStatus.TRN_PAUSE
             self._logs.append(log_info(f"{self.tr('train finished ahead of schedule')} epoch = {current_epoch}"))
             db_update_task_pause(self._task_info.task_id)
 
@@ -340,7 +340,7 @@ class ModelTrainThread(QThread):
             except Exception as e:
                 self.model_train_failed.emit(str(e))
                 core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
-                                                              TaskStatus.TRN_FAILED)
+                                                              TrainTaskStatus.TRN_FAILED)
                 db_update_task_failed(self._task_info.task_id)
 
     @Slot()

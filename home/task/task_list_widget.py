@@ -22,7 +22,7 @@ from common.component.tag_widget import TextTagWidget
 from common.utils.utils import format_datatime, open_directory
 from common.core.content_widget_base import ContentWidgetBase
 from models.models import TrainTask, Project
-from ..types import TaskStatus
+from ..types import TrainTaskStatus
 
 COLUMN_TASK_ID = 0
 COLUMN_PROJECT_NAME = 1
@@ -149,7 +149,7 @@ class TaskListWidget(ContentWidgetBase):
 
                 item0 = QTableWidgetItem(task.task_id)
                 item1 = QTableWidgetItem(task.project.project_name)
-                item2 = TextTagWidget(TaskStatus(task.task_status).name, *TaskStatus(task.task_status).color)
+                item2 = TextTagWidget(TrainTaskStatus(task.task_status).name, *TrainTaskStatus(task.task_status).color)
                 item3 = CustomProcessBar()
                 item4 = QTableWidgetItem(format_datatime(task.start_time))
                 item5 = QTableWidgetItem(format_datatime(task.end_time))
@@ -175,16 +175,16 @@ class TaskListWidget(ContentWidgetBase):
 
                 item3.set_value(task.epoch)
                 item3.set_max_value(task.epochs)
-                if task.task_status == TaskStatus.TRN_PAUSE.value:
+                if task.task_status == TrainTaskStatus.TRN_PAUSE.value:
                     item3.set_pause(True)
-                elif task.task_status == TaskStatus.TRN_FAILED.value:
+                elif task.task_status == TrainTaskStatus.TRN_FAILED.value:
                     item3.set_error(True)
-                elif task.task_status == TaskStatus.TRN_FINISHED.value:
+                elif task.task_status == TrainTaskStatus.TRN_FINISHED.value:
                     item3.resume()
 
-    @Slot(str, str, TaskStatus)
+    @Slot(str, str, TrainTaskStatus)
     def _on_train_status_changed(self, task_id: str, epoch: int, epochs: int, start_time: str, end_time: str,
-                                 elapsed: str, task_status: TaskStatus):
+                                 elapsed: str, task_status: TrainTaskStatus):
         project_id = db_get_project_id(task_id)
         if project_id != self._current_project_id:
             return
@@ -199,25 +199,25 @@ class TaskListWidget(ContentWidgetBase):
         item_bar = self.tb_task.cellWidget(row_index, COLUMN_PROGRESS_BAR)
 
         if isinstance(item_bar, CustomProcessBar) and isinstance(item_task_status, TextTagWidget):
-            if task_status == TaskStatus.TRAINING:
+            if task_status == TrainTaskStatus.TRAINING:
                 item_bar.set_max_value(epochs)
                 item_bar.set_value(epoch)
-                item_task_status.set_text(TaskStatus.TRAINING.name)
-                item_task_status.set_color(*TaskStatus.TRAINING.color)
+                item_task_status.set_text(TrainTaskStatus.TRAINING.name)
+                item_task_status.set_color(*TrainTaskStatus.TRAINING.color)
                 item_start_time.setText(start_time)
                 item_end_time.setText("")
                 item_elapsed.setText("")
-            elif task_status == TaskStatus.TRN_PAUSE:
-                item_task_status.set_text(TaskStatus.TRN_PAUSE.name)
-                item_task_status.set_color(*TaskStatus.TRN_PAUSE.color)
+            elif task_status == TrainTaskStatus.TRN_PAUSE:
+                item_task_status.set_text(TrainTaskStatus.TRN_PAUSE.name)
+                item_task_status.set_color(*TrainTaskStatus.TRN_PAUSE.color)
                 item_bar.set_pause(True)
-            elif task_status == TaskStatus.TRN_FAILED:
-                item_task_status.set_text(TaskStatus.TRN_FAILED.name)
-                item_task_status.set_color(*TaskStatus.TRN_FAILED.color)
+            elif task_status == TrainTaskStatus.TRN_FAILED:
+                item_task_status.set_text(TrainTaskStatus.TRN_FAILED.name)
+                item_task_status.set_color(*TrainTaskStatus.TRN_FAILED.color)
                 item_bar.set_error(True)
-            elif task_status == TaskStatus.TRN_FINISHED:
-                item_task_status.set_text(TaskStatus.TRN_FINISHED.name)
-                item_task_status.set_color(*TaskStatus.TRN_FINISHED.color)
+            elif task_status == TrainTaskStatus.TRN_FINISHED:
+                item_task_status.set_text(TrainTaskStatus.TRN_FINISHED.name)
+                item_task_status.set_color(*TrainTaskStatus.TRN_FINISHED.color)
                 item_bar.resume()
                 item_end_time.setText(end_time)
                 item_elapsed.setText(elapsed)
@@ -264,7 +264,7 @@ class TaskListWidget(ContentWidgetBase):
                 os.makedirs(project_dir / task_id, exist_ok=True)
                 task = TrainTask(
                     task_id=task_id,
-                    task_status=TaskStatus.INITIALIZING.value,
+                    task_status=TrainTaskStatus.INITIALIZING.value,
                     epoch=0,
                     epochs=0
                 )

@@ -10,7 +10,7 @@ from common.component.file_select_widget import FileSelectWidget
 from common.component.progress_message_box import ProgressMessageBox
 from common.core.window_manager import WindowManager
 from ..task_thread.model_export_thread import ModelExportThread
-from ...types import TaskInfo
+from ...types import TrainTaskInfo
 
 
 class FixWidthBodyLabel(BodyLabel):
@@ -23,7 +23,7 @@ class FixWidthBodyLabel(BodyLabel):
 
 
 class ModelExportWidget(CollapsibleWidgetItem):
-    export_model_finished = Signal(TaskInfo)
+    export_model_finished = Signal(TrainTaskInfo)
 
     def __init__(self, parent=None):
         super().__init__(self.tr("▌Model export"), parent=parent)
@@ -129,7 +129,7 @@ class ModelExportWidget(CollapsibleWidgetItem):
         self.vly_content.addLayout(self.hly_btn)
 
         self.set_content_widget(self.content_widget)
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
         self._model_export_thread: ModelExportThread | None = None
         self._message_box: ProgressMessageBox | None = None
         self._export_parameter = dict()
@@ -139,7 +139,7 @@ class ModelExportWidget(CollapsibleWidgetItem):
     def _connect_signals_and_slots(self):
         self.btn_export.clicked.connect(self._on_export_clicked)
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
         self._init_model_name()
 

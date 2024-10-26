@@ -4,7 +4,7 @@ from PySide6.QtCore import Signal, QThread
 
 from common.database.task_helper import db_update_task_status
 from ultralytics import YOLO
-from ...types import TaskInfo, TaskStatus
+from ...types import TrainTaskInfo, TrainTaskStatus
 
 
 class ModelValThread(QThread):
@@ -17,9 +17,9 @@ class ModelValThread(QThread):
         super().__init__()
         self._validator: YOLO | None = None
         self._val_parameters = val_parameters
-        self._task_info: TaskInfo | None = None
+        self._task_info: TrainTaskInfo | None = None
 
-    def set_task_info(self, task_info: TaskInfo):
+    def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
 
     def init_model_validator(self) -> bool:
@@ -45,7 +45,7 @@ class ModelValThread(QThread):
     def _on_val_end(self, validator):
         val_result = validator.get_val_results()
         val_speed = validator.speed
-        db_update_task_status(self._task_info.task_id, TaskStatus.VAL_FINISHED)
+        db_update_task_status(self._task_info.task_id, TrainTaskStatus.VAL_FINISHED)
         with open(self._task_info.task_dir / "val_results.pkl", mode="wb") as f:
             pickle.dump([val_result, val_speed], f)
         self.model_val_end.emit(val_result, val_speed)
