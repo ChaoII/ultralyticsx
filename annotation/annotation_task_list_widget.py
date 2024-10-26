@@ -17,10 +17,10 @@ from common.component.tag_widget import TextTagWidget
 # from common.core import event_manager
 from common.core.content_widget_base import ContentWidgetBase
 from common.database.db_helper import db_session
-from common.utils.utils import format_datatime, open_directory
+from common.utils.utils import format_datatime, open_directory, str_to_datetime
 from models.models import AnnotationTask
 from .new_annotation_task_dialog import NewAnnotationTaskDialog
-from .types import AnnotationStatus
+from .types import AnnotationStatus, AnnotationTaskInfo
 
 COLUMN_TASK_ID = 0
 COLUMN_TASK_NAME = 1
@@ -241,20 +241,19 @@ class AnnotationTaskListWidget(ContentWidgetBase):
         self.new_annotation_dialog = NewAnnotationTaskDialog(self)
         self.new_annotation_dialog.annotation_task_created.connect(self._on_add_new_annotation_task)
         self.new_annotation_dialog.exec()
-        # # 创建任务路径
-        # with db_session() as session:
-        #     task_id = self.get_task_id()
-        #     try:
-        #         task = AnnotationTask(
-        #             task_id=task_id,
-        #             task_status=AnnotationStatus.Initialing.value,
-        #             cur_num=0,
-        #             total=0
-        #         )
-        #         session.add(task)
-        #     except Exception as e:
-        #         logger.error(f"Failed to create annotation task {task_id} error: {e}")
-        # self.update_widget()
 
-    def _on_add_new_annotation_task(self):
-        pass
+    @Slot(AnnotationTaskInfo)
+    def _on_add_new_annotation_task(self, annotation_task_info: AnnotationTaskInfo):
+        new_annotation_task_row = AnnotationTask(
+            task_id=annotation_task_info.annotation_task_id,
+            task_name=annotation_task_info.annotation_task_name,
+            task_description=annotation_task_info.annotation_task_description,
+            model_type=annotation_task_info.model_type.value,
+            task_status=AnnotationStatus.Initialing.value,
+            image_dir=annotation_task_info.image_dir,
+            create_time=str_to_datetime(annotation_task_info.create_time),
+        )
+        # 这里想获取新增后的id,需要refresh数据，就不能在上下文里提交
+        with db_session(True) as session:
+            session.add(new_annotation_task_row)
+        self.update_widget()

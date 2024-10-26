@@ -68,13 +68,15 @@ class AnnotationTask(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(String)
     task_name = Column(String)
+    task_description = Column(String)
+    model_type = Column(Integer)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     elapsed = Column(String)
     task_status = Column(Integer, default=0)
     cur_num = Column(Integer, default=0)
     total = Column(Integer, default=0)
-    data_dir = Column(String)
+    image_dir = Column(String)
     create_time = Column(DateTime, default=datetime.now())
 
 

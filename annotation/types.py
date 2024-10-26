@@ -28,3 +28,4 @@ class AnnotationTaskInfo:
     model_type: ModelType
     image_dir: str
     annotation_dir: str
+    create_time: str
