@@ -16,6 +16,7 @@ from common.component.fill_tool_button import FillToolButton
 from common.component.tag_widget import TextTagWidget
 # from common.core import event_manager
 from common.core.content_widget_base import ContentWidgetBase
+from common.core.window_manager import window_manager
 from common.database.db_helper import db_session
 from common.utils.utils import format_datatime, open_directory, str_to_datetime
 from models.models import AnnotationTask
@@ -232,13 +233,13 @@ class AnnotationTaskListWidget(ContentWidgetBase):
     def _on_open_annotation_dir(self, task_id):
         with db_session() as session:
             task: AnnotationTask = session.query(AnnotationTask).filter_by(task_id=task_id).first()
-            directory = Path(task.data_dir)
+            directory = Path(task.image_dir)
         if directory.exists():
             open_directory(directory)
 
     @Slot()
     def _on_create_annotation_task_clicked(self):
-        self.new_annotation_dialog = NewAnnotationTaskDialog(self)
+        self.new_annotation_dialog = NewAnnotationTaskDialog(parent=window_manager.find_window("main_widget"))
         self.new_annotation_dialog.annotation_task_created.connect(self._on_add_new_annotation_task)
         self.new_annotation_dialog.exec()
 
