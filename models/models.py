@@ -45,7 +45,7 @@ class Project(Base):
 
 
 class TrainTask(Base):
-    __tablename__ = "tb_tasks"
+    __tablename__ = "tb_train_tasks"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(String)
@@ -77,6 +77,7 @@ class AnnotationTask(Base):
     cur_num = Column(Integer, default=0)
     total = Column(Integer, default=0)
     image_dir = Column(String)
+    annotation_dir = Column(String)
     create_time = Column(DateTime, default=datetime.now())
 
 

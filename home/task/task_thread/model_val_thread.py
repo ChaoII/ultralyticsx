@@ -2,7 +2,7 @@ import pickle
 
 from PySide6.QtCore import Signal, QThread
 
-from common.database.task_helper import db_update_task_status
+from common.database.train_task_helper import db_update_task_status
 from ultralytics import YOLO
 from ...types import TrainTaskInfo, TrainTaskStatus
 

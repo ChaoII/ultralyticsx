@@ -61,6 +61,7 @@ class NewAnnotationTaskDialog(MessageBoxBase):
         self.model_type.model_type_selected.connect(self._on_annotation_task_type_selected)
         self.ted_description.textChanged.connect(self._on_description_text_changed)
         self.image_dir_select.path_selected.connect(self._on_image_dir_selected)
+        self.annotation_dir_select.path_selected.connect(self._on_annotation_task_created)
         self.annotation_dir_select.path_selected.connect(self._on_annotation_dir_selected)
         self.yesButton.clicked.connect(self._on_create_button_clicked)
 
@@ -105,6 +106,9 @@ class NewAnnotationTaskDialog(MessageBoxBase):
     @Slot(str)
     def _on_image_dir_selected(self, image_dir):
         self.annotation_task_info.image_dir = image_dir
+
+    def _on_annotation_task_created(self, annotation_dir):
+        self.annotation_task_info.annotation_dir = annotation_dir
 
     @Slot(str)
     def _on_annotation_dir_selected(self, annotation_dir):

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, Qt
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
-from qfluentwidgets import Dialog
+from qfluentwidgets import Dialog, InfoBar, InfoBarPosition
 
 from annotation.annotation_command_bar import AnnotationCommandBar
 from annotation.annotation_ensure_message_box import AnnotationEnsureMessageBox
@@ -13,6 +13,8 @@ from annotation.labels_settings_widget import LabelSettingsWidget
 from annotation.shape import ShapeType, ShapeItem
 from common.component.model_type_widget import ModelType
 from common.core.content_widget_base import ContentWidgetBase
+from common.core.window_manager import window_manager
+from common.database.annotation_task_helper import db_update_annotation_dir_path
 from common.database.db_helper import db_session
 from common.utils.utils import is_image, generate_random_color
 from models.models import AnnotationTask
@@ -54,7 +56,6 @@ class AnnotationWidget(ContentWidgetBase):
         self.model_type = ModelType.DETECT
 
     def connect_signals_and_slots(self):
-        self.cb_label.image_path_changed.connect(self.on_image_path_changed)
         self.cb_label.annotation_directory_changed.connect(self.on_annotation_directory_changed)
         self.cb_label.save_annotation_clicked.connect(self.save_current_annotation)
         self.cb_label.delete_image_clicked.connect(self.on_delete_image_clicked)
@@ -83,7 +84,8 @@ class AnnotationWidget(ContentWidgetBase):
             annotation_task: AnnotationTask = session.query(AnnotationTask).filter(
                 AnnotationTask.task_id == self.annotation_task_id).first()
             image_path = Path(annotation_task.image_dir)
-            self.model_type = annotation_task.model_type
+            self.model_type = ModelType(annotation_task.model_type)
+            self.annotation_dir_path = Path(annotation_task.annotation_dir)
         self.update_shape_status()
         self.set_image_path(image_path)
 
@@ -140,6 +142,18 @@ class AnnotationWidget(ContentWidgetBase):
             cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color, parent=self)
             if cus_message_box.exec():
                 label = cus_message_box.get_label()
+                if not label:
+                    InfoBar.error(
+                        title='',
+                        content=self.tr("Please select  or input a label "),
+                        orient=Qt.Orientation.Vertical,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP_RIGHT,
+                        duration=-1,
+                        parent=window_manager.find_window("main_widget")
+                    )
+                    self.canvas.scene.removeItem(shape_item)
+                    return
         else:
             label = shape_item.get_annotation()
         if label:
@@ -180,7 +194,7 @@ class AnnotationWidget(ContentWidgetBase):
             self.cb_label.action_next_image.setEnabled(False)
 
     def set_history_image_and_annotations(self, image_path: Path):
-        annotation_path = image_path.parent / "annotations" / (image_path.stem + ".txt")
+        annotation_path = self.annotation_dir_path / (image_path.stem + ".txt")
         annotations = []
         if annotation_path.exists():
             with annotation_path.open("r") as f:
@@ -188,7 +202,8 @@ class AnnotationWidget(ContentWidgetBase):
                     annotation_data = line.strip().split(" ")
                     annotation = [float(x) for x in annotation_data]
                     annotations.append(annotation)
-        self.canvas.set_image_and_draw_annotations(image_path, annotations, self.labels_color)
+        self.annotation_widget.clear()
+        self.canvas.set_image_and_draw_annotations(image_path, annotations, self.model_type, self.labels_color)
 
     def on_image_item_changed(self, image_path: str | Path):
         if isinstance(image_path, str):
@@ -245,21 +260,9 @@ class AnnotationWidget(ContentWidgetBase):
         self.annotation_task_id = annotation_task_id
         self.update_widget()
 
-    def on_image_path_changed(self, path: Path):
-        image_path, labeled = self.image_list_widget.get_current_image_labeled()
-        # 如果存在图片并且未保存
-        if image_path and not labeled:
-            w = Dialog(self.tr("Warning"),
-                       self.tr("Current annotation is not saved. Do you want to save it?"), self)
-            w.yesButton.setText(self.tr("Save"))
-            if w.exec():
-                self.save_current_annotation()
-            else:
-                return
-        self.set_image_path(path)
-
     def on_annotation_directory_changed(self, annotation_path: Path):
         self.annotation_dir_path = annotation_path
+        db_update_annotation_dir_path(self.annotation_task_id, annotation_path.resolve().as_posix())
 
     def set_image_path(self, image_path: Path):
         if image_path.exists():
@@ -279,11 +282,9 @@ class AnnotationWidget(ContentWidgetBase):
                     labels = open(label_file_path).read().splitlines()
                     self.labels_color = {label: generate_random_color() for label in labels}
                     self.label_widget.set_labels(self.labels_color)
-
-                annotation_path = image_path / "annotations"
                 annotation_list = []
-                if annotation_path.exists():
-                    for annotation in annotation_path.iterdir():
+                if self.annotation_dir_path and self.annotation_dir_path.exists():
+                    for annotation in self.annotation_dir_path.iterdir():
                         annotation_list.append(annotation.stem)
                 image_path_list = []
                 for image_path in image_path.iterdir():
@@ -303,12 +304,14 @@ class AnnotationWidget(ContentWidgetBase):
             if self.dataset_dir_path.exists():
                 if not self.annotation_dir_path or not self.annotation_dir_path.exists():
                     w = Dialog(self.tr("Warning"),
-                               self.tr("annotation directory is ot existed,Create it?"), self)
+                               self.tr("annotation directory is ot existed, Create it?"), self)
                     w.yesButton.setText(self.tr("Yes"))
                     w.cancelButton.setText(self.tr("No"))
                     if w.exec():
                         self.annotation_dir_path = self.dataset_dir_path / "annotations"
                         self.annotation_dir_path.mkdir(exist_ok=True)
+                        db_update_annotation_dir_path(self.annotation_task_id,
+                                                      self.annotation_dir_path.resolve().as_posix())
                     else:
                         return
             self.update_label_file()
@@ -316,33 +319,19 @@ class AnnotationWidget(ContentWidgetBase):
             annotation_path = self.annotation_dir_path / (annotation_name.stem + ".txt")
             annotations = []
             pix = self.canvas.get_background_pix()
-            w = pix.width()
-            h = pix.height()
+            w, h = pix.width(), pix.height()
             for item in self.canvas.get_shape_items():
                 if isinstance(item, ShapeItem):
                     annotation = str(list(self.labels_color.keys()).index(item.get_annotation()))
                     shape_data = item.get_shape_data()
-                    if (item.get_shape_type() == ShapeType.Rectangle or
-                            item.get_shape_type() == ShapeType.Polygon or
-                            item.get_shape_type() == ShapeType.Line or
-                            item.get_shape_type() == ShapeType.Point):
-                        for index, data in enumerate(shape_data):
-                            if index % 2 == 0:
-                                data /= w
-                            else:
-                                data /= h
-                            annotation += f" {data:.4f}"
-                        annotation += "\n"
-                        annotations.append(annotation)
-                    elif item.get_shape_type() == ShapeType.RotatedRectangle:
-                        for index, data in enumerate(shape_data):
-                            if index == 0:
-                                data /= w
-                            elif index == 1:
-                                data /= h
-                            annotation += f" {data:.4f}"
-                        annotation += "\n"
-                        annotations.append(annotation)
+                    for index, data in enumerate(shape_data):
+                        if index % 2 == 0:
+                            data /= w
+                        else:
+                            data /= h
+                        annotation += f" {data:.4f}"
+                    annotation += "\n"
+                    annotations.append(annotation)
             with open(annotation_path, "w", encoding="utf8") as f:
                 f.writelines(annotations)
             self.image_list_widget.set_current_image_labeled()

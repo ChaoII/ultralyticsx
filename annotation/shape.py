@@ -303,8 +303,6 @@ class RotatedRectangleItem(ShapeItem):
         self.setAcceptHoverEvents(True)
         self.polygon = QPolygonF()
         self.angle = 0
-        self.draw_line = True
-        self.is_rotated = False
         self.w = 0
         self.h = 0
         self.direction = 0
@@ -349,13 +347,11 @@ class RotatedRectangleItem(ShapeItem):
 
     def update_shape(self):
         if len(self.points) == 2:
-            self.draw_line = True
             p1 = self.points[0]
             p2 = self.points[1]
             p3_ = p2
             p4_ = p1
         elif len(self.points) == 3:
-            self.draw_line = False
             p1 = self.points[0]
             p2 = self.points[1]
             p3 = self.points[2]
@@ -377,9 +373,6 @@ class RotatedRectangleItem(ShapeItem):
             return
         self.polygon = QPolygonF([p1, p2, p3_, p4_])
 
-    def set_rotated(self, is_rotated: bool):
-        self.is_rotated = is_rotated
-
     def get_shape_data(self):
         data = []
         for point in self.polygon.toList():
@@ -387,7 +380,6 @@ class RotatedRectangleItem(ShapeItem):
         return data
 
     def boundingRect(self) -> QRectF:
-
         return self.polygon.boundingRect().adjusted(-self.corner_radius, -self.corner_radius,
                                                     self.corner_radius, self.corner_radius)
 

@@ -9,6 +9,7 @@ from PySide6.QtCore import QUuid
 
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
     ImageItem, RotatedRectangleItem
+from common.component.model_type_widget import ModelType
 from .core import drawing_status_manager, DrawingStatus
 
 # dark_theme/light theme
@@ -114,7 +115,7 @@ class InteractiveCanvas(QGraphicsView):
         self.scene.setSceneRect(0, 0, 800, 600)
 
     def set_image_and_draw_annotations(self, image_path: str | Path, annotations: list[list[float]],
-                                       labels_color: dict):
+                                       model_type: ModelType, labels_color: dict):
         self.background_pix = QPixmap(image_path)
         image_item = ImageItem(self.background_pix)
         self.scene.clear()
@@ -125,7 +126,7 @@ class InteractiveCanvas(QGraphicsView):
             shape_data = annotation[1:]
             label = list(labels_color.keys())[label_index]
             color = labels_color[label]
-            if len(shape_data) == 4:
+            if model_type == ModelType.DETECT:
                 shape_item = RectangleItem()
                 x_center = float(shape_data[0]) * self.background_pix.width()
                 y_center = float(shape_data[1]) * self.background_pix.height()
@@ -134,14 +135,42 @@ class InteractiveCanvas(QGraphicsView):
                 p1 = QPointF(x_center - w / 2, y_center - h / 2)
                 p2 = QPointF(x_center + w / 2, y_center + h / 2)
                 shape_item.update_points([p1, p2])
-                shape_item.set_annotation(label)
-                shape_item.set_color(color)
-                shape_item.set_is_drawing_history(True)
-                self.scene.addItem(shape_item)
-                self.send_draw_finished_signal(shape_item)
+            elif model_type == ModelType.OBB:
+                shape_item = RotatedRectangleItem()
+                x1 = float(shape_data[0]) * self.background_pix.width()
+                y1 = float(shape_data[1]) * self.background_pix.height()
+                x2 = float(shape_data[2]) * self.background_pix.width()
+                y2 = float(shape_data[3]) * self.background_pix.height()
+                x3 = float(shape_data[4]) * self.background_pix.width()
+                y3 = float(shape_data[5]) * self.background_pix.height()
+                x4 = float(shape_data[6]) * self.background_pix.width()
+                y4 = float(shape_data[7]) * self.background_pix.height()
+                p1 = QPointF(x1, y1)
+                p2 = QPointF(x2, y2)
+                p3 = QPointF((x3 + x4) / 2, (y3 + y4) / 2)
+                shape_item.update_points([p1, p2, p3])
+            elif model_type == ModelType.SEGMENT:
+                shape_item = PolygonItem()
+                points = []
+                for i in range(0, len(shape_data), 2):
+                    x = float(shape_data[i]) * self.background_pix.width()
+                    y = float(shape_data[i + 1]) * self.background_pix.height()
+                    points.append(QPointF(x, y))
+                shape_item.update_points(points)
+            elif model_type == ModelType.POSE:
+                shape_item = LineItem()
+                x1 = float(shape_data[0]) * self.background_pix.width()
+                y1 = float(shape_data[1]) * self.background_pix.height()
+                x2 = float(shape_data[2]) * self.background_pix.width()
+                y2 = float(shape_data[3]) * self.background_pix.height()
+                shape_item.update_points([QPointF(x1, y1), QPointF(x2, y2)])
             else:
-                # todo other shape type
                 raise NotImplementedError
+            shape_item.set_annotation(label)
+            shape_item.set_color(color)
+            shape_item.set_is_drawing_history(True)
+            self.scene.addItem(shape_item)
+            self.send_draw_finished_signal(shape_item)
 
     def set_drawing_status(self, status: DrawingStatus):
         drawing_status_manager.set_drawing_status(status)
@@ -299,7 +328,6 @@ class InteractiveCanvas(QGraphicsView):
             if len(points) >= 2:
                 points[-1] = self.end_pos
                 self.rotated_rect_points = QPolygonF(points)
-            self.temp_item.update_points(self.rotated_rect_points.toList())
             self.temp_item.update_points(points)
         elif self.current_shape_type == ShapeType.Point:
             self.temp_item.update_points([self.end_pos])

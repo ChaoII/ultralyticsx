@@ -15,7 +15,7 @@ from common.core import event_manager
 from common.component.custom_icon import CustomFluentIcon
 from common.component.custom_process_bar import CustomProcessBar
 from common.database.db_helper import db_session
-from common.database.task_helper import db_get_project_id
+from common.database.train_task_helper import db_get_project_id
 from common.component.delete_ensure_widget import CustomFlyoutView
 from common.component.fill_tool_button import FillToolButton
 from common.component.tag_widget import TextTagWidget

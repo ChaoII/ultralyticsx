@@ -11,7 +11,6 @@ from common.component.custom_icon import CustomFluentIcon
 
 
 class AnnotationCommandBar(CommandBar):
-    image_path_changed = Signal(Path)
     annotation_directory_changed = Signal(Path)
 
     save_annotation_clicked = Signal()
@@ -30,10 +29,6 @@ class AnnotationCommandBar(CommandBar):
         self.setObjectName("LabelCommandBar")
         self.setButtonTight(True)
 
-        self.action_openfile = Action(CustomFluentIcon.FILE, self.tr("Open file"))
-        self.action_openfile.triggered.connect(self.on_open_file)
-        self.action_image_directory = Action(FluentIcon.FOLDER, self.tr("Image directory"))
-        self.action_image_directory.triggered.connect(self.on_select_directory)
         self.action_annotation_directory = Action(FluentIcon.FOLDER, self.tr("Annotation directory"))
         self.action_annotation_directory.triggered.connect(self.on_select_directory)
 
@@ -102,8 +97,6 @@ class AnnotationCommandBar(CommandBar):
         self.action_zoom_out = Action(FluentIcon.ZOOM_OUT, self.tr("Zoom out"))
         self.action_zoom_out.triggered.connect(lambda: self.scale_down_clicked.emit())
         self.addActions([
-            self.action_openfile,
-            self.action_image_directory,
             self.action_annotation_directory,
             self.action_save_image,
             self.action_delete,
@@ -175,18 +168,18 @@ class AnnotationCommandBar(CommandBar):
         if toggled:
             self.shape_selected.emit(ShapeType.Line)
 
-    def on_open_file(self):
-        if self._cur_file_path:
-            if self._cur_file_path.is_file():
-                _dir = self._cur_file_path.parent.resolve().as_posix()
-            else:
-                _dir = Path(".").as_posix()
-        else:
-            _dir = Path(".").as_posix()
-        filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir,
-                                                  "All Files (*);;Image Files (*.jpg *.jpeg *.png *.bmp)")
-        self._cur_file_path = Path(filename)
-        self.current_path_changed.emit(self._cur_file_path)
+    # def on_open_file(self):
+    #     if self._cur_file_path:
+    #         if self._cur_file_path.is_file():
+    #             _dir = self._cur_file_path.parent.resolve().as_posix()
+    #         else:
+    #             _dir = Path(".").as_posix()
+    #     else:
+    #         _dir = Path(".").as_posix()
+    #     filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir,
+    #                                               "All Files (*);;Image Files (*.jpg *.jpeg *.png *.bmp)")
+    #     self._cur_file_path = Path(filename)
+    #     self.image_path_changed.emit(self._cur_file_path)
 
     def on_select_directory(self):
         if self._cur_directory_path:
@@ -196,10 +189,7 @@ class AnnotationCommandBar(CommandBar):
         directory = QFileDialog.getExistingDirectory(self, self.tr("Select a directory"), _dir)
         if directory:
             self._cur_directory_path = Path(directory)
-            if self.sender() == self.action_image_directory:
-                self.image_path_changed.emit(self._cur_directory_path)
-            elif self.sender() == self.action_annotation_directory:
-                self.annotation_directory_changed.emit(self._cur_directory_path)
+            self.annotation_directory_changed.emit(self._cur_directory_path)
 
     def set_shape_enabled(self, enabled: bool):
         self.action_rectangle.setEnabled(enabled)

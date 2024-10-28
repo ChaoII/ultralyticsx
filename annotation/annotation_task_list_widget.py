@@ -239,6 +239,7 @@ class AnnotationTaskListWidget(ContentWidgetBase):
             model_type=annotation_task_info.model_type.value,
             task_status=AnnotationStatus.Initialing.value,
             image_dir=annotation_task_info.image_dir,
+            annotation_dir=annotation_task_info.annotation_dir,
             create_time=str_to_datetime(annotation_task_info.create_time),
         )
         # 这里想获取新增后的id,需要refresh数据，就不能在上下文里提交

@@ -8,7 +8,7 @@ from PySide6.QtCore import Slot, Signal, QThread, QObject
 from loguru import logger
 
 from common import core
-from common.database.task_helper import db_update_task_epoch_info, db_update_task_finished, db_update_task_pause, \
+from common.database.train_task_helper import db_update_task_epoch_info, db_update_task_finished, db_update_task_pause, \
     db_update_task_started, db_update_task_failed
 from common.component.model_type_widget import ModelType
 from common.utils.utils import log_info, format_datatime

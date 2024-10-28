@@ -74,7 +74,7 @@ class ImageListWidget(SimpleCardWidget):
         if len(image_path_list) == 0:
             self.item_ending_status_changed.emit(3)
             return
-        elif len(annotation_list) == 1:
+        elif len(image_path_list) == 1:
             self.item_ending_status_changed.emit(3)
         else:
             self.item_ending_status_changed.emit(0)
