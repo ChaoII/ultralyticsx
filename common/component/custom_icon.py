@@ -5,6 +5,7 @@ from qfluentwidgets import getIconColor, Theme, FluentIconBase
 
 class CustomFluentIcon(FluentIconBase, Enum):
     """ Custom icons """
+    ANNOTATION = "annotation"
     CIRCLE = "circle"
     CLASSIFY = "classify"
     DATASET = "dataset"

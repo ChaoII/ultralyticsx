@@ -11,6 +11,9 @@ from common.component.custom_icon import CustomFluentIcon
 
 
 class AnnotationCommandBar(CommandBar):
+    image_path_changed = Signal(Path)
+    annotation_directory_changed = Signal(Path)
+
     save_annotation_clicked = Signal()
     delete_image_clicked = Signal()
     pre_image_clicked = Signal()
@@ -18,7 +21,7 @@ class AnnotationCommandBar(CommandBar):
 
     drawing_status_selected = Signal(DrawingStatus)
     shape_selected = Signal(ShapeType)
-    current_path_changed = Signal(Path)
+
     scale_down_clicked = Signal()
     scale_up_clicked = Signal()
 
@@ -29,8 +32,11 @@ class AnnotationCommandBar(CommandBar):
 
         self.action_openfile = Action(CustomFluentIcon.FILE, self.tr("Open file"))
         self.action_openfile.triggered.connect(self.on_open_file)
-        self.action_open_directory = Action(FluentIcon.FOLDER, self.tr("Open directory"))
-        self.action_open_directory.triggered.connect(self.on_open_directory)
+        self.action_image_directory = Action(FluentIcon.FOLDER, self.tr("Image directory"))
+        self.action_image_directory.triggered.connect(self.on_select_directory)
+        self.action_annotation_directory = Action(FluentIcon.FOLDER, self.tr("Annotation directory"))
+        self.action_annotation_directory.triggered.connect(self.on_select_directory)
+
         self.action_save_image = Action(FluentIcon.SAVE, self.tr("Save"))
         self.action_save_image.setShortcut("Ctrl+S")
         self.action_save_image.setEnabled(False)
@@ -97,7 +103,8 @@ class AnnotationCommandBar(CommandBar):
         self.action_zoom_out.triggered.connect(lambda: self.scale_down_clicked.emit())
         self.addActions([
             self.action_openfile,
-            self.action_open_directory,
+            self.action_image_directory,
+            self.action_annotation_directory,
             self.action_save_image,
             self.action_delete,
         ])
@@ -181,7 +188,7 @@ class AnnotationCommandBar(CommandBar):
         self._cur_file_path = Path(filename)
         self.current_path_changed.emit(self._cur_file_path)
 
-    def on_open_directory(self):
+    def on_select_directory(self):
         if self._cur_directory_path:
             _dir = Path(self._cur_directory_path).resolve().as_posix()
         else:
@@ -189,4 +196,15 @@ class AnnotationCommandBar(CommandBar):
         directory = QFileDialog.getExistingDirectory(self, self.tr("Select a directory"), _dir)
         if directory:
             self._cur_directory_path = Path(directory)
-            self.current_path_changed.emit(self._cur_directory_path)
+            if self.sender() == self.action_image_directory:
+                self.image_path_changed.emit(self._cur_directory_path)
+            elif self.sender() == self.action_annotation_directory:
+                self.annotation_directory_changed.emit(self._cur_directory_path)
+
+    def set_shape_enabled(self, enabled: bool):
+        self.action_rectangle.setEnabled(enabled)
+        self.action_rotated_rectangle.setEnabled(enabled)
+        self.action_polygon.setEnabled(enabled)
+        self.action_circle.setEnabled(enabled)
+        self.action_point.setEnabled(enabled)
+        self.action_line.setEnabled(enabled)

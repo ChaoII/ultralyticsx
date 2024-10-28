@@ -7,13 +7,12 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QHeaderView, \
 from loguru import logger
 from qfluentwidgets import FluentIcon, CaptionLabel, TableWidget, PrimaryPushButton, \
     PopupTeachingTip, TeachingTipTailPosition
-from sqlalchemy import desc
 
-from common.component.custom_icon import CustomFluentIcon
 from common.component.custom_process_bar import CustomProcessBar
 from common.component.delete_ensure_widget import CustomFlyoutView
 from common.component.fill_tool_button import FillToolButton
 from common.component.tag_widget import TextTagWidget
+from common.component.custom_icon import CustomFluentIcon
 # from common.core import event_manager
 from common.core.content_widget_base import ContentWidgetBase
 from common.core.window_manager import window_manager
@@ -35,37 +34,35 @@ COLUMN_OPERATION = 7
 
 class OperationWidget(QWidget):
     task_deleted = Signal(str)
-    task_detail = Signal(str)
+    start_annotation = Signal(str)
     open_task_dir = Signal(str)
 
     def __init__(self, task_id: str):
         super().__init__()
         self.hly_content = QHBoxLayout(self)
-        self.btn_view = FillToolButton(FluentIcon.EDIT)
+        self.btn_annotate = FillToolButton(CustomFluentIcon.ANNOTATION)
         self.btn_delete = FillToolButton(FluentIcon.DELETE)
         self.btn_delete.set_background_color(QColor("#E61919"))
         self.btn_delete.set_icon_color(QColor(0, 0, 0))
         self.btn_open = FillToolButton(FluentIcon.FOLDER)
 
         self.hly_content.addStretch(1)
-        self.hly_content.addWidget(self.btn_view)
+        self.hly_content.addWidget(self.btn_annotate)
         self.hly_content.addWidget(CaptionLabel("|", self))
         self.hly_content.addWidget(self.btn_delete)
         self.hly_content.addWidget(CaptionLabel("|", self))
         self.hly_content.addWidget(self.btn_open)
         self.hly_content.addStretch(1)
-
         self._connect_signals_and_slots()
-
         self.task_id = task_id
 
     def _connect_signals_and_slots(self):
         self.btn_delete.clicked.connect(self._on_delete_clicked)
-        self.btn_view.clicked.connect(self._on_view_clicked)
+        self.btn_annotate.clicked.connect(self._on_annotation_clicked)
         self.btn_open.clicked.connect(self._on_open_clicked)
 
-    def _on_view_clicked(self):
-        self.task_detail.emit(self.task_id)
+    def _on_annotation_clicked(self):
+        self.start_annotation.emit(self.task_id)
 
     def _on_open_clicked(self):
         self.open_task_dir.emit(self.task_id)
@@ -112,7 +109,7 @@ class AnnotationTaskTableWidget(TableWidget):
 
 
 class AnnotationTaskListWidget(ContentWidgetBase):
-    view_task_clicked = Signal(str)
+    start_annotation_clicked = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -153,7 +150,7 @@ class AnnotationTaskListWidget(ContentWidgetBase):
                 item7 = OperationWidget(task.task_id)
 
                 item7.task_deleted.connect(self._on_delete_task)
-                item7.task_detail.connect(self._on_view_task)
+                item7.start_annotation.connect(self._on_start_annotation)
                 item7.open_task_dir.connect(self._on_open_annotation_dir)
 
                 item0.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -208,16 +205,6 @@ class AnnotationTaskListWidget(ContentWidgetBase):
                 item_elapsed.setText(elapsed)
             self.update()
 
-    @staticmethod
-    def get_task_id() -> str:
-        with db_session() as session:
-            latest_task: AnnotationTask = session.query(AnnotationTask).order_by(desc(AnnotationTask.task_id)).first()
-            if latest_task is None:
-                task_id = "A000001"
-            else:
-                task_id = f"A{int(latest_task.task_id[1:]) + 1:06d}"
-        return task_id
-
     @Slot(str)
     def _on_delete_task(self, task_id):
         with db_session() as session:
@@ -226,8 +213,8 @@ class AnnotationTaskListWidget(ContentWidgetBase):
         self.update_widget()
 
     @Slot(str)
-    def _on_view_task(self, task_id):
-        self.view_task_clicked.emit(task_id)
+    def _on_start_annotation(self, task_id):
+        self.start_annotation_clicked.emit(task_id)
 
     @Slot(str)
     def _on_open_annotation_dir(self, task_id):

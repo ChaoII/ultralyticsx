@@ -27,6 +27,7 @@ class AnnotationInterface(InterfaceBase):
 
     def _on_connect_signals_and_slots(self):
         self.breadcrumbBar.currentItemChanged.connect(self._on_bread_bar_item_changed)
+        self.annotation_task_list_widget.start_annotation_clicked.connect(self._on_start_annotation_clicked)
 
     #     self.dataset_list_widget.import_dataset_clicked.connect(self._on_import_dataset_clicked)
     #     self.dataset_list_widget.view_dataset_clicked.connect(self._on_view_dataset_clicked)
@@ -44,11 +45,11 @@ class AnnotationInterface(InterfaceBase):
     #     self.dataset_detail_widget.set_dataset_info(dataset_info)
     #     self.breadcrumbBar.addItem(self.dataset_detail_widget.objectName(), dataset_info.dataset_name)
     #
-    # @Slot(DatasetInfo)
-    # def _on_view_dataset_clicked(self, dataset_info: DatasetInfo):
-    #     self.stackedWidget.setCurrentWidget(self.dataset_detail_widget)
-    #     self.dataset_detail_widget.set_dataset_info(dataset_info)
-    #     self.breadcrumbBar.addItem(self.dataset_detail_widget.objectName(), dataset_info.dataset_name)
+    @Slot(str)
+    def _on_start_annotation_clicked(self, annotation_task_id: str):
+        self.stackedWidget.setCurrentWidget(self.annotation_widget)
+        self.annotation_widget.set_annotation_task_id(annotation_task_id)
+        self.breadcrumbBar.addItem(self.annotation_widget.objectName(), annotation_task_id)
 
     # @Slot()
     # def _on_create_task_clicked(self):
@@ -64,4 +65,3 @@ class AnnotationInterface(InterfaceBase):
         if isinstance(obj, ContentWidgetBase):
             self.stackedWidget.setCurrentWidget(obj)
             obj.update_widget()
-

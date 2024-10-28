@@ -100,7 +100,7 @@ class Window(FluentWindow):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
         self.navigationInterface.addSeparator()
         self.addSubInterface(self.dataset_interface, CustomFluentIcon.DATASET1, self.tr('dataset'))
-        self.addSubInterface(self.annotation_interface, FIcon.PHOTO, self.tr('annotation'))
+        self.addSubInterface(self.annotation_interface, CustomFluentIcon.ANNOTATION, self.tr('annotation'))
         self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('model train'))
         self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('model valid'))
         self.addSubInterface(self.export_interface, FIcon.UP, self.tr('model export'))
