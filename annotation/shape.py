@@ -3,7 +3,7 @@ import math
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QLineF, QSizeF
 from PySide6.QtGui import QPolygonF, QPainterPath, QPainter, QColor, QPen, QKeyEvent, QTransform, QPainterPathStroker, \
-    QPixmap, QCursor
+    QPixmap
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsSceneHoverEvent
 from qfluentwidgets import themeColor
 
@@ -88,7 +88,6 @@ class ShapeItem(QGraphicsItem):
         self.update()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
-        self.prepareGeometryChange()
         if event.button() == Qt.MouseButton.LeftButton \
                 and drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             if self.operation_type == RectangleItem.OperationType.Move:
@@ -98,7 +97,6 @@ class ShapeItem(QGraphicsItem):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        self.prepareGeometryChange()
         if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw:
             return
         if self.operation_type == RectangleItem.OperationType.Move:
@@ -115,7 +113,6 @@ class ShapeItem(QGraphicsItem):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event) -> None:
-        self.prepareGeometryChange()
         if event.button() == Qt.MouseButton.LeftButton and \
                 drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             self.setCursor(Qt.CursorShape.OpenHandCursor)
@@ -123,14 +120,12 @@ class ShapeItem(QGraphicsItem):
 
     def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent):
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
-            self.prepareGeometryChange()
             self.is_hover = True
             self.update()
         super().hoverEnterEvent(event)
 
     def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
-            self.prepareGeometryChange()
             pad = [-8, -8, 8, 8]
             is_point_hover = False
             for index, point in enumerate(self.points):
@@ -150,7 +145,6 @@ class ShapeItem(QGraphicsItem):
 
     def hoverLeaveEvent(self, event):
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
-            self.prepareGeometryChange()
             self.is_hover = False
             self.hover_index = -1
             self.setCursor(Qt.CursorShape.ArrowCursor)

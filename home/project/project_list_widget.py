@@ -9,6 +9,7 @@ from sqlalchemy import desc, asc
 from sqlalchemy.orm import Query
 
 from common.component.custom_scroll_widget import CustomScrollWidget
+from common.core.window_manager import window_manager
 from common.database.db_helper import db_session
 from common.component.model_type_widget import ModelType
 from common.component.page_widget import PipsPager, PipsScrollButtonDisplayMode
@@ -93,7 +94,7 @@ class ProjectListWidget(ContentWidgetBase):
                 project_card.update_project_type_tag_style()
 
     def _on_clicked_create_project(self):
-        self.new_project_window = NewProjectDialog(self)
+        self.new_project_window = NewProjectDialog(parent=window_manager.find_window("main_widget"))
         self.new_project_window.project_created.connect(self._on_add_new_project)
         self.new_project_window.exec()
 

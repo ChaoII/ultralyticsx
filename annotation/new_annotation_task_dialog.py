@@ -85,7 +85,6 @@ class NewAnnotationTaskDialog(MessageBoxBase):
         self.annotation_task_info.annotation_task_description = self.ted_description.toPlainText()
         self.annotation_task_info.create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.annotation_task_created.emit(self.annotation_task_info)
-        self.accept()
 
     @Slot(str)
     def _on_description_text_changed(self):

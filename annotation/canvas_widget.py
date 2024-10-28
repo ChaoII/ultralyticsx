@@ -97,6 +97,7 @@ class InteractiveCanvas(QGraphicsView):
     def send_draw_finished_signal(self, shape_item: ShapeItem):
         uid = QUuid.createUuid().toString().replace("-", "").replace("{", "").replace("}", "")
         shape_item.set_id(uid)
+        shape_item.prepareGeometryChange()
         self.shape_item_map.update({uid: shape_item})
         self.draw_finished.emit(shape_item)
 

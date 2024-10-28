@@ -7,8 +7,7 @@ from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QLabel, QPushButton
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
 from qfluentwidgets import BodyLabel, FluentStyleSheet, PrimaryPushButton, \
-    LineEdit, TextEdit, InfoBar, InfoBarPosition
-from qframelesswindow import FramelessDialog
+    LineEdit, TextEdit, InfoBar, InfoBarPosition, MessageBoxBase, SubtitleLabel
 from sqlalchemy.orm import Query
 
 from common.database.db_helper import db_session
@@ -19,34 +18,23 @@ from models.models import Project
 from settings import cfg
 
 
-class NewProjectDialog(FramelessDialog):
+class NewProjectDialog(MessageBoxBase):
     project_created = Signal(ProjectInfo)
-    cancelSignal = Signal()
 
     def __init__(self, parent=None):
-        super().__init__()
+        super().__init__(parent=parent)
         self._setUpUi(self.tr("Create project"), parent=parent)
 
     def _setUpUi(self, title, parent):
-        self.titleLabel = QLabel(title, parent)
-        self.setFixedSize(400, 300)
-
-        self.yesButton = PrimaryPushButton(text=self.tr('Create'))
-        self.cancelButton = QPushButton(text=self.tr('Cancel'))
+        self.titleLabel = SubtitleLabel(title, parent)
+        self.buttonLayout.insertStretch(0, 1)
+        self.yesButton.setText(self.tr("Create"))
         self.yesButton.setFixedWidth(120)
         self.cancelButton.setFixedWidth(120)
 
-        self.vly_title = QVBoxLayout()
-        self.vly_title.setSpacing(12)
-        self.vly_title.setContentsMargins(24, 24, 24, 24)
-        self.vly_title.addWidget(self.titleLabel, 0, Qt.AlignmentFlag.AlignTop)
-
-        self.hly_btn = QHBoxLayout()
-        self.hly_btn.addStretch(1)
-        self.hly_btn.addWidget(self.yesButton)
-        self.hly_btn.addWidget(self.cancelButton)
-        self.hly_btn.setSpacing(12)
-        self.hly_btn.setContentsMargins(24, 24, 24, 24)
+        self.hly_title = QHBoxLayout()
+        self.hly_title.addWidget(self.titleLabel)
+        self.hly_title.addStretch(1)
 
         self.lbl_name = BodyLabel(text=self.tr("Project name:"))
         self.le_name = LineEdit()
@@ -64,22 +52,17 @@ class NewProjectDialog(FramelessDialog):
         self.fly_content.addRow(self.lbl_type, self.model_type)
         self.fly_content.addRow(self.lbl_workspace_dir, self.workdir_select)
 
-        self.vBoxLayout = QVBoxLayout(self)
-        self.vBoxLayout.setSpacing(9)
-        self.vBoxLayout.setContentsMargins(12, 0, 12, 0)
-        self.vBoxLayout.addLayout(self.vly_title, 1)
-        self.vBoxLayout.addLayout(self.fly_content)
+        self.viewLayout.addLayout(self.hly_title)
+        self.viewLayout.addLayout(self.fly_content)
 
-        self.vBoxLayout.addLayout(self.hly_btn)
-        self.vBoxLayout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)
         self.project_info = ProjectInfo()
         self.workdir_select.setText(cfg.get(cfg.workspace_folder))
         self.project_root_dir = Path(cfg.get(cfg.workspace_folder)) / "project"
         os.makedirs(self.project_root_dir, exist_ok=True)
-        self._initWidget()
         self._connect_signals_and_slots()
 
     def _connect_signals_and_slots(self):
+        self.yesButton.clicked.connect(self._on_create_button_clicked)
         self.model_type.model_type_selected.connect(self._on_project_type_selected)
         self.workdir_select.path_selected.connect(self._on_workdir_selected)
         self.ted_description.textChanged.connect(self._on_description_text_changed)
@@ -108,20 +91,7 @@ class NewProjectDialog(FramelessDialog):
     def _on_project_type_selected(self, project_type: ModelType):
         self.project_info.model_type = project_type
 
-    def _initWidget(self):
-        self._setQss()
-        # fixes https://github.com/zhiyiYo/PyQt-Fluent-Widgets/issues/19
-        self.yesButton.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect)
-        self.cancelButton.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect)
-        self.yesButton.setFocus()
-        self.yesButton.clicked.connect(self._onYesButtonClicked)
-        self.cancelButton.clicked.connect(self._onCancelButtonClicked)
-
-    def _onCancelButtonClicked(self):
-        self.reject()
-        self.cancelSignal.emit()
-
-    def _onYesButtonClicked(self):
+    def _on_create_button_clicked(self):
         with db_session(True) as session:
             projects: Query = session.query(Project).filter_by(project_name=self.le_name.text().strip())
             if len(projects.all()) > 0:
@@ -135,7 +105,6 @@ class NewProjectDialog(FramelessDialog):
                     parent=self
                 )
                 return
-        self.accept()
         self.project_info.project_id = self._get_project_id()
         self.project_info.project_name = self.le_name.text()
         self.project_info.project_description = self.ted_description.toPlainText()
@@ -149,19 +118,3 @@ class NewProjectDialog(FramelessDialog):
             if item.is_dir() and re.match(r'^P\d{6}$', item.name):
                 project_id = f"P{int(item.name[1:]) + 1:06d}"
         return project_id
-
-    def _setQss(self):
-        self.titleLabel.setObjectName("titleLabel")
-        self.cancelButton.setObjectName('cancelButton')
-        FluentStyleSheet.DIALOG.apply(self)
-        self.yesButton.adjustSize()
-        self.cancelButton.adjustSize()
-
-    def setContentCopyable(self, isCopyable: bool):
-        """ set whether the content is copyable """
-        if isCopyable:
-            self.titleLabel.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse)
-        else:
-            self.titleLabel.setTextInteractionFlags(
-                Qt.TextInteractionFlag.NoTextInteraction)
