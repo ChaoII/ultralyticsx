@@ -7,7 +7,7 @@ from qfluentwidgets import BodyLabel, SubtitleLabel, PrimaryPushButton, \
 
 from common.component.custom_icon import CustomFluentIcon
 from common.component.file_select_widget import FileSelectWidget
-from common import core
+from common.core.event_manager import signal_bridge
 from common.component.tag_widget import TextTagWidget
 from common.utils.utils import copy_tree
 from ..dataset_process import check_dataset
@@ -72,10 +72,10 @@ class ImportDatasetWidget(QWidget):
 
     def _on_import_clicked(self):
         if self._import_data():
-            core.EventManager().import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECKED)
+            signal_bridge.import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECKED)
             self.check_and_import_finished.emit(self._dataset_info)
         else:
-            core.EventManager().import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECK_FAILED)
+            signal_bridge.import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECK_FAILED)
 
     def _import_data(self):
         if not self._selected_dataset_dir:

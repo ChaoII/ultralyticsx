@@ -49,7 +49,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.vly.addWidget(self.cb_label)
         self.vly.addLayout(self.hly)
         self.connect_signals_and_slots()
-        self.dataset_dir_path: Path | None = None
+        self.image_dir_path: Path | None = None
         self.annotation_dir_path: Path | None = None
         self.labels_color = dict()
         self.annotation_task_id = ""
@@ -83,9 +83,11 @@ class AnnotationWidget(ContentWidgetBase):
         with db_session() as session:
             annotation_task: AnnotationTask = session.query(AnnotationTask).filter(
                 AnnotationTask.task_id == self.annotation_task_id).first()
-            image_path = Path(annotation_task.image_dir)
             self.model_type = ModelType(annotation_task.model_type)
-            self.annotation_dir_path = Path(annotation_task.annotation_dir)
+            if annotation_task.image_dir:
+                image_path = Path(annotation_task.image_dir)
+            if annotation_task.annotation_dir:
+                self.annotation_dir_path = Path(annotation_task.annotation_dir)
         self.update_shape_status()
         self.set_image_path(image_path)
 
@@ -173,9 +175,9 @@ class AnnotationWidget(ContentWidgetBase):
         self.canvas.set_shape_item_selected(uid)
 
     def update_label_file(self):
-        if not self.dataset_dir_path:
+        if not self.image_dir_path:
             return
-        with open(self.dataset_dir_path / "classes.txt", "w") as f:
+        with open(self.image_dir_path.parent / "classes.txt", "w") as f:
             for label in self.labels_color.keys():
                 f.write(f"{label}\n")
 
@@ -194,6 +196,8 @@ class AnnotationWidget(ContentWidgetBase):
             self.cb_label.action_next_image.setEnabled(False)
 
     def set_history_image_and_annotations(self, image_path: Path):
+        if not self.annotation_dir_path:
+            return
         annotation_path = self.annotation_dir_path / (image_path.stem + ".txt")
         annotations = []
         if annotation_path.exists():
@@ -263,75 +267,87 @@ class AnnotationWidget(ContentWidgetBase):
     def on_annotation_directory_changed(self, annotation_path: Path):
         self.annotation_dir_path = annotation_path
         db_update_annotation_dir_path(self.annotation_task_id, annotation_path.resolve().as_posix())
+        self.update_widget()
 
     def set_image_path(self, image_path: Path):
-        if image_path.exists():
-            if image_path.is_file() and is_image(image_path):
-                self.set_history_image_and_annotations(image_path)
-                self.dataset_dir_path = image_path.parent
-                self.cb_label.action_pre_image.setEnabled(False)
-                self.cb_label.action_next_image.setEnabled(False)
-            elif image_path.is_dir():
-                self.dataset_dir_path = image_path
-                self.label_widget.clear()
-                self.canvas.clear()
-                self.annotation_widget.clear()
-                self.image_list_widget.clear()
-                label_file_path = image_path / "classes.txt"
-                if label_file_path.exists():
-                    labels = open(label_file_path).read().splitlines()
-                    self.labels_color = {label: generate_random_color() for label in labels}
-                    self.label_widget.set_labels(self.labels_color)
-                annotation_list = []
-                if self.annotation_dir_path and self.annotation_dir_path.exists():
-                    for annotation in self.annotation_dir_path.iterdir():
-                        annotation_list.append(annotation.stem)
-                image_path_list = []
-                for image_path in image_path.iterdir():
-                    if image_path.suffix in [".jpg", ".png", ".jpeg"]:
-                        image_path_list.append(image_path)
-                self.image_list_widget.set_image_dir_path(image_path_list, annotation_list)
-                if len(image_path_list) > 0:
-                    self.cb_label.action_save_image.setEnabled(True)
-                    self.cb_label.action_delete.setEnabled(True)
-                else:
-                    self.cb_label.action_save_image.setEnabled(False)
-                    self.cb_label.action_delete.setEnabled(False)
+        if not image_path.exists():
+            InfoBar.error(
+                title='',
+                content=self.tr("Image path is not existed "),
+                orient=Qt.Orientation.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=-1,
+                parent=window_manager.find_window("main_widget")
+            )
+            return
+        if image_path == self.image_dir_path:
+            return
+        if image_path.is_file() and is_image(image_path):
+            self.set_history_image_and_annotations(image_path)
+            self.image_dir_path = image_path.parent
+            self.cb_label.action_pre_image.setEnabled(False)
+            self.cb_label.action_next_image.setEnabled(False)
+        elif image_path.is_dir():
+            self.image_dir_path = image_path
+            self.label_widget.clear()
+            self.canvas.clear()
+            self.annotation_widget.clear()
+            self.image_list_widget.clear()
+            label_file_path = image_path.parent / "classes.txt"
+            if label_file_path.exists():
+                labels = open(label_file_path).read().splitlines()
+                self.labels_color = {label: generate_random_color() for label in labels}
+                self.label_widget.set_labels(self.labels_color)
+            annotation_list = []
+            if self.annotation_dir_path and self.annotation_dir_path.exists():
+                for annotation in self.annotation_dir_path.iterdir():
+                    annotation_list.append(annotation.stem)
+            image_path_list = []
+            for image_path in image_path.iterdir():
+                if image_path.suffix in [".jpg", ".png", ".jpeg"]:
+                    image_path_list.append(image_path)
+            self.image_list_widget.set_image_dir_path(image_path_list, annotation_list)
+            if len(image_path_list) > 0:
+                self.cb_label.action_save_image.setEnabled(True)
+                self.cb_label.action_delete.setEnabled(True)
+            else:
+                self.cb_label.action_save_image.setEnabled(False)
+                self.cb_label.action_delete.setEnabled(False)
             self.label_widget.cus_add_label.setEnabled(True)
 
     def save_current_annotation(self):
-        if self.dataset_dir_path:
-            if self.dataset_dir_path.exists():
-                if not self.annotation_dir_path or not self.annotation_dir_path.exists():
-                    w = Dialog(self.tr("Warning"),
-                               self.tr("annotation directory is ot existed, Create it?"), self)
-                    w.yesButton.setText(self.tr("Yes"))
-                    w.cancelButton.setText(self.tr("No"))
-                    if w.exec():
-                        self.annotation_dir_path = self.dataset_dir_path / "annotations"
-                        self.annotation_dir_path.mkdir(exist_ok=True)
-                        db_update_annotation_dir_path(self.annotation_task_id,
-                                                      self.annotation_dir_path.resolve().as_posix())
+        if self.image_dir_path and self.image_dir_path.exists():
+            if not self.annotation_dir_path or not self.annotation_dir_path.exists():
+                w = Dialog(self.tr("Warning"),
+                           self.tr("annotation directory is ot existed, Create it?"), self)
+                w.yesButton.setText(self.tr("Yes"))
+                w.cancelButton.setText(self.tr("No"))
+                if w.exec():
+                    self.annotation_dir_path = self.image_dir_path.parent / "annotations"
+                    self.annotation_dir_path.mkdir(exist_ok=True)
+                    db_update_annotation_dir_path(self.annotation_task_id,
+                                                  self.annotation_dir_path.resolve().as_posix())
+                else:
+                    return
+        self.update_label_file()
+        annotation_name = Path(self.image_list_widget.get_current_image_labeled()[0])
+        annotation_path = self.annotation_dir_path / (annotation_name.stem + ".txt")
+        annotations = []
+        pix = self.canvas.get_background_pix()
+        w, h = pix.width(), pix.height()
+        for item in self.canvas.get_shape_items():
+            if isinstance(item, ShapeItem):
+                annotation = str(list(self.labels_color.keys()).index(item.get_annotation()))
+                shape_data = item.get_shape_data()
+                for index, data in enumerate(shape_data):
+                    if index % 2 == 0:
+                        data /= w
                     else:
-                        return
-            self.update_label_file()
-            annotation_name = Path(self.image_list_widget.get_current_image_labeled()[0])
-            annotation_path = self.annotation_dir_path / (annotation_name.stem + ".txt")
-            annotations = []
-            pix = self.canvas.get_background_pix()
-            w, h = pix.width(), pix.height()
-            for item in self.canvas.get_shape_items():
-                if isinstance(item, ShapeItem):
-                    annotation = str(list(self.labels_color.keys()).index(item.get_annotation()))
-                    shape_data = item.get_shape_data()
-                    for index, data in enumerate(shape_data):
-                        if index % 2 == 0:
-                            data /= w
-                        else:
-                            data /= h
-                        annotation += f" {data:.4f}"
-                    annotation += "\n"
-                    annotations.append(annotation)
-            with open(annotation_path, "w", encoding="utf8") as f:
-                f.writelines(annotations)
-            self.image_list_widget.set_current_image_labeled()
+                        data /= h
+                    annotation += f" {data:.4f}"
+                annotation += "\n"
+                annotations.append(annotation)
+        with open(annotation_path, "w", encoding="utf8") as f:
+            f.writelines(annotations)
+        self.image_list_widget.set_current_image_labeled()

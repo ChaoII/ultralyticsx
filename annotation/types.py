@@ -26,6 +26,6 @@ class AnnotationTaskInfo:
     annotation_task_description: str
     annotation_task_status: AnnotationStatus = AnnotationStatus.Initialing
     model_type: ModelType = ModelType.CLASSIFY
-    image_dir: str = "."
-    annotation_dir: str = "."
+    image_dir: str = ""
+    annotation_dir: str = ""
     create_time: str

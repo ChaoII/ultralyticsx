@@ -182,9 +182,9 @@ class TaskListWidget(ContentWidgetBase):
                 elif task.task_status == TrainTaskStatus.TRN_FINISHED.value:
                     item3.resume()
 
-    @Slot(str, str, TrainTaskStatus)
+    @Slot(str, int, int, str, str, str, int)
     def _on_train_status_changed(self, task_id: str, epoch: int, epochs: int, start_time: str, end_time: str,
-                                 elapsed: str, task_status: TrainTaskStatus):
+                                 elapsed: str, task_status: int):
         project_id = db_get_project_id(task_id)
         if project_id != self._current_project_id:
             return
@@ -199,7 +199,7 @@ class TaskListWidget(ContentWidgetBase):
         item_bar = self.tb_task.cellWidget(row_index, COLUMN_PROGRESS_BAR)
 
         if isinstance(item_bar, CustomProcessBar) and isinstance(item_task_status, TextTagWidget):
-            if task_status == TrainTaskStatus.TRAINING:
+            if task_status == TrainTaskStatus.TRAINING.value:
                 item_bar.set_max_value(epochs)
                 item_bar.set_value(epoch)
                 item_task_status.set_text(TrainTaskStatus.TRAINING.name)
@@ -207,15 +207,15 @@ class TaskListWidget(ContentWidgetBase):
                 item_start_time.setText(start_time)
                 item_end_time.setText("")
                 item_elapsed.setText("")
-            elif task_status == TrainTaskStatus.TRN_PAUSE:
+            elif task_status == TrainTaskStatus.TRN_PAUSE.value:
                 item_task_status.set_text(TrainTaskStatus.TRN_PAUSE.name)
                 item_task_status.set_color(*TrainTaskStatus.TRN_PAUSE.color)
                 item_bar.set_pause(True)
-            elif task_status == TrainTaskStatus.TRN_FAILED:
+            elif task_status == TrainTaskStatus.TRN_FAILED.value:
                 item_task_status.set_text(TrainTaskStatus.TRN_FAILED.name)
                 item_task_status.set_color(*TrainTaskStatus.TRN_FAILED.color)
                 item_bar.set_error(True)
-            elif task_status == TrainTaskStatus.TRN_FINISHED:
+            elif task_status == TrainTaskStatus.TRN_FINISHED.value:
                 item_task_status.set_text(TrainTaskStatus.TRN_FINISHED.name)
                 item_task_status.set_color(*TrainTaskStatus.TRN_FINISHED.color)
                 item_bar.resume()

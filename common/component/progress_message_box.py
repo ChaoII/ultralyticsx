@@ -62,8 +62,8 @@ class ProgressMessageBox(MessageBoxBaseTransparent):
         self.viewLayout.addWidget(self.pgr)
 
     def set_error(self, is_error: bool):
-        self.pgr.setError(is_error)
-
+        # self.pgr.setError(is_error)
+        pass
     def set_stroke_width(self, width: int):
         self.pgr.setStrokeWidth(width)
 

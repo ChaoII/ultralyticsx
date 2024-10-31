@@ -7,7 +7,7 @@ import yaml
 from PySide6.QtCore import Slot, Signal, QThread, QObject
 from loguru import logger
 
-from common import core
+from common.core.event_manager import signal_bridge
 from common.database.train_task_helper import db_update_task_epoch_info, db_update_task_finished, db_update_task_pause, \
     db_update_task_started, db_update_task_failed
 from common.component.model_type_widget import ModelType
@@ -218,8 +218,8 @@ class ModelTrainThread(QThread):
         if self._metric_data.is_empty():
             self._metric_data.init_plot_data(metrics)
         self.train_start_signal.emit(self._loss_data.raw_data(), self._metric_data.raw_data())
-        core.EventManager().train_status_changed.emit(self._task_info.task_id, 0, epochs, format_datatime(
-            datetime.fromtimestamp(self._start_time)), None, None, TrainTaskStatus.TRAINING)
+        signal_bridge.train_status_changed.emit(self._task_info.task_id, 0, epochs, format_datatime(
+            datetime.fromtimestamp(self._start_time)), None, None, TrainTaskStatus.TRAINING.value)
         db_update_task_started(self._task_info.task_id, datetime.fromtimestamp(self._start_time))
 
     def _on_train_epoch_start(self, trainer):
@@ -238,8 +238,8 @@ class ModelTrainThread(QThread):
         epochs = trainer.epochs
         self.train_epoch_end.emit(epoch)
 
-        core.EventManager().train_status_changed.emit(self._task_info.task_id, epoch, epochs, format_datatime(
-            datetime.fromtimestamp(self._start_time)), None, None, TrainTaskStatus.TRAINING)
+        signal_bridge.train_status_changed.emit(self._task_info.task_id, epoch, epochs, format_datatime(
+            datetime.fromtimestamp(self._start_time)), None, None, TrainTaskStatus.TRAINING.value)
 
         db_update_task_epoch_info(self._task_info.task_id, epoch, epochs)
 
@@ -329,9 +329,9 @@ class ModelTrainThread(QThread):
             yaml.dump(self._train_parameters, f, default_flow_style=False, allow_unicode=True,
                       sort_keys=False)
         logger.info(f"train finished, {elapsed_time}")
-        core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None,
-                                                      format_datatime(datetime.fromtimestamp(end_time)), elapsed_time,
-                                                      self._task_info.task_status)
+        signal_bridge.train_status_changed.emit(self._task_info.task_id, None, None, None,
+                                                format_datatime(datetime.fromtimestamp(end_time)), elapsed_time,
+                                                self._task_info.task_status.value)
 
     def run(self):
         if self.trainer:
@@ -339,8 +339,8 @@ class ModelTrainThread(QThread):
                 self.trainer.train()
             except Exception as e:
                 self.model_train_failed.emit(str(e))
-                core.EventManager().train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
-                                                              TrainTaskStatus.TRN_FAILED)
+                signal_bridge.train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
+                                                        TrainTaskStatus.TRN_FAILED.value)
                 db_update_task_failed(self._task_info.task_id)
 
     @Slot()
