@@ -75,6 +75,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.label_widget.delete_label_clicked.connect(self.on_delete_label)
         self.label_widget.label_item_color_changed.connect(self.on_label_item_color_changed)
         self.annotation_widget.delete_annotation_clicked.connect(lambda x: self.canvas.delete_shape_item(x))
+        self.annotation_widget.edit_annotation_clicked.connect(self.on_annotation_item_edit_clicked)
         self.annotation_widget.annotation_item_selected_changed.connect(self.on_annotation_item_selected_changed)
         self.image_list_widget.image_item_changed.connect(self.on_image_item_changed)
         self.image_list_widget.item_ending_status_changed.connect(self.on_move_ending_status)
@@ -189,6 +190,19 @@ class AnnotationWidget(ContentWidgetBase):
 
     def on_annotation_item_selected_changed(self, uid: str):
         self.canvas.set_shape_item_selected(uid)
+
+    def on_annotation_item_edit_clicked(self, uid: str):
+        cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color,
+                                                     last_label="", parent=self)
+        if cus_message_box.exec():
+            label = cus_message_box.get_label()
+            color = self.labels_color[label]
+            self.annotation_widget.set_item_annotation(uid, label)
+            self.annotation_widget.set_item_color(uid, color)
+            shape_item = self.canvas.get_shape_item(uid)
+            if shape_item:
+                shape_item.set_color(color)
+                shape_item.set_annotation(label)
 
     def update_label_file(self):
         if not self.image_dir_path:

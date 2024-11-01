@@ -3,24 +3,35 @@ from PySide6.QtGui import QColor, QKeyEvent, Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QListWidgetItem, QTableWidget
 from qfluentwidgets import ColorPickerButton, BodyLabel, SimpleCardWidget, StrongBodyLabel
 
+from annotation.annotation_ensure_message_box import AnnotationEnsureMessageBox
 from annotation.core import drawing_status_manager, DrawingStatus
+from common.component.custom_color_button import CustomColorButton
 from common.component.custom_list_widget import CustomListWidget
 
 
 class AnnotationListItemWidget(QWidget):
     item_deleted = Signal(str)
+    item_edited = Signal(str)
 
     def __init__(self, uid: str, annotation: str, color: QColor, parent=None):
         super().__init__(parent=parent)
         self.hly = QHBoxLayout(self)
         self.hly.setContentsMargins(0, 0, 0, 0)
-        self.cb_label_status = ColorPickerButton(color, "")
+        self.cb_label_status = CustomColorButton(color)
         self.cb_label_status.setFixedSize(16, 16)
+        self.lbl_annotation = BodyLabel(annotation, self)
         self.hly.addWidget(self.cb_label_status)
-        self.hly.addWidget(BodyLabel(text=annotation))
+        self.hly.addWidget(self.lbl_annotation)
         self.hly.addStretch(1)
         self.annotation = annotation
         self.uid = uid
+        self.cb_label_status.clicked.connect(lambda: self.item_edited.emit(self.uid))
+
+    def set_color(self, color: QColor):
+        self.cb_label_status.setColor(color)
+
+    def set_text(self, annotation: str):
+        self.lbl_annotation.setText(annotation)
 
     def get_annotation(self):
         return self.annotation
@@ -28,6 +39,7 @@ class AnnotationListItemWidget(QWidget):
 
 class AnnotationListWidget(SimpleCardWidget):
     delete_annotation_clicked = Signal(str)
+    edit_annotation_clicked = Signal(str)
     annotation_item_selected_changed = Signal(str)
 
     def __init__(self):
@@ -61,11 +73,31 @@ class AnnotationListWidget(SimpleCardWidget):
         self.list_widget.addItem(item)
         annotation_item_widget = AnnotationListItemWidget(uid, annotation, color)
         annotation_item_widget.item_deleted.connect(self.on_delete_item)
+        annotation_item_widget.item_edited.connect(self.on_edit_item)
         self.list_widget.setItemWidget(item, annotation_item_widget)
         self.annotation_item_map.update({uid: item})
 
     def on_delete_item(self, uid: str):
         self.delete_annotation_item(uid)
+
+    def on_edit_item(self, uid: str):
+        self.edit_annotation_clicked.emit(uid)
+
+    def set_item_color(self, uid: str, color: QColor):
+        item = self.annotation_item_map.get(uid, None)
+        if item is None:
+            return
+        annotation_item_widget = self.list_widget.itemWidget(item)
+        if isinstance(annotation_item_widget, AnnotationListItemWidget):
+            annotation_item_widget.set_color(color)
+
+    def set_item_annotation(self, uid: str, annotation: str):
+        item = self.annotation_item_map.get(uid, None)
+        if item is None:
+            return
+        annotation_item_widget = self.list_widget.itemWidget(item)
+        if isinstance(annotation_item_widget, AnnotationListItemWidget):
+            annotation_item_widget.set_text(annotation)
 
     def on_annotation_item_clicked(self, item: QListWidgetItem):
         annotation_item_widget = self.list_widget.itemWidget(item)

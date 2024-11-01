@@ -1,14 +1,13 @@
 from PySide6.QtGui import QColor, Qt, QPainter
 from PySide6.QtWidgets import QToolButton
 from blinker import Signal
-from qfluentwidgets import ColorDialog, isDarkTheme
+from qfluentwidgets import isDarkTheme
 
 
 class CustomColorButton(QToolButton):
 
     def __init__(self, color: QColor, parent=None):
         super().__init__(parent=parent)
-        self.setFixedSize(24, 24)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.color = color
         self.border_radius = 5

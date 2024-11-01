@@ -36,7 +36,9 @@ class LabelSettingsListItemWidget(QWidget):
         self.hly = QHBoxLayout(self)
         self.hly.setContentsMargins(0, 0, 0, 0)
         self.cb_label_status = ColorPickerButton(color, "")
+        self.cb_label_status.setDisabled(True)
         self.cb_label_status.setFixedSize(16, 16)
+
         self.hly.addWidget(self.cb_label_status)
         self.hly.addWidget(BodyLabel(text=label))
         self.hly.addStretch(1)

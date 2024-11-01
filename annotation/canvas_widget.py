@@ -70,6 +70,9 @@ class InteractiveCanvas(QGraphicsView):
             if isinstance(item, ShapeItem):
                 self.shape_item_selected_changed.emit(item.get_id())
 
+    def get_shape_item(self, uid: str):
+        return self.shape_item_map.get(uid, None)
+
     def get_shape_items(self):
         return self.scene.items()
 
