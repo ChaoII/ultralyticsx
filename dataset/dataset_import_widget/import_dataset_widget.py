@@ -72,10 +72,10 @@ class ImportDatasetWidget(QWidget):
 
     def _on_import_clicked(self):
         if self._import_data():
-            signal_bridge.import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECKED)
+            signal_bridge.import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECKED.value)
             self.check_and_import_finished.emit(self._dataset_info)
         else:
-            signal_bridge.import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECK_FAILED)
+            signal_bridge.import_dataset_finished.emit(self.lbl_dataset_id.text(), DatasetStatus.CHECK_FAILED.value)
 
     def _import_data(self):
         if not self._selected_dataset_dir:

@@ -269,8 +269,8 @@ class DatasetListWidget(QWidget):
         dataset_info = self._binding_dataset_info_from_db(dataset_id)
         self.import_dataset_clicked.emit(dataset_info)
 
-    @Slot(str)
-    def _on_import_dataset_finished(self, dataset_id, status: DatasetStatus):
+    @Slot(str, int)
+    def _on_import_dataset_finished(self, dataset_id: str, status: int):
         # 部分区域刷新
         # item = self.item_dataset_id_map.get(dataset_id, None)
         # if item:
@@ -284,7 +284,7 @@ class DatasetListWidget(QWidget):
         #         op.set_checked_status(True)
         with db_session() as session:
             dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
-            dataset.dataset_status = status.value
+            dataset.dataset_status = status
         # 全量数据刷新，如果此处存在性能瓶颈，请使用部分区域刷新
         self._load_dataset_data()
 

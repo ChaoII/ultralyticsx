@@ -62,8 +62,9 @@ class ProgressMessageBox(MessageBoxBaseTransparent):
         self.viewLayout.addWidget(self.pgr)
 
     def set_error(self, is_error: bool):
-        # self.pgr.setError(is_error)
-        pass
+        if not self._indeterminate:
+            self.pgr.setError(is_error)
+
     def set_stroke_width(self, width: int):
         self.pgr.setStrokeWidth(width)
 
@@ -71,7 +72,8 @@ class ProgressMessageBox(MessageBoxBaseTransparent):
         self.pgr.setFixedSize(width, height)
 
     def set_paused(self, is_paused: bool):
-        self.pgr.setPaused(is_paused)
+        if not self._indeterminate:
+            self.pgr.setPaused(is_paused)
 
     def set_max_value(self, value):
         if not self._indeterminate:
