@@ -1,9 +1,8 @@
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor, QKeyEvent, Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QListWidgetItem, QTableWidget
-from qfluentwidgets import ColorPickerButton, BodyLabel, SimpleCardWidget, StrongBodyLabel
+from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel
 
-from annotation.annotation_ensure_message_box import AnnotationEnsureMessageBox
 from annotation.core import drawing_status_manager, DrawingStatus
 from common.component.custom_color_button import CustomColorButton
 from common.component.custom_list_widget import CustomListWidget

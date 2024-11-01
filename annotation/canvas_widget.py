@@ -1,7 +1,7 @@
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QLineF, Signal, QPointF
+from PySide6.QtCore import QLineF, Signal, QPointF, QEvent
 from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsItem
 from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
@@ -45,7 +45,6 @@ class InteractiveCanvas(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.scrollDelegate = SmoothScrollDelegate(self)
-
         self.inter_line_color = QColor(Qt.GlobalColor.red)
         self.border_line_color = QColor(Qt.GlobalColor.cyan)
         self.update_background_color()
@@ -208,13 +207,30 @@ class InteractiveCanvas(QGraphicsView):
                         self.scene.removeItem(item)
                         if item.get_id() in self.shape_item_map:
                             self.shape_item_map.pop(item.get_id())
-        super().keyPressEvent(event)
+
+            if event.key() == Qt.Key.Key_Up:
+                for item in self.scene.selectedItems():
+                    if isinstance(item, ShapeItem):
+                        item.move_by(QPointF(0, -1))
+            elif event.key() == Qt.Key.Key_Down:
+                for item in self.scene.selectedItems():
+                    if isinstance(item, ShapeItem):
+                        item.move_by(QPointF(0, 1))
+            elif event.key() == Qt.Key.Key_Left:
+                for item in self.scene.selectedItems():
+                    if isinstance(item, ShapeItem):
+                        item.move_by(QPointF(-1, 0))
+            elif event.key() == Qt.Key.Key_Right:
+                for item in self.scene.selectedItems():
+                    if isinstance(item, ShapeItem):
+                        item.move_by(QPointF(1, 0))
+            else:
+                super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if drawing_status_manager.get_drawing_status() == DrawingStatus.Select:
             if event.key() == Qt.Key.Key_Shift:
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
-
         super().keyReleaseEvent(event)
 
     def mousePressEvent(self, event):
