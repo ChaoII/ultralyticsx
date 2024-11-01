@@ -23,7 +23,7 @@ class LabelListItemWidget(QWidget):
 class AnnotationEnsureMessageBox(MessageBoxBase):
     """ Custom message box """
 
-    def __init__(self, labels_color: dict, parent=None):
+    def __init__(self, labels_color: dict, last_label: str, parent=None):
         super().__init__(parent)
         self.title_label = StrongBodyLabel(self.tr("Select the label"), self)
         self.le_label = LineEdit()
@@ -32,21 +32,27 @@ class AnnotationEnsureMessageBox(MessageBoxBase):
         self.viewLayout.addWidget(self.title_label)
         self.viewLayout.addWidget(self.le_label)
         self.viewLayout.addWidget(self.list_widget)
-        self.set_labels(labels_color)
+        self.set_labels(labels_color, last_label)
         self.list_widget.itemClicked.connect(self.on_label_item_clicked)
 
-    def set_labels(self, labels_color: dict):
+    def set_labels(self, labels_color: dict, last_label: str):
         self.list_widget.clear()
-        for label, color in labels_color.items():
+        cur_label_row = -1
+        for index, (label, color) in enumerate(labels_color.items()):
             item = QListWidgetItem()
             self.list_widget.addItem(item)
             label_item = LabelListItemWidget(label, color)
             self.list_widget.setItemWidget(item, label_item)
-
         labels = list(labels_color.keys())
+        if last_label in labels:
+            cur_label_row = labels.index(last_label)
         if len(labels) > 0:
-            self.list_widget.setCurrentIndex(self.list_widget.model().index(0, 0))
-            self.le_label.setText(labels[0])
+            if cur_label_row >= 0:
+                self.list_widget.setCurrentIndex(self.list_widget.model().index(cur_label_row, 0))
+                self.le_label.setText(labels[cur_label_row])
+            else:
+                self.list_widget.setCurrentIndex(self.list_widget.model().index(0, 0))
+                self.le_label.setText(labels[0])
 
     def on_label_item_clicked(self, item: QListWidgetItem):
         widget = self.list_widget.itemWidget(item)

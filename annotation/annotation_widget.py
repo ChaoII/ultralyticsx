@@ -54,6 +54,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.labels_color = dict()
         self.annotation_task_id = ""
         self.model_type = ModelType.DETECT
+        self.last_selected_label = ""
 
     def connect_signals_and_slots(self):
         self.cb_label.annotation_directory_changed.connect(self.on_annotation_directory_changed)
@@ -139,9 +140,11 @@ class AnnotationWidget(ContentWidgetBase):
             self.update_shape_status()
 
     def is_saved_annotation(self) -> bool:
-        shape_num = len(self.canvas.get_shape_items())
+        shape_num = len(self.canvas.get_shape_items()) - 1
         image_path = Path(self.image_list_widget.get_current_image_labeled()[0])
         annotation_path = self.annotation_dir_path / (image_path.stem + ".txt")
+        if not annotation_path.exists():
+            return False
         f = annotation_path.open("r", encoding="utf-8")
         annotation_num = len(f.readlines())
         return shape_num == annotation_num
@@ -149,9 +152,10 @@ class AnnotationWidget(ContentWidgetBase):
     def on_draw_finished(self, shape_item: ShapeItem):
         label = ""
         if not shape_item.get_is_drawing_history():
-            cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color, parent=self)
+            cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color,
+                                                         last_label=self.last_selected_label, parent=self)
             if cus_message_box.exec():
-                label = cus_message_box.get_label()
+                self.last_selected_label = label = cus_message_box.get_label()
                 if not label:
                     InfoBar.error(
                         title='',
@@ -177,6 +181,8 @@ class AnnotationWidget(ContentWidgetBase):
         self.canvas.scene.clearSelection()
         if not self.is_saved_annotation():
             self.image_list_widget.set_current_image_labeled(False)
+        else:
+            self.image_list_widget.set_current_image_labeled(True)
 
     def on_shape_item_selected_changed(self, uid: str):
         self.annotation_widget.set_selected_item(uid)
@@ -249,7 +255,7 @@ class AnnotationWidget(ContentWidgetBase):
             w.yesButton.setText(self.tr("Save"))
             if w.exec():
                 self.save_current_annotation()
-                self.image_list_widget.set_current_image_labeled()
+                self.image_list_widget.set_current_image_labeled(True)
             else:
                 return
         self.image_list_widget.pre_item()

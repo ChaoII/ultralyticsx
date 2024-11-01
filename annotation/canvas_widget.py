@@ -205,7 +205,6 @@ class InteractiveCanvas(QGraphicsView):
                         self.scene.removeItem(item)
                         if item.get_id() in self.shape_item_map:
                             self.shape_item_map.pop(item.get_id())
-
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
