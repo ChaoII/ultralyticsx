@@ -367,3 +367,12 @@ class AnnotationWidget(ContentWidgetBase):
         with open(annotation_path, "w", encoding="utf8") as f:
             f.writelines(annotations)
         self.image_list_widget.set_current_image_labeled(True)
+        InfoBar.success(
+            title='',
+            content=self.tr("Annotations save successfully!"),
+            orient=Qt.Orientation.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=window_manager.find_window("main_widget")
+        )
