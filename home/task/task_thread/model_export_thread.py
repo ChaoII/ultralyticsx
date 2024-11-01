@@ -13,7 +13,6 @@ class ModelExportThread(QThread):
         super().__init__()
         self._exporter: YOLO | None = None
         self._export_parameters = export_parameters
-        # self._task_info: TaskInfo | None = None
 
     def init_model_exporter(self) -> bool:
         try:

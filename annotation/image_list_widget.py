@@ -154,11 +154,11 @@ class ImageListWidget(SimpleCardWidget):
         else:
             self.item_ending_status_changed.emit(2)
 
-    def set_current_image_labeled(self):
+    def set_current_image_labeled(self, labeled: bool):
         item = self.list_widget.currentItem()
         widget = self.list_widget.itemWidget(item)
         if isinstance(widget, ImageListItemWidget):
-            widget.set_label_status(True)
+            widget.set_label_status(labeled)
 
     def get_current_image_labeled(self) -> [str, bool]:
         item = self.list_widget.currentItem()

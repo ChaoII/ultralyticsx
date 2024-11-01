@@ -138,6 +138,14 @@ class AnnotationWidget(ContentWidgetBase):
         else:
             self.update_shape_status()
 
+    def is_saved_annotation(self) -> bool:
+        shape_num = len(self.canvas.get_shape_items())
+        image_path = Path(self.image_list_widget.get_current_image_labeled()[0])
+        annotation_path = self.annotation_dir_path / (image_path.stem + ".txt")
+        f = annotation_path.open("r", encoding="utf-8")
+        annotation_num = len(f.readlines())
+        return shape_num == annotation_num
+
     def on_draw_finished(self, shape_item: ShapeItem):
         label = ""
         if not shape_item.get_is_drawing_history():
@@ -167,6 +175,8 @@ class AnnotationWidget(ContentWidgetBase):
             shape_item.set_annotation(label)
             self.annotation_widget.add_annotation(shape_item.get_id(), label, color)
         self.canvas.scene.clearSelection()
+        if not self.is_saved_annotation():
+            self.image_list_widget.set_current_image_labeled(False)
 
     def on_shape_item_selected_changed(self, uid: str):
         self.annotation_widget.set_selected_item(uid)
@@ -350,4 +360,4 @@ class AnnotationWidget(ContentWidgetBase):
                 annotations.append(annotation)
         with open(annotation_path, "w", encoding="utf8") as f:
             f.writelines(annotations)
-        self.image_list_widget.set_current_image_labeled()
+        self.image_list_widget.set_current_image_labeled(True)

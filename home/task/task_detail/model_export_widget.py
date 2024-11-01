@@ -8,7 +8,7 @@ from common.component.collapsible_widget import CollapsibleWidgetItem
 from common.component.custom_icon import CustomFluentIcon
 from common.component.file_select_widget import FileSelectWidget
 from common.component.progress_message_box import ProgressMessageBox
-from common.core.window_manager import WindowManager
+from common.core.window_manager import WindowManager, window_manager
 from ..task_thread.model_export_thread import ModelExportThread
 from ...types import TrainTaskInfo
 
@@ -190,7 +190,7 @@ class ModelExportWidget(CollapsibleWidgetItem):
     def export(self):
         self.create_export_thread()
         self._model_export_thread.start()
-        self._message_box = ProgressMessageBox(indeterminate=True, parent=WindowManager().find_window("main_widget"))
+        self._message_box = ProgressMessageBox(indeterminate=True, parent=window_manager.find_window("main_widget"))
         self._message_box.set_ring_size(200, 200)
         self._message_box.exec()
 
