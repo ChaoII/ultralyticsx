@@ -21,12 +21,16 @@ class ModelPredictorThread(QThread):
         self._model_path = model_path
         self._task_info: TrainTaskInfo | None = None
         self._image_path: Path | None = None
+        self._kwargs = dict()
 
     def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
 
     def set_predict_image(self, image_path: Path):
         self._image_path = image_path
+
+    def set_args(self, kwargs: dict):
+        self._kwargs = kwargs
 
     def draw_image(self, result: Results) -> QImage:
         pix = QImage(self._image_path)
@@ -53,7 +57,7 @@ class ModelPredictorThread(QThread):
             return
         if self._predictor and self._image_path:
             try:
-                results = self._predictor.predict(self._image_path)
+                results = self._predictor.predict(self._image_path, **self._kwargs)
                 image = self.draw_image(results[0])
                 self.model_predict_end.emit(image, results[0])
             except Exception as e:

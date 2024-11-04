@@ -85,7 +85,19 @@ def draw_detect_result(pix: QImage, labels_name_map: dict, boxes: list, line_wid
     font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
     font = QFont("Courier")
     font.setPixelSize(font_size)
+    fm = QFontMetrics(font)
     colors_map = generate_color_map(len(labels_name_map.keys()))
+    for index, (class_id, label_name) in enumerate(labels_name_map.items()):
+        txt = f"{label_name}"
+        text_rect = QRect(10, index * fm.height(), fm.boundingRect(txt).width() + line_width, fm.height())
+        color = colors_map[class_id]
+        painter.setPen(color)
+        painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
+        painter.drawRect(text_rect)
+        painter.setFont(font)
+        inv_color = invert_color(color)
+        painter.setPen(QPen(inv_color))
+        painter.drawText(text_rect, txt)
     for box in boxes:
         x1, y1, x2, y2, conf, class_id = box
         label = labels_name_map[int(class_id)]
@@ -98,16 +110,17 @@ def draw_detect_result(pix: QImage, labels_name_map: dict, boxes: list, line_wid
         painter.setPen(QPen(QColor(color.red(), color.green(), color.blue()), line_width))  # 设置画笔颜色和宽度
         painter.drawRect(QRectF(QPointF(x1, y1), QPointF(x2, y2)))  # 绘制矩形
         # 获取字体大小
-        fm = QFontMetrics(font)
+
         # 文字填充色
-        painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
-        txt = f"{label}_{conf:.2f}"
-        text_rect = QRect(x1, y1 - fm.height(), fm.boundingRect(txt).width() + line_width,
-                          fm.height())
-        painter.drawRect(text_rect)
-        painter.setFont(font)
-        painter.setPen(QPen(inv_color))
-        painter.drawText(text_rect, txt)
+        # painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
+        # txt = f"{label}_{conf:.2f}"
+        # text_rect = QRect(x1, y1 - fm.height(), fm.boundingRect(txt).width() + line_width,
+        #                   fm.height())
+        #
+        # painter.drawRect(text_rect)
+        # painter.setFont(font)
+        # painter.setPen(QPen(inv_color))
+        # painter.drawText(text_rect, txt)
     painter.end()
 
 

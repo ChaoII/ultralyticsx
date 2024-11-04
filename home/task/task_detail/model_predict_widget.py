@@ -4,7 +4,7 @@ from PySide6.QtGui import Qt, QFont, QImage, QResizeEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QAbstractItemView, QTableWidgetItem, \
     QSizePolicy
 from qfluentwidgets import BodyLabel, ComboBox, PrimaryPushButton, InfoBar, InfoBarPosition, ToolTipFilter, \
-    ToolTipPosition, TableWidget, TextEdit
+    ToolTipPosition, TableWidget, TextEdit, CompactSpinBox
 
 from common.component.collapsible_widget import CollapsibleWidgetItem
 from common.component.custom_icon import CustomFluentIcon
@@ -33,11 +33,17 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         super().__init__(self.tr("▌Model prediction"), parent=parent)
         self.cmb_model_name = ComboBox()
         self.cmb_model_name.setFixedWidth(300)
+        self.spb_image_size = CompactSpinBox()
+        self.spb_image_size.setRange(64, 2560)
+        self.spb_image_size.setValue(640)
+        self.spb_image_size.setFixedWidth(300)
 
         self.hly_export_setting = QHBoxLayout()
         self.hly_export_setting.setSpacing(40)
         self.hly_export_setting.addWidget(FixWidthBodyLabel(self.tr("model name: ")))
         self.hly_export_setting.addWidget(self.cmb_model_name)
+        self.hly_export_setting.addWidget(FixWidthBodyLabel(self.tr("image size: ")))
+        self.hly_export_setting.addWidget(self.spb_image_size)
         self.hly_export_setting.addStretch(1)
         self._lbl_image_fix_width = 360
         self._lbl_image_fix_height = 300
@@ -160,7 +166,11 @@ class ModelPredictWidget(CollapsibleWidgetItem):
                 parent=window_manager.find_window("main_widget")
             )
             return
+        kwargs = dict(
+            imgsz=self.spb_image_size.value(),
+        )
         self._model_predict_thread.set_predict_image(self._current_image_path)
+        self._model_predict_thread.set_args(kwargs)
         self._model_predict_thread.start()
         self._message_box = ProgressMessageBox(indeterminate=True, parent=window_manager.find_window("main_widget"))
         self._message_box.set_ring_size(100, 100)
