@@ -177,7 +177,7 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         InfoBar.error(
             title="",
             content=err_msg,
-            duration=2000,
+            duration=-1,
             position=InfoBarPosition.TOP_RIGHT,
             parent=window_manager.find_window("main_widget")
         )

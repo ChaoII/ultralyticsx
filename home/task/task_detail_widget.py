@@ -94,6 +94,7 @@ class TaskDetailWidget(ContentWidgetBase):
     @Slot(bool)
     def _on_model_export_finish(self, task_info: TrainTaskInfo):
         self.tool_box.set_current_item(self.model_predict_widget)
+        self.model_predict_widget.setEnabled(True)
         self.model_predict_widget.set_task_info(task_info)
 
     def update_data(self, task_id):

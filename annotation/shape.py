@@ -2,8 +2,7 @@ import enum
 import math
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QLineF, QSizeF
-from PySide6.QtGui import QPolygonF, QPainterPath, QPainter, QColor, QPen, QKeyEvent, QTransform, QPainterPathStroker, \
-    QPixmap
+from PySide6.QtGui import QPolygonF, QPainterPath, QPainter, QColor, QPen, QTransform, QPainterPathStroker, QPixmap
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsSceneHoverEvent
 from qfluentwidgets import themeColor
 
@@ -150,17 +149,6 @@ class ShapeItem(QGraphicsItem):
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.update()
         super().hoverLeaveEvent(event)
-
-    def keyPressEvent(self, event: QKeyEvent) -> None:
-        if event.key() == Qt.Key.Key_Left:
-            self.move_by(QPointF(-1, 0))
-        if event.key() == Qt.Key.Key_Right:
-            self.move_by(QPointF(1, 0))
-        if event.key() == Qt.Key.Key_Up:
-            self.move_by(QPointF(0, -1))
-        if event.key() == Qt.Key.Key_Down:
-            self.move_by(QPointF(0, 1))
-        super().keyPressEvent(event)
 
 
 class PolygonItem(ShapeItem):

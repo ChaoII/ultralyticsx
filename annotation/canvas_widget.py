@@ -1,11 +1,11 @@
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QLineF, Signal, QPointF, QEvent
-from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsItem
-from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
+from PySide6.QtCore import QLineF, Signal, QPointF
 from PySide6.QtCore import QUuid
+from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
+from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
 
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
     ImageItem, RotatedRectangleItem

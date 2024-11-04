@@ -95,10 +95,8 @@ class FileSelectWidget(LineEdit):
         if Path(self._cur_path).exists():
             if Path(self._cur_path).is_dir():
                 _dir = self._cur_path
-                self._is_dir = True
             elif Path(self._cur_path).is_file():
                 _dir = Path(self._cur_path).parent.resolve().as_posix()
-                self._is_dir = False
             else:
                 _dir = Path.home().as_posix()
         else:
