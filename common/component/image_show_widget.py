@@ -1,90 +1,95 @@
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPainter, QImage, QPen, QPainterPath, QPixmap
-from PySide6.QtWidgets import QWidget, QVBoxLayout
-from qfluentwidgets import ImageLabel
+from pathlib import Path
+
+from PySide6.QtCore import Qt, Signal, QEvent
+from PySide6.QtGui import QPainter, QImage, QPen, QPainterPath, QPixmap, QResizeEvent, QMouseEvent, QEnterEvent, QCursor
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication, QFileDialog
+from qfluentwidgets import ImageLabel, TransparentToolButton, FluentIcon, ToolButton
+
+from .base.interactive_image_label_base import InteractiveImageLabelBase
+from .custom_icon import CustomFluentIcon
+from .image_tip_widget import ImageTip
 
 
-class ImageShowWidget(QWidget):
-    path_selected = Signal(str)
+class ImageShowWidget(InteractiveImageLabelBase):
+    compact_mode_clicked = Signal(bool)
 
     def __init__(self):
         super().__init__()
-        self.lbl_image = ImageLabel()
-        self._bottom_right_radius = 8
-        self._bottom_left_radius = 8
-        self._top_right_radius = 8
-        self._top_left_radius = 8
-        self._is_hovered = False
-        self._cur_path = ""
-        self.image: QImage | None = None
-        self.vly_image = QVBoxLayout(self)
-        self.vly_image.setContentsMargins(0, 0, 0, 0)
-        self.vly_image.addWidget(self.lbl_image, 0, Qt.AlignmentFlag.AlignCenter)
+        self.tb_down_load = TransparentToolButton(FluentIcon.DOWNLOAD, self)
+        self.tb_down_load.setFixedSize(30, 30)
+        self.tb_down_load.setVisible(False)
+        self.tb_down_load.setToolTip(self.tr("Download image"))
+        self.tb_down_load.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.tb_compact = TransparentToolButton(CustomFluentIcon.COMPACT, self)
+        self.tb_compact.setFixedSize(30, 30)
+        self.tb_compact.setCheckable(True)
+        self.tb_compact.setChecked(False)
+        self.tb_compact.setVisible(False)
+        self.tb_compact.setToolTip(self.tr("Compact mode"))
+        self.tb_compact.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.tb_maximum = TransparentToolButton(CustomFluentIcon.SHOW, self)
+        self.tb_maximum.setFixedSize(30, 30)
+        self.tb_maximum.setVisible(False)
+        self.tb_maximum.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.tb_maximum.setToolTip(self.tr("View"))
+        self.connect_signals_and_slots()
 
-    def _scale_image(self):
-        if self.width() > self.height():
-            if self.lbl_image.image.width() > self.lbl_image.image.height():
-                self.lbl_image.scaledToWidth(self.width() - 2)
-            else:
-                self.lbl_image.scaledToHeight(self.height() - 2)
+        self.cur_dir = "."
+        self.image_tip = None
+
+    def connect_signals_and_slots(self):
+        self.tb_maximum.clicked.connect(self.on_maximum_clicked)
+        self.tb_compact.clicked.connect(self.on_compact_clicked)
+        self.tb_down_load.clicked.connect(self.on_download_clicked)
+
+    def on_maximum_clicked(self):
+        if self.image:
+            pix = QPixmap.fromImage(self.image)
+            self.image_tip = ImageTip(pix, QCursor.pos())
+            self.image_tip.showFlyout()
+
+    def on_compact_clicked(self, checked: bool):
+        if checked:
+            self.tb_compact.setIcon(CustomFluentIcon.RELAX)
+            self.tb_compact.setToolTip(self.tr("Relax mode"))
         else:
-            if self.lbl_image.image.width() > self.lbl_image.image.height():
-                self.lbl_image.scaledToHeight(self.height() - 2)
-            else:
-                self.lbl_image.scaledToWidth(self.width() - 2)
+            self.tb_compact.setIcon(CustomFluentIcon.COMPACT)
+            self.tb_compact.setToolTip(self.tr("Compact mode"))
+        if self.image:
+            self.compact_mode_clicked.emit(checked)
+
+    def on_download_clicked(self):
+        if not self.image:
+            return
+        default_filename = (Path(self.cur_dir) / "result.jpg").resolve().as_posix()
+        filename, _ = QFileDialog.getSaveFileName(self, self.tr("Save Image"), default_filename,
+                                                  "Image Files (*.png *.jpg *.bmp)")
+        if filename:
+            self.image.save(filename)
+            self.cur_dir = Path(filename).parent.resolve().as_posix()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        self._scale_image()
+        self.tb_down_load.move(self.width() - 35, 1)
+        self.tb_compact.move(self.width() - 65, 1)
+        self.tb_maximum.move(self.width() - 95, 1)
+        self.lbl_image.move((self.width() - self.lbl_image.width()) // 2,
+                            (self.height() - self.lbl_image.height()) // 2)
+
+    def enterEvent(self, event: QEnterEvent) -> None:
+        self.tb_down_load.setVisible(True)
+        self.tb_compact.setVisible(True)
+        self.tb_maximum.setVisible(True)
+
+    def leaveEvent(self, event: QEvent) -> None:
+        self.tb_down_load.setVisible(False)
+        self.tb_compact.setVisible(False)
+        self.tb_maximum.setVisible(False)
 
     def set_image(self, image: str | QPixmap | QImage = None):
         """ set the image of label """
+        self.image = image
         self.lbl_image.setImage(image)
         self._scale_image()
-
-    def setFixedSize(self, *args, **kwargs) -> None:
-        super().setFixedSize(*args, **kwargs)
-        self._scale_image()
-
-    def set_border_radius(self, top_left: int, top_right: int, bottom_left: int, bottom_right: int):
-        """ set the border radius of image """
-        self._bottom_right_radius = top_left
-        self._bottom_left_radius = top_right
-        self._top_right_radius = bottom_left
-        self._top_left_radius = bottom_right
-        self.lbl_image.setBorderRadius(0, 0, 0, 0)
-        self.update()
-
-    def clear(self):
-        self.set_image(QImage())
-
-    def paintEvent(self, e):
-        super().paintEvent(e)
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        path = QPainterPath()
-        w, h = self.width(), self.height()
-        # top line
-        path.moveTo(self._top_left_radius, 0)
-        path.lineTo(w - self._top_right_radius, 0)
-        # top right arc
-        d = self._top_right_radius * 2
-        path.arcTo(w - d, 0, d, d, 90, -90)
-        # right line
-        path.lineTo(w, h - self._bottom_right_radius)
-        # bottom right arc
-        d = self._bottom_right_radius * 2
-        path.arcTo(w - d, h - d, d, d, 0, -90)
-        # bottom line
-        path.lineTo(self._bottom_left_radius, h)
-        # bottom left arc
-        d = self._bottom_left_radius * 2
-        path.arcTo(0, h - d, d, d, -90, -90)
-        # left line
-        path.lineTo(0, self._top_left_radius)
-        # top left arc
-        d = self._top_left_radius * 2
-        path.arcTo(0, 0, d, d, -180, -90)
-
-        # if not self.image:
-        pen = QPen()
-        pen.setColor(Qt.GlobalColor.gray)
-        pen.setStyle(Qt.PenStyle.SolidLine)
-        painter.setPen(pen)
-        painter.drawPath(path)
+        self.lbl_image.move((self.width() - self.lbl_image.width()) // 2,
+                            (self.height() - self.lbl_image.height()) // 2)

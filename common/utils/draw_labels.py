@@ -2,7 +2,9 @@ import numpy as np
 from PySide6.QtCore import QRect, QRectF, QPointF, QPoint
 from PySide6.QtGui import QColor, QPen, QPainter, QImage, QFont, QFontMetrics, QBrush, QPolygonF, Qt
 
+from common.component.model_type_widget import ModelType
 from common.utils.utils import generate_color_map, invert_color, generate_random_color
+from ultralytics.engine.results import Results
 
 skeleton = [
     [16, 14],
@@ -78,26 +80,31 @@ def draw_classify_result(pix: QImage, label: str, line_width: int = 1):
     painter.end()
 
 
-def draw_detect_result(pix: QImage, labels_name_map: dict, boxes: list, line_width: int = 1):
+def draw_detect_result(pix: QImage, labels_name_map: dict, boxes: list,
+                       font_size=14, line_width: int = 1, compact: bool = False):
     painter = QPainter()
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.begin(pix)
-    font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
     font = QFont("Courier")
+    margin_left = 10
+    margin_top = 10
+    gap = 5
     font.setPixelSize(font_size)
     fm = QFontMetrics(font)
     colors_map = generate_color_map(len(labels_name_map.keys()))
-    for index, (class_id, label_name) in enumerate(labels_name_map.items()):
-        txt = f"{label_name}"
-        text_rect = QRect(10, index * fm.height(), fm.boundingRect(txt).width() + line_width, fm.height())
-        color = colors_map[class_id]
-        painter.setPen(color)
-        painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
-        painter.drawRect(text_rect)
-        painter.setFont(font)
-        inv_color = invert_color(color)
-        painter.setPen(QPen(inv_color))
-        painter.drawText(text_rect, txt)
+    if compact:
+        for index, (class_id, label_name) in enumerate(labels_name_map.items()):
+            txt = f"{label_name}"
+            legend_rect = QRect(margin_left, margin_top + index * (fm.height() + gap), fm.height(), fm.height())
+            text_rect = QRect(margin_left + fm.height() + gap, margin_top + index * (fm.height() + gap),
+                              fm.boundingRect(txt).width() + line_width, fm.height())
+            color = colors_map[class_id]
+            painter.setPen(color)
+            painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
+            painter.drawRect(legend_rect)
+            painter.setFont(font)
+            painter.setPen(QPen(color))
+            painter.drawText(text_rect, txt)
     for box in boxes:
         x1, y1, x2, y2, conf, class_id = box
         label = labels_name_map[int(class_id)]
@@ -110,25 +117,26 @@ def draw_detect_result(pix: QImage, labels_name_map: dict, boxes: list, line_wid
         painter.setPen(QPen(QColor(color.red(), color.green(), color.blue()), line_width))  # 设置画笔颜色和宽度
         painter.drawRect(QRectF(QPointF(x1, y1), QPointF(x2, y2)))  # 绘制矩形
         # 获取字体大小
+        if not compact:
+            # 文字填充色
+            painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
+            txt = f"{label}_{conf:.2f}"
+            text_rect = QRect(x1, y1 - fm.height(), fm.boundingRect(txt).width() + line_width,
+                              fm.height())
 
-        # 文字填充色
-        # painter.setBrush(QBrush(QColor(color.red(), color.green(), color.blue())))
-        # txt = f"{label}_{conf:.2f}"
-        # text_rect = QRect(x1, y1 - fm.height(), fm.boundingRect(txt).width() + line_width,
-        #                   fm.height())
-        #
-        # painter.drawRect(text_rect)
-        # painter.setFont(font)
-        # painter.setPen(QPen(inv_color))
-        # painter.drawText(text_rect, txt)
+            painter.drawRect(text_rect)
+            painter.setFont(font)
+            painter.setPen(QPen(inv_color))
+            painter.drawText(text_rect, txt)
     painter.end()
 
 
-def draw_segment_result(pix: QImage, labels_name_map: dict, boxes: list, masks: list, line_width: int = 1):
+def draw_segment_result(pix: QImage, labels_name_map: dict, boxes: list, masks: list,
+                        font_size=14, line_width: int = 1):
     painter = QPainter()
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.begin(pix)
-    font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
+    # font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
     font = QFont("Courier")
     font.setPixelSize(font_size)
     colors_map = generate_color_map(len(labels_name_map.keys()))
@@ -165,11 +173,12 @@ def draw_segment_result(pix: QImage, labels_name_map: dict, boxes: list, masks: 
     painter.end()
 
 
-def draw_obb_result(pix: QImage, labels_name_map: dict, classes: list, confs: list, boxes: list, line_width: int = 1):
+def draw_obb_result(pix: QImage, labels_name_map: dict, classes: list, confs: list, boxes: list,
+                    font_size=14, line_width: int = 1):
     painter = QPainter()
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.begin(pix)
-    font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
+    # font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
     font = QFont("Courier")
     font.setPixelSize(font_size)
     colors_map = generate_color_map(len(labels_name_map.keys()))
@@ -200,11 +209,12 @@ def draw_obb_result(pix: QImage, labels_name_map: dict, classes: list, confs: li
     painter.end()
 
 
-def draw_pose_result(pix: QImage, labels_name_map: dict, boxes: list, key_points: list, line_width: int = 1):
+def draw_pose_result(pix: QImage, labels_name_map: dict, boxes: list,
+                     key_points: list, font_size=14, line_width: int = 1):
     painter = QPainter()
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.begin(pix)
-    font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
+    # font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
     font = QFont("Courier")
     font.setPixelSize(font_size)
     colors_map = generate_color_map(len(labels_name_map.keys()))
@@ -251,3 +261,20 @@ def draw_pose_result(pix: QImage, labels_name_map: dict, boxes: list, key_points
             if pos2[0] == 0 or pos2[1] == 0 or pos2[0] < 0 or pos2[1] < 0:
                 continue
             painter.drawLine(QPoint(pos1[0], pos1[1]), QPoint(pos2[0], pos2[1]))
+
+
+def draw_image(image_path: str, model_type: ModelType, result: Results, compact: bool) -> QImage:
+    pix = QImage(image_path)
+    if model_type == ModelType.CLASSIFY:
+        label = result.names[result.probs.top1]
+        draw_classify_result(pix, label)
+    if model_type == ModelType.DETECT:
+        draw_detect_result(pix, result.names, result.boxes.data.cpu().tolist(), compact=compact)
+    if model_type == ModelType.SEGMENT:
+        draw_segment_result(pix, result.names, result.boxes.data.cpu().tolist(), result.masks.xy)
+    if model_type == ModelType.OBB:
+        draw_obb_result(pix, result.names, result.obb.cls.cpu().tolist(), result.obb.conf.cpu().tolist(),
+                        result.obb.xyxyxyxy.cpu().tolist())
+    if model_type == ModelType.POSE:
+        draw_pose_result(pix, result.names, result.boxes.data.cpu().tolist(), result.keypoints.data.cpu().tolist())
+    return pix

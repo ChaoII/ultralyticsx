@@ -12,7 +12,7 @@ from ...types import TrainTaskInfo
 
 
 class ModelPredictorThread(QThread):
-    model_predict_end = Signal(QImage, Results)
+    model_predict_end = Signal(Results)
     model_predict_failed = Signal(str)
 
     def __init__(self, model_path: Path):
@@ -32,22 +32,6 @@ class ModelPredictorThread(QThread):
     def set_args(self, kwargs: dict):
         self._kwargs = kwargs
 
-    def draw_image(self, result: Results) -> QImage:
-        pix = QImage(self._image_path)
-        if self._task_info.model_type == ModelType.CLASSIFY:
-            label = result.names[result.probs.top1]
-            draw_classify_result(pix, label)
-        if self._task_info.model_type == ModelType.DETECT:
-            draw_detect_result(pix, result.names, result.boxes.data.cpu().tolist())
-        if self._task_info.model_type == ModelType.SEGMENT:
-            draw_segment_result(pix, result.names, result.boxes.data.cpu().tolist(), result.masks.xy)
-        if self._task_info.model_type == ModelType.OBB:
-            draw_obb_result(pix, result.names, result.obb.cls.cpu().tolist(), result.obb.conf.cpu().tolist(),
-                            result.obb.xyxyxyxy.cpu().tolist())
-        if self._task_info.model_type == ModelType.POSE:
-            draw_pose_result(pix, result.names, result.boxes.data.cpu().tolist(), result.keypoints.data.cpu().tolist())
-        return pix
-
     def run(self):
         try:
             self._predictor = YOLO(self._model_path)
@@ -58,7 +42,7 @@ class ModelPredictorThread(QThread):
         if self._predictor and self._image_path:
             try:
                 results = self._predictor.predict(self._image_path, **self._kwargs)
-                image = self.draw_image(results[0])
-                self.model_predict_end.emit(image, results[0])
+
+                self.model_predict_end.emit(results[0])
             except Exception as e:
                 self.model_predict_failed.emit(str(e))

@@ -33,18 +33,26 @@ class CustomFlyoutView(FlyoutViewBase):
 
 
 class ImageTip(QWidget):
-    def __init__(self, pix: QPixmap, target: QWidget | QPoint, max_side=300):
+    def __init__(self, pix: QPixmap, target: QWidget | QPoint):
         super().__init__()
 
         self.lbl_image = ImageLabel()
         self.lbl_image.setPixmap(pix)
         self.lbl_image.setBorderRadius(8, 8, 8, 8)
         # 按比例缩放到指定高度
-        self.lbl_image.scaledToHeight(max_side)
+        self.scaled_to_pixmap(pix)
         self.target = QPoint(target.x() - self.lbl_image.width(), target.y() - self.lbl_image.height())
         self.view = CustomFlyoutView(self.lbl_image)
         self.view.closed.connect(self._close_tip)
         self.flyout = None
+
+    def scaled_to_pixmap(self, pix: QPixmap):
+        if pix.width() >= pix.height():
+            max_side = min(pix.width(), int(QApplication.primaryScreen().geometry().width() * 0.8))
+            self.lbl_image.scaledToWidth(max_side)
+        else:
+            max_side = min(pix.height(), int(QApplication.primaryScreen().geometry().height() * 0.8))
+            self.lbl_image.scaledToWidth(max_side)
 
     @Slot()
     def _close_tip(self):

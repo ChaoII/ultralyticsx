@@ -1,8 +1,9 @@
 from pathlib import Path
 
+import yaml
 from PySide6.QtGui import Qt, QFont, QImage, QResizeEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QAbstractItemView, QTableWidgetItem, \
-    QSizePolicy
+    QSizePolicy, QFormLayout
 from qfluentwidgets import BodyLabel, ComboBox, PrimaryPushButton, InfoBar, InfoBarPosition, ToolTipFilter, \
     ToolTipPosition, TableWidget, TextEdit, CompactSpinBox
 
@@ -13,6 +14,7 @@ from common.component.image_show_widget import ImageShowWidget
 from common.component.model_type_widget import ModelType
 from common.component.progress_message_box import ProgressMessageBox
 from common.core.window_manager import window_manager
+from common.utils.draw_labels import draw_image
 from ultralytics.engine.results import Results
 from ..task_thread.model_predict_thread import ModelPredictorThread
 from ...types import TrainTaskInfo
@@ -37,13 +39,17 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self.spb_image_size.setRange(64, 2560)
         self.spb_image_size.setValue(640)
         self.spb_image_size.setFixedWidth(300)
-
+        self.btn_predict = PrimaryPushButton(CustomFluentIcon.MODEL_EXPORT, self.tr("Predict"))
+        self.btn_predict.setFixedWidth(120)
+        self.fly_model_name = QFormLayout()
+        self.fly_model_name.addRow(self.tr("Model name:"), self.cmb_model_name)
+        self.fly_image_size = QFormLayout()
+        self.fly_image_size.addRow(self.tr("Image size:"), self.spb_image_size)
         self.hly_export_setting = QHBoxLayout()
-        self.hly_export_setting.setSpacing(40)
-        self.hly_export_setting.addWidget(FixWidthBodyLabel(self.tr("model name: ")))
-        self.hly_export_setting.addWidget(self.cmb_model_name)
-        self.hly_export_setting.addWidget(FixWidthBodyLabel(self.tr("image size: ")))
-        self.hly_export_setting.addWidget(self.spb_image_size)
+        self.hly_export_setting.addLayout(self.fly_model_name)
+        self.hly_export_setting.addLayout(self.fly_image_size)
+        self.hly_export_setting.addWidget(self.btn_predict)
+
         self.hly_export_setting.addStretch(1)
         self._lbl_image_fix_width = 360
         self._lbl_image_fix_height = 300
@@ -96,35 +102,41 @@ class ModelPredictWidget(CollapsibleWidgetItem):
         self.vly_content.setContentsMargins(20, 0, 20, 20)
         self.vly_content.setSpacing(30)
         self.vly_content.addLayout(self.vly_export_setting)
-
-        self.btn_predict = PrimaryPushButton(CustomFluentIcon.MODEL_EXPORT, self.tr("Predict"))
-        self.btn_predict.setFixedWidth(120)
-
-        self.hly_btn = QHBoxLayout()
-        self.hly_btn.addWidget(self.btn_predict)
-        self.hly_btn.addStretch(1)
-        self.vly_content.addLayout(self.hly_btn)
-
         self.set_content_widget(self.content_widget)
+
         self._task_info: TrainTaskInfo | None = None
         self._model_predict_thread: ModelPredictorThread | None = None
         self._current_image_path: Path | None = None
         self._message_box: ProgressMessageBox | None = None
         self._connect_signals_and_slots()
+        self._is_compact = False
 
     def _connect_signals_and_slots(self):
         self.btn_predict.clicked.connect(self._on_predict_clicked)
         self.lbl_input_image.image_selected.connect(self._on_image_selected)
+        self.lbl_output_image.compact_mode_clicked.connect(self.on_compact_clicked)
+
+    def on_compact_clicked(self, checked: bool):
+        self._is_compact = checked
+        self.draw_image_label()
 
     def set_task_info(self, task_info: TrainTaskInfo):
         self._task_info = task_info
         self._init_model_name()
+        self._init_imgsz()
         self.tb_predict_speed.clear()
         self.tb_predict_speed.setVisible(False)
         self.lbl_output_result.clear()
         self.lbl_output_result.setVisible(False)
         self.lbl_input_image.clear()
         self.lbl_output_image.clear()
+
+    def _init_imgsz(self):
+        train_config_path = self._task_info.task_dir / "train_config.yaml"
+        if train_config_path.exists():
+            with open(train_config_path, mode="r", encoding="utf8") as f:
+                train_config = yaml.safe_load(f)
+                self.spb_image_size.setValue(train_config.get("imgsz", 640))
 
     def _init_model_name(self):
         self.cmb_model_name.clear()
@@ -192,14 +204,18 @@ class ModelPredictWidget(CollapsibleWidgetItem):
             parent=window_manager.find_window("main_widget")
         )
 
-    def _on_predict_end(self, image: QImage, result: Results):
-
-        self._close_message_box()
-
+    def draw_image_label(self):
+        self.lbl_output_image.clear()
+        image = draw_image(self._current_image_path.resolve().as_posix(),
+                           self._task_info.model_type, self.result, self._is_compact)
         self.lbl_output_image.set_image(image)
+
+    def _on_predict_end(self, result: Results):
+        self._close_message_box()
+        self.result = result
+        self.draw_image_label()
         self.lbl_output_result.clear()
         self.lbl_output_result.setVisible(True)
-
         if self._task_info.model_type == ModelType.CLASSIFY:
             self.lbl_output_result.append("top1:")
             self.lbl_output_result.append(

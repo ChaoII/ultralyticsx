@@ -123,11 +123,7 @@ class DatasetDrawWidgetBase(SimpleCardWidget):
     @Slot(QListWidgetItem)
     def _on_item_double_clicked(self, item: QListWidgetItem):
         pix: QPixmap = item.data(Qt.ItemDataRole.UserRole)
-        max_screen_side = max(QApplication.primaryScreen().geometry().width(),
-                              QApplication.primaryScreen().geometry().height())
-        max_image_side = max(pix.width(), pix.height())
-        max_side = min(max_image_side, int(max_screen_side * 0.6))
-        self.image_tip = ImageTip(pix, QCursor.pos(), max_side)
+        self.image_tip = ImageTip(pix, QCursor.pos())
         self.image_tip.showFlyout()
 
     @Slot(str)
