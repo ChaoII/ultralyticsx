@@ -53,6 +53,7 @@ class AnnotationListWidget(SimpleCardWidget):
         self.list_widget = CustomListWidget()
         self.list_widget.setAutoFillBackground(True)
         self.list_widget.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.list_widget.set_item_height(25)
 
         self.hly_lbl = QHBoxLayout()
         self.hly_lbl.addWidget(self.lbl_title)

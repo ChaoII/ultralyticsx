@@ -96,6 +96,7 @@ class LabelSettingsWidget(SimpleCardWidget):
         self.list_widget = CustomListWidget()
         self.list_widget.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         self.list_widget.disable_hover_effect()
+        self.list_widget.set_item_height(25)
 
         self.hly_lbl = QHBoxLayout()
         self.hly_lbl.addWidget(self.lbl_title)

@@ -23,7 +23,8 @@ class DetectionDatasetDrawThread(DatasetDrawThreadBase):
             pix = QPixmap(row["image_path"])
             painter.begin(pix)
             line_width = 1
-            font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
+            # font_size = min(pix.width(), pix.height()) // 20  # 假设文字大小是窗口大小的10%
+            font_size = 14
             font = QFont("Courier")
             font.setPixelSize(font_size)
             if self.draw_labels:

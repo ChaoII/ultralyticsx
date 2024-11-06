@@ -28,6 +28,7 @@ class CustomFluentIcon(FluentIconBase, Enum):
     POINT = "point"
     POLYGON = "polygon"
     POSE = "pose"
+    RECOVER = "recover"
     RELAX = "relax"
     SEGMENT = "segment"
     SHOW = "show"

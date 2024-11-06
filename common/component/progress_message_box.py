@@ -1,11 +1,9 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QButtonGroup, QVBoxLayout
-from qfluentwidgets import MessageBoxBase, SubtitleLabel, LineEdit, RadioButton, CheckBox, ProgressRing, \
+from PySide6.QtWidgets import QVBoxLayout
+from qfluentwidgets import ProgressRing, \
     FluentStyleSheet, isDarkTheme, IndeterminateProgressRing
 from qfluentwidgets.components.dialog_box.mask_dialog_base import MaskDialogBase
-
-from settings import cfg
 
 
 class MessageBoxBaseTransparent(MaskDialogBase):

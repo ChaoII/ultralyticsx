@@ -48,6 +48,7 @@ class ImageListWidget(SimpleCardWidget):
         self.setMinimumHeight(200)
         self.lbl_title = StrongBodyLabel(text=self.tr("Image list"))
         self.list_widget = CustomListWidget()
+        self.list_widget.set_item_height(25)
         self.vly_content = QVBoxLayout(self)
         self.vly_content.addWidget(self.lbl_title)
         self.vly_content.addWidget(self.list_widget)

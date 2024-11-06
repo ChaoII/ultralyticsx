@@ -66,6 +66,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.cb_label.drawing_status_selected.connect(lambda x: self.canvas.set_drawing_status(x))
         self.cb_label.scale_down_clicked.connect(lambda: self.canvas.scale_down())
         self.cb_label.scale_up_clicked.connect(lambda: self.canvas.scale_up())
+        self.cb_label.recover_clicked.connect(lambda: self.canvas.reset_scale())
 
         self.canvas.is_drawing_changed.connect(self.on_is_drawing_changed)
         self.canvas.draw_finished.connect(self.on_draw_finished)

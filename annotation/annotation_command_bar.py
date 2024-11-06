@@ -23,6 +23,7 @@ class AnnotationCommandBar(CommandBar):
 
     scale_down_clicked = Signal()
     scale_up_clicked = Signal()
+    recover_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -96,6 +97,9 @@ class AnnotationCommandBar(CommandBar):
         # 缩小
         self.action_zoom_out = Action(FluentIcon.ZOOM_OUT, self.tr("Zoom out"))
         self.action_zoom_out.triggered.connect(lambda: self.scale_down_clicked.emit())
+        # 恢复
+        self.action_recover = Action(CustomFluentIcon.RECOVER, self.tr("recover"))
+        self.action_recover.triggered.connect(lambda: self.recover_clicked.emit())
         self.addActions([
             self.action_annotation_directory,
             self.action_save_image,
@@ -120,9 +124,9 @@ class AnnotationCommandBar(CommandBar):
 
         self.addSeparator()
         self.addActions([
-
             self.action_zoom_in,
-            self.action_zoom_out
+            self.action_zoom_out,
+            self.action_recover
         ])
 
         self._cur_file_path: Path | None = None
