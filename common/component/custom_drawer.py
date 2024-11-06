@@ -5,7 +5,7 @@ from PySide6.QtGui import QColor, QShowEvent, QResizeEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QFrame, \
     QGraphicsDropShadowEffect
 from PySide6.QtCore import QRect, QPropertyAnimation, QEasingCurve, Qt, QEvent, QSize
-from qfluentwidgets import isDarkTheme
+from qfluentwidgets import isDarkTheme, SimpleCardWidget
 
 
 class DrawerPosition(enum.Enum):
@@ -13,13 +13,13 @@ class DrawerPosition(enum.Enum):
     Right = 2
 
 
-class Drawer(QWidget):
+class Drawer(SimpleCardWidget):
     def __init__(self, parent: QWidget, position: DrawerPosition):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setStyleSheet("background-color: lightblue;")
-        self.widget = QFrame()
+
         self.vly_content = QVBoxLayout(self)
 
         self.cur_width: int = 0
@@ -32,18 +32,17 @@ class Drawer(QWidget):
         self.is_collapse = True
         self.content_widget: None | QWidget = None
         self.init_drawer()
-        self.set_content_widget(self.widget)
 
         self.setShadowEffect(blurRadius=60)
 
     def setShadowEffect(self, blurRadius=60, offset=(30, 10), color=QColor(255, 255, 0, 100)):
         """ add shadow to dialog """
-        shadowEffect = QGraphicsDropShadowEffect(self.widget)
+        shadowEffect = QGraphicsDropShadowEffect(self)
         shadowEffect.setBlurRadius(blurRadius)
         shadowEffect.setOffset(*offset)
         shadowEffect.setColor(color)
-        self.widget.setGraphicsEffect(None)
-        self.widget.setGraphicsEffect(shadowEffect)
+        self.setGraphicsEffect(None)
+        self.setGraphicsEffect(shadowEffect)
 
     def set_content_widget(self, widget: QWidget):
         if self.content_widget:
