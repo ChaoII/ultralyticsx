@@ -290,11 +290,11 @@ class AnnotationWidget(ContentWidgetBase):
         else:
             self.label_property_widget.image_list_widget.set_current_image_labeled(True)
 
-    def on_shape_item_selected_changed(self, uid: str):
-        self.label_property_widget.annotation_widget.set_selected_item(uid)
+    def on_shape_item_selected_changed(self, item_ids: list[str]):
+        self.label_property_widget.annotation_widget.set_selected_item(item_ids)
 
-    def on_annotation_item_selected_changed(self, uid: str):
-        self.canvas.set_shape_item_selected(uid)
+    def on_annotation_item_selected_changed(self, item_ids: list[str]):
+        self.canvas.set_shape_item_selected(item_ids)
 
     def on_annotation_item_edit_clicked(self, uid: str):
         cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color,

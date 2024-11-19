@@ -28,7 +28,7 @@ SCALE_STEP = 1.1
 class InteractiveCanvas(QGraphicsView):
     is_drawing_changed = Signal(bool)
     draw_finished = Signal(ShapeItem)
-    shape_item_selected_changed = Signal(str)
+    shape_item_selected_changed = Signal(list)
     delete_shape_item_clicked = Signal(str)
     width_changed = Signal(int)
 
@@ -67,12 +67,14 @@ class InteractiveCanvas(QGraphicsView):
         self.shape_item_map = dict()
 
     def on_item_select_changed(self):
+        item_ids = []
         for item in self.scene.selectedItems():
             if isinstance(item, ShapeItem):
-                self.shape_item_selected_changed.emit(item.get_id())
+                item_ids.append(item.get_id())
+        self.shape_item_selected_changed.emit(item_ids)
 
-    def get_shape_item(self, uid: str):
-        return self.shape_item_map.get(uid, None)
+    def get_shape_item(self, item_id: str):
+        return self.shape_item_map.get(item_id, None)
 
     def get_shape_items(self):
         return self.scene.items()
@@ -80,29 +82,32 @@ class InteractiveCanvas(QGraphicsView):
     def get_background_pix(self):
         return self.background_pix
 
-    def delete_shape_item(self, uid):
-        shape_item = self.shape_item_map.get(uid, None)
+    def delete_shape_item(self, item_id):
+        shape_item = self.shape_item_map.get(item_id, None)
         if shape_item:
             self.scene.removeItem(shape_item)
-            self.shape_item_map.pop(uid)
+            self.shape_item_map.pop(item_id)
 
     def update_shape_item_color(self, annotation, color: QColor):
-        for uid, shape_item in self.shape_item_map.items():
+        for _, shape_item in self.shape_item_map.items():
             if shape_item.get_annotation() == annotation:
                 if isinstance(shape_item, ShapeItem):
                     shape_item.set_color(color)
 
-    def set_shape_item_selected(self, uid):
+    def set_shape_item_selected(self, item_ids: list[str]):
+        self.scene.blockSignals(True)
         self.scene.clearSelection()
-        shape_item = self.shape_item_map.get(uid, None)
-        if shape_item:
-            shape_item.setSelected(True)
+        for item_id in item_ids:
+            shape_item = self.shape_item_map.get(item_id, None)
+            if shape_item:
+                shape_item.setSelected(True)
+        self.scene.blockSignals(False)
 
     def send_draw_finished_signal(self, shape_item: ShapeItem):
-        uid = QUuid.createUuid().toString().replace("-", "").replace("{", "").replace("}", "")
-        shape_item.set_id(uid)
+        item_id = QUuid.createUuid().toString().replace("-", "").replace("{", "").replace("}", "")
+        shape_item.set_id(item_id)
         shape_item.prepareGeometryChange()
-        self.shape_item_map.update({uid: shape_item})
+        self.shape_item_map.update({item_id: shape_item})
         self.draw_finished.emit(shape_item)
 
     def update_background_color(self):
