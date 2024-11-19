@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Property, Signal
+from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Property, QPointF
 from PySide6.QtGui import QColor, Qt
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
 from qfluentwidgets import Dialog, InfoBar, InfoBarPosition, SimpleCardWidget
 
 from annotation.annotation_command_bar import AnnotationCommandBar
@@ -10,6 +10,7 @@ from annotation.annotation_ensure_message_box import AnnotationEnsureMessageBox
 from annotation.annotations_list_widget import AnnotationListWidget
 from annotation.canvas_widget import InteractiveCanvas, DrawingStatus
 from annotation.image_list_widget import ImageListWidget
+from annotation.item_property_widget import RectItemPropertyWidget
 from annotation.labels_settings_widget import LabelSettingsWidget
 from annotation.shape import ShapeType, ShapeItem
 from common.component.custom_icon import CustomFluentIcon
@@ -61,35 +62,6 @@ class LabelPropertyWidget(SimpleCardWidget):
         self.animation.start()
 
 
-class SSSS(SimpleCardWidget):
-    def __init__(self):
-        super().__init__()
-        self.setFixedWidth(0)
-        self.animation = QPropertyAnimation(self, b"width_")
-        self.animation.setDuration(200)
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
-        self.is_collapse = True
-
-    @Property(int)
-    def width_(self):
-        return self.width()
-
-    @width_.setter
-    def width_(self, value):
-        self.setFixedWidth(value)
-
-    def on_btn_collapse_clicked(self):
-        if self.minimumWidth() == 0:
-            self.animation.setStartValue(0)
-            self.animation.setEndValue(200)
-            self.is_collapse = False
-        else:
-            self.animation.setStartValue(200)
-            self.animation.setEndValue(0)
-            self.is_collapse = True
-        self.animation.start()
-
-
 class AnnotationWidget(ContentWidgetBase):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -111,7 +83,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.btn_label_property.setFixedSize(30, 30)
         self.btn_label_property.setParent(self.canvas)
         self.label_property_widget = LabelPropertyWidget()
-        self.cc = SSSS()
+        self.cc = RectItemPropertyWidget()
 
         # self.vly_right.addStretch(1)
         self.hly = QHBoxLayout()
@@ -168,6 +140,15 @@ class AnnotationWidget(ContentWidgetBase):
         self.label_property_widget.image_list_widget.save_annotation_clicked.connect(
             lambda: self.save_current_annotation())
 
+        self.cc.shape_changed.connect(self.on_shape_changed)
+
+    def on_shape_changed(self, x, y, w, h):
+        items = self.canvas.scene.selectedItems()
+        if len(items) > 0:
+            item = items[0]
+            if isinstance(item, ShapeItem):
+                item.update_points([QPointF(x, y), QPointF(x + w, y + h)])
+
     def on_btn_item_clicked(self):
         self.cc.on_btn_collapse_clicked()
         if self.cc.is_collapse:
@@ -195,6 +176,7 @@ class AnnotationWidget(ContentWidgetBase):
                 image_path = Path(annotation_task.image_dir)
             if annotation_task.annotation_dir:
                 self.annotation_dir_path = Path(annotation_task.annotation_dir)
+
         self.update_shape_status()
         self.set_image_path(image_path)
 
@@ -292,6 +274,15 @@ class AnnotationWidget(ContentWidgetBase):
 
     def on_shape_item_selected_changed(self, item_ids: list[str]):
         self.label_property_widget.annotation_widget.set_selected_item(item_ids)
+        if len(item_ids) > 0:
+            item_id = item_ids[0]
+            item = self.canvas.get_shape_item(item_id)
+            if isinstance(item, ShapeItem):
+                x_c, y_c, w, h = item.get_shape_data()
+                self.cc.spb_x.setValue(int(x_c - w / 2))
+                self.cc.spb_y.setValue(int(y_c - h / 2))
+                self.cc.spb_w.setValue(int(w))
+                self.cc.spb_h.setValue(int(h))
 
     def on_annotation_item_selected_changed(self, item_ids: list[str]):
         self.canvas.set_shape_item_selected(item_ids)
