@@ -17,6 +17,7 @@ class FillToolButton(QWidget):
         self._icon = icon
         self.setMinimumSize(24, 24)
         self._icon_size = QSize(16, 16)
+        self._border_radius = 4
         self._bg_color = themeColor()
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -24,6 +25,12 @@ class FillToolButton(QWidget):
         self._is_pressed = False
 
         cfg.themeChanged.connect(lambda: self.set_background_color(themeColor()))
+
+    def set_icon(self, icon):
+        self._icon = icon
+
+    def set_border_radius(self, radius: int):
+        self._border_radius = radius
 
     def set_icon_size(self, icon_size: QSize):
         self._icon_size = icon_size
@@ -63,10 +70,9 @@ class FillToolButton(QWidget):
             # 点击时右下移动，有按下去的感觉
             rect = self.rect().adjusted(1, 1, 1, 1)
             icon_rect = QRectF(x, y, w, h).adjusted(1, 1, 1, 1)
-
         painter.setPen(QColor(0, 0, 0, 0))
         painter.setBrush(QBrush(bg_color))
-        painter.drawRoundedRect(rect, 4, 4)
+        painter.drawRoundedRect(rect, self._border_radius, self._border_radius)
         drawIcon(self._icon, painter, icon_rect)
 
     def enterEvent(self, event: QEnterEvent) -> None:

@@ -17,7 +17,7 @@ class AnnotationInterface(InterfaceBase):
         self.breadcrumbBar = BreadcrumbBar(self)
         self.stackedWidget = QStackedWidget(self)
         self.annotation_task_list_widget = AnnotationTaskListWidget()
-        self.annotation_widget = AnnotationWidget()
+        self.annotation_widget = AnnotationWidget(self)
         self.stackedWidget.addWidget(self.annotation_task_list_widget)
         self.stackedWidget.addWidget(self.annotation_widget)
         self.breadcrumbBar.addItem(self.annotation_task_list_widget.objectName(), self.tr("All annotation task"))

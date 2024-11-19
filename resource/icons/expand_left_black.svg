@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   t="1731465265508"
+   class="icon"
+   viewBox="0 0 1024 1024"
+   version="1.1"
+   p-id="5396"
+   width="16"
+   height="16"
+   id="svg1"
+   sodipodi:docname="collapse_left_black.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="35.929863"
+     inkscape:cx="7.9182043"
+     inkscape:cy="9.6716204"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     d="M 43.33044,0 H 981.76503 C 1005.0867,0 1024,20.294475 1024,45.319134 c 0,25.02466 -18.9133,45.319134 -42.23497,45.319134 H 43.33044 C 20.0088,90.638268 1.0955,70.343794 1.0955,45.319134 1.0955,20.294475 20.0088,0 43.33044,0 Z m -1.08227,320.56206 h 613.35732 c 23.32162,0 42.23497,20.29448 42.23497,45.31914 0,25.02466 -18.91335,45.31913 -42.23497,45.31913 H 42.23497 C 18.9133,411.20033 0,390.90586 0,365.8812 0,340.85654 18.9133,320.56206 42.24817,320.56206 Z m 0,292.23761 h 613.35732 c 23.32162,0 42.23497,20.29447 42.23497,45.31913 0,25.02466 -18.91335,45.31914 -42.23497,45.31914 H 42.23497 C 18.9133,703.43794 0,683.14346 0,658.1188 0,633.09414 18.9133,612.79967 42.24817,612.79967 Z m 0,320.56206 h 938.43459 c 23.32164,0 42.23494,20.29448 42.23494,45.31914 0,25.02463 -18.9133,45.31913 -42.23494,45.31913 H 42.24817 C 18.9265,1024 0.0132,1003.7055 0.0132,978.68087 c 0,-25.03883 18.9001,-45.31914 42.23497,-45.31914 z M 775.96195,320.56206 V 703.43794 L 1006.3273,493.61035 Z"
+     p-id="5397"
+     fill="#000000"
+     id="path1"
+     style="stroke-width:1.36718" />
+</svg>

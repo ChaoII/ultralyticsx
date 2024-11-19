@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, QEvent
-from PySide6.QtWidgets import QVBoxLayout, QListWidgetItem, QWidget, QHBoxLayout
+from PySide6.QtWidgets import QVBoxLayout, QListWidgetItem, QWidget, QHBoxLayout, QSizePolicy
 from qfluentwidgets import BodyLabel, SimpleCardWidget, StrongBodyLabel, Dialog
 
 from common.component.custom_color_button import CustomColorButton
@@ -44,7 +44,6 @@ class ImageListWidget(SimpleCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setObjectName("imageListWidget")
-        self.setFixedWidth(200)
         self.setMinimumHeight(200)
         self.lbl_title = StrongBodyLabel(text=self.tr("Image list"))
         self.list_widget = CustomListWidget()

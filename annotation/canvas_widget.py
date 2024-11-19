@@ -3,7 +3,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QLineF, Signal, QPointF
 from PySide6.QtCore import QUuid
-from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent
+from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent, \
+    QResizeEvent
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
 from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
 
@@ -29,6 +30,7 @@ class InteractiveCanvas(QGraphicsView):
     draw_finished = Signal(ShapeItem)
     shape_item_selected_changed = Signal(str)
     delete_shape_item_clicked = Signal(str)
+    width_changed = Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -194,6 +196,10 @@ class InteractiveCanvas(QGraphicsView):
     def set_is_drawing(self, is_drawing: bool):
         self.is_drawing = is_drawing
         self.is_drawing_changed.emit(self.is_drawing)
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        self.width_changed.emit(event.size().width())
+        super().resizeEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if drawing_status_manager.get_drawing_status() == DrawingStatus.Select:

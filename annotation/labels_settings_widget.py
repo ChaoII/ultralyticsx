@@ -1,6 +1,6 @@
 from PySide6.QtCore import QSize, Signal
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QListWidgetItem, QTableWidget
+from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QListWidgetItem, QTableWidget, QSizePolicy
 from qfluentwidgets import ColorPickerButton, BodyLabel, SimpleCardWidget, StrongBodyLabel, FluentIcon, \
     TransparentToolButton, PopupTeachingTip, TeachingTipTailPosition, MessageBoxBase, LineEdit
 
@@ -84,9 +84,7 @@ class LabelSettingsWidget(SimpleCardWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("labelsWidget")
-        self.setFixedWidth(200)
         self.setMinimumHeight(200)
-
         self.lbl_title = StrongBodyLabel(text=self.tr("labels"))
         self.lbl_title.setFixedHeight(20)
         self.cus_add_label = TransparentToolButton(FluentIcon.ADD, self)
