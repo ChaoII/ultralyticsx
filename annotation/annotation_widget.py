@@ -120,6 +120,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.canvas.is_drawing_changed.connect(self.on_is_drawing_changed)
         self.canvas.draw_finished.connect(self.on_draw_finished)
         self.canvas.shape_item_selected_changed.connect(self.on_shape_item_selected_changed)
+        self.canvas.shape_item_geometry_changed.connect(self.on_shape_item_geometry_changed)
         self.canvas.delete_shape_item_clicked.connect(
             lambda x: self.label_property_widget.annotation_widget.delete_annotation_item(x))
         self.canvas.width_changed.connect(self.on_canvas_width_changed)
@@ -148,6 +149,14 @@ class AnnotationWidget(ContentWidgetBase):
             item = items[0]
             if isinstance(item, ShapeItem):
                 item.update_points([QPointF(x, y), QPointF(x + w, y + h)])
+                item.update()
+
+    def on_shape_item_selected_changed(self, item_ids: list[str]):
+        self.label_property_widget.annotation_widget.set_selected_item(item_ids)
+        self.update_item_property(item_ids)
+
+    def on_shape_item_geometry_changed(self, shape_data: list):
+        self.update_item_property(shape_data)
 
     def on_btn_item_clicked(self):
         self.cc.on_btn_collapse_clicked()
@@ -272,20 +281,18 @@ class AnnotationWidget(ContentWidgetBase):
         else:
             self.label_property_widget.image_list_widget.set_current_image_labeled(True)
 
-    def on_shape_item_selected_changed(self, item_ids: list[str]):
-        self.label_property_widget.annotation_widget.set_selected_item(item_ids)
+    def update_item_property(self, item_ids: list[str]):
         if len(item_ids) > 0:
             item_id = item_ids[0]
             item = self.canvas.get_shape_item(item_id)
             if isinstance(item, ShapeItem):
-                x_c, y_c, w, h = item.get_shape_data()
-                self.cc.spb_x.setValue(int(x_c - w / 2))
-                self.cc.spb_y.setValue(int(y_c - h / 2))
-                self.cc.spb_w.setValue(int(w))
-                self.cc.spb_h.setValue(int(h))
+                self.cc.set_id(item_id)
+                self.cc.set_annotation(item.get_annotation())
+                self.cc.update_property(item.get_shape_data())
 
     def on_annotation_item_selected_changed(self, item_ids: list[str]):
         self.canvas.set_shape_item_selected(item_ids)
+        self.update_item_property(item_ids)
 
     def on_annotation_item_edit_clicked(self, uid: str):
         cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color,

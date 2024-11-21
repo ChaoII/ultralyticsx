@@ -29,12 +29,12 @@ class InteractiveCanvas(QGraphicsView):
     is_drawing_changed = Signal(bool)
     draw_finished = Signal(ShapeItem)
     shape_item_selected_changed = Signal(list)
+    shape_item_geometry_changed = Signal(list)
     delete_shape_item_clicked = Signal(str)
     width_changed = Signal(int)
 
     def __init__(self):
         super().__init__()
-
         # 创建绘图场景
         self.scene = QGraphicsScene(self)
         self.scene.selectionChanged.connect(self.on_item_select_changed)
@@ -44,6 +44,7 @@ class InteractiveCanvas(QGraphicsView):
         # 必须加不加的话刷新不及时，有残影
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
         self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+        # self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.scrollDelegate = SmoothScrollDelegate(self)
@@ -55,7 +56,8 @@ class InteractiveCanvas(QGraphicsView):
         # 绘制状态
         self.background_pix = QPixmap()
         self.is_drawing = False
-        self.start_pos = None
+        self.move_start_pos = None
+        self.draw_start_pos = None
         self.end_pos = None
         self.scale_factor = 1
         self.ensure_point_num = 0
@@ -65,6 +67,9 @@ class InteractiveCanvas(QGraphicsView):
         # 临时图形
         self.temp_item: ShapeItem | None = None
         self.shape_item_map = dict()
+
+        # 默认为鼠标拖动框选模式，当鼠标点击到item后，模式变为移动模式，这样会避免框选会触发item的移动事件
+        self.is_move_mode = False
 
     def on_item_select_changed(self):
         item_ids = []
@@ -179,8 +184,14 @@ class InteractiveCanvas(QGraphicsView):
             shape_item.set_annotation(label)
             shape_item.set_color(color)
             shape_item.set_is_drawing_history(True)
+            shape_item.shape_item_geometry_changed.connect(self.on_shape_item_geometry_changed)
             self.scene.addItem(shape_item)
             self.send_draw_finished_signal(shape_item)
+
+    def on_shape_item_geometry_changed(self):
+        item = self.sender()
+        if isinstance(item, ShapeItem) and item == self.scene.selectedItems()[0]:
+            self.shape_item_geometry_changed.emit([item.get_id()])
 
     def set_drawing_status(self, status: DrawingStatus):
         drawing_status_manager.set_drawing_status(status)
@@ -218,7 +229,6 @@ class InteractiveCanvas(QGraphicsView):
                         self.scene.removeItem(item)
                         if item.get_id() in self.shape_item_map:
                             self.shape_item_map.pop(item.get_id())
-
             if event.key() == Qt.Key.Key_Up:
                 for item in self.scene.selectedItems():
                     if isinstance(item, ShapeItem):
@@ -241,14 +251,20 @@ class InteractiveCanvas(QGraphicsView):
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if drawing_status_manager.get_drawing_status() == DrawingStatus.Select:
             if event.key() == Qt.Key.Key_Shift:
-                self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+                self.setDragMode(QGraphicsView.DragMode.NoDrag)
         super().keyReleaseEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            self.move_start_pos = self.mapToScene(event.pos())
+            item = self.scene.itemAt(self.move_start_pos, self.transform())
+            if isinstance(item, ShapeItem):
+                self.is_move_mode = True
+            else:
+                self.is_move_mode = False
             if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw and not self.is_drawing:
-                self.start_pos = self.mapToScene(event.pos())
-                self.end_pos = self.start_pos
+                self.draw_start_pos = self.mapToScene(event.pos())
+                self.end_pos = self.draw_start_pos
                 if self.current_shape_type == ShapeType.Rectangle:
                     self.temp_item = RectangleItem()
                     self.scene.addItem(self.temp_item)
@@ -260,13 +276,13 @@ class InteractiveCanvas(QGraphicsView):
                         self.temp_item = PolygonItem()
                         self.scene.addItem(self.temp_item)
                         self.polygon_points = QPolygonF()
-                        self.polygon_points.append(self.start_pos)
+                        self.polygon_points.append(self.draw_start_pos)
                 elif self.current_shape_type == ShapeType.RotatedRectangle:
                     if not self.is_drawing:
                         self.temp_item = RotatedRectangleItem()
                         self.scene.addItem(self.temp_item)
                         self.rotated_rect_points = QPolygonF()
-                        self.rotated_rect_points.append(self.start_pos)
+                        self.rotated_rect_points.append(self.draw_start_pos)
                 elif self.current_shape_type == ShapeType.Point:
                     self.temp_item = PointItem()
                     self.scene.addItem(self.temp_item)
@@ -281,62 +297,78 @@ class InteractiveCanvas(QGraphicsView):
         if self.is_drawing:
             self.end_pos = self.mapToScene(event.pos())
             self.update_temp_item()
+        else:
+            if event.buttons() & Qt.MouseButton.LeftButton and self.is_move_mode and \
+                    drawing_status_manager.get_drawing_status() == DrawingStatus.Select:
+                self.end_pos = self.mapToScene(event.pos())
+                delta = self.mapToScene(event.pos()) - self.move_start_pos
+                self.move_start_pos = self.end_pos
+                for item in self.scene.selectedItems():
+                    if isinstance(item, ShapeItem) and item.get_operation_type() == ShapeItem.OperationType.Move:
+                        item.move_by(delta)
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton and self.is_drawing:
-            self.end_pos = self.mapToScene(event.pos())
-            self.update_temp_item()
-            # 鼠标按下后再释放，记录完成了一个点
-            self.ensure_point_num += 1
-            # 两点即可绘制出矩形，圆形，直线
-            if self.current_shape_type == ShapeType.Line or self.current_shape_type == ShapeType.Rectangle or \
-                    self.current_shape_type == ShapeType.Circle:
-                if self.ensure_point_num == 2:
-                    self.ensure_point_num = 0
-                    self.set_is_drawing(False)
-                    self.send_draw_finished_signal(self.temp_item)
-                else:
-                    self.set_is_drawing(True)
-            # 一点即可绘制一个点
-            elif self.current_shape_type == ShapeType.Point:
-                if self.ensure_point_num == 1:
-                    self.ensure_point_num = 0
-                    self.set_is_drawing(False)
-                    self.send_draw_finished_signal(self.temp_item)
-                else:
-                    self.set_is_drawing(True)
-            # 多点绘制多边形，绘制完成则闭合，通过闭合条件判断绘制完成
-            elif self.current_shape_type == ShapeType.Polygon:
-                if self.polygon_first_point_hover:
-                    self.ensure_point_num = 0
-                    # 丢弃最后一个点直接闭合曲线
-                    self.polygon_points.pop_back()
-                    self.temp_item.update_points(self.polygon_points.toList())
-                    self.set_is_drawing(False)
-                    if isinstance(self.temp_item, PolygonItem):
-                        self.temp_item.set_first_point_hover(False)
-                    self.polygon_first_point_hover = False
-                    self.send_draw_finished_signal(self.temp_item)
-                else:
-                    self.polygon_points.append(self.end_pos)
-                    self.set_is_drawing(True)
-            # 三点绘制旋转矩形
-            elif self.current_shape_type == ShapeType.RotatedRectangle:
-                if self.ensure_point_num == 3:
-                    self.ensure_point_num = 0
-                    self.set_is_drawing(False)
-                    self.send_draw_finished_signal(self.temp_item)
-                else:
-                    self.rotated_rect_points.append(self.end_pos)
-                    self.set_is_drawing(True)
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.is_drawing:
+                self.end_pos = self.mapToScene(event.pos())
+                self.update_temp_item()
+                # 鼠标按下后再释放，记录完成了一个点
+                self.ensure_point_num += 1
+                # 两点即可绘制出矩形，圆形，直线
+                if self.current_shape_type == ShapeType.Line or self.current_shape_type == ShapeType.Rectangle or \
+                        self.current_shape_type == ShapeType.Circle:
+                    if self.ensure_point_num == 2:
+                        self.ensure_point_num = 0
+                        self.set_is_drawing(False)
+                        self.send_draw_finished_signal(self.temp_item)
+                    else:
+                        self.set_is_drawing(True)
+                # 一点即可绘制一个点
+                elif self.current_shape_type == ShapeType.Point:
+                    if self.ensure_point_num == 1:
+                        self.ensure_point_num = 0
+                        self.set_is_drawing(False)
+                        self.send_draw_finished_signal(self.temp_item)
+                    else:
+                        self.set_is_drawing(True)
+                # 多点绘制多边形，绘制完成则闭合，通过闭合条件判断绘制完成
+                elif self.current_shape_type == ShapeType.Polygon:
+                    if self.polygon_first_point_hover:
+                        self.ensure_point_num = 0
+                        # 丢弃最后一个点直接闭合曲线
+                        self.polygon_points.pop_back()
+                        self.temp_item.update_points(self.polygon_points.toList())
+                        self.set_is_drawing(False)
+                        if isinstance(self.temp_item, PolygonItem):
+                            self.temp_item.set_first_point_hover(False)
+                        self.polygon_first_point_hover = False
+                        self.send_draw_finished_signal(self.temp_item)
+                    else:
+                        self.polygon_points.append(self.end_pos)
+                        self.set_is_drawing(True)
+                # 三点绘制旋转矩形
+                elif self.current_shape_type == ShapeType.RotatedRectangle:
+                    if self.ensure_point_num == 3:
+                        self.ensure_point_num = 0
+                        self.set_is_drawing(False)
+                        self.send_draw_finished_signal(self.temp_item)
+                    else:
+                        self.rotated_rect_points.append(self.end_pos)
+                        self.set_is_drawing(True)
+            else:
+                if not self.is_move_mode:
+                    for item in self.scene.selectedItems():
+                        if isinstance(item, ShapeItem):
+                            print(item.get_id())
+                            print(item.get_operation_type())
         super().mouseReleaseEvent(event)
 
     def update_temp_item(self):
         if self.current_shape_type == ShapeType.Rectangle:
-            self.temp_item.update_points([self.start_pos, self.end_pos])
+            self.temp_item.update_points([self.draw_start_pos, self.end_pos])
         elif self.current_shape_type == ShapeType.Circle:
-            self.temp_item.update_points([self.start_pos, self.end_pos])
+            self.temp_item.update_points([self.draw_start_pos, self.end_pos])
         elif self.current_shape_type == ShapeType.Polygon:
             points = self.polygon_points.toList()
             if points and len(points) >= 2:
@@ -362,7 +394,7 @@ class InteractiveCanvas(QGraphicsView):
         elif self.current_shape_type == ShapeType.Point:
             self.temp_item.update_points([self.end_pos])
         elif self.current_shape_type == ShapeType.Line:
-            self.temp_item.update_points([self.start_pos, self.end_pos])
+            self.temp_item.update_points([self.draw_start_pos, self.end_pos])
         self.temp_item.update()
 
     def drawBackground(self, painter: QPainter, rect) -> None:

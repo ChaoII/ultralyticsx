@@ -1,7 +1,8 @@
 import enum
 import math
+from typing import Any
 
-from PySide6.QtCore import QPointF, QRectF, Qt, QLineF, QSizeF
+from PySide6.QtCore import QPointF, QRectF, Qt, QLineF, QSizeF, Signal, QObject
 from PySide6.QtGui import QPolygonF, QPainterPath, QPainter, QColor, QPen, QTransform, QPainterPathStroker, QPixmap
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsSceneHoverEvent
 from qfluentwidgets import themeColor
@@ -18,14 +19,17 @@ class ShapeType(enum.Enum):
     Point = 5
 
 
-class ShapeItem(QGraphicsItem):
+class ShapeItem(QObject, QGraphicsItem):
+    shape_item_geometry_changed = Signal()
+
     class OperationType(enum.Enum):
         Move = 0
         Edit = 1
         Rotate = 2
 
     def __init__(self, parent=None):
-        super().__init__(parent=parent)
+        QObject.__init__(self)
+        QGraphicsItem.__init__(self, parent=parent)
         self.setFlags(
             QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
             QGraphicsItem.GraphicsItemFlag.ItemIsFocusable)
@@ -72,6 +76,12 @@ class ShapeItem(QGraphicsItem):
         self.color = color
 
     def update_shape(self):
+        self.update_shape_sub()
+        self.prepareGeometryChange()
+        self.shape_item_geometry_changed.emit()
+        self.update()
+
+    def update_shape_sub(self):
         raise NotImplementedError
 
     def get_shape_data(self) -> list:
@@ -84,12 +94,11 @@ class ShapeItem(QGraphicsItem):
         for i in range(len(self.points)):
             self.points[i] = self.points[i] + offset
         self.update_shape()
-        self.update()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton \
                 and drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
-            if self.operation_type == RectangleItem.OperationType.Move:
+            if self.operation_type == ShapeItem.OperationType.Move:
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
                 self.press_point = event.pos()
                 self.press_points = self.points.copy()
@@ -98,18 +107,21 @@ class ShapeItem(QGraphicsItem):
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw:
             return
-        if self.operation_type == RectangleItem.OperationType.Move:
-            delta = event.pos() - self.press_point
-            self.points.clear()
-            for point in self.press_points:
-                self.points.append(point + delta)
+        if self.operation_type == ShapeItem.OperationType.Move:
+            # delta = event.pos() - self.press_point
+            # self.points.clear()
+            # for point in self.press_points:
+            #     self.points.append(point + delta)
+            pass
         elif self.operation_type == ShapeItem.OperationType.Edit:
             self.points[self.hover_index] = event.pos()
         else:
             pass
         self.update_shape()
-        self.update()
         super().mouseMoveEvent(event)
+
+    def get_operation_type(self):
+        return self.operation_type
 
     def mouseReleaseEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton and \
@@ -137,8 +149,8 @@ class ShapeItem(QGraphicsItem):
                 self.operation_type = RectangleItem.OperationType.Edit
             else:
                 self.setCursor(Qt.CursorShape.OpenHandCursor)
-                self.operation_type = RectangleItem.OperationType.Move
                 self.hover_index = -1
+                self.operation_type = RectangleItem.OperationType.Move
             self.update()
         super().hoverMoveEvent(event)
 
@@ -149,6 +161,63 @@ class ShapeItem(QGraphicsItem):
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.update()
         super().hoverLeaveEvent(event)
+
+
+class RectangleItem(ShapeItem):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptHoverEvents(True)
+        self.rect = QRectF()
+
+    @staticmethod
+    def get_shape_type() -> ShapeType:
+        return ShapeType.Rectangle
+
+    def update_shape_sub(self):
+        x1 = min(self.points[0].x(), self.points[1].x())
+        y1 = min(self.points[0].y(), self.points[1].y())
+        x2 = max(self.points[0].x(), self.points[1].x())
+        y2 = max(self.points[0].y(), self.points[1].y())
+        self.rect = QRectF(x1, y1, x2 - x1, y2 - y1)
+
+    def get_shape_data(self):
+        # x_center, y_center, w, h
+        x_center = self.rect.center().x()
+        y_center = self.rect.center().y()
+        w = self.rect.width()
+        h = self.rect.height()
+        return [x_center, y_center, w, h]
+
+    def boundingRect(self) -> QRectF:
+        return self.rect.adjusted(-self.corner_radius, -self.corner_radius,
+                                  self.corner_radius, self.corner_radius)
+
+    def shape(self) -> QPainterPath:
+        path = QPainterPath()
+        path.addRect(self.rect.adjusted(-self.corner_radius, -self.corner_radius,
+                                        self.corner_radius, self.corner_radius))
+        return path
+
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(QPen(self.color, 1, Qt.PenStyle.SolidLine))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        brush_color = QColor(self.color)
+        corner_radius = self.corner_radius
+        if self.isSelected():
+            painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
+        if self.is_hover or self.isSelected():
+            brush_color.setAlpha(100)
+            painter.setBrush(brush_color)
+            corner_radius = self.corner_radius + 2
+        painter.drawRect(self.rect)
+        painter.setBrush(self.color)
+        for index, point in enumerate(self.points):
+            if index == self.hover_index:
+                painter.drawEllipse(point, self.corner_radius * 2, self.corner_radius * 2)
+            else:
+                painter.drawEllipse(point, corner_radius, corner_radius)
 
 
 class PolygonItem(ShapeItem):
@@ -165,7 +234,7 @@ class PolygonItem(ShapeItem):
     def get_shape_type() -> ShapeType:
         return ShapeType.Polygon
 
-    def update_shape(self):
+    def update_shape_sub(self):
         polygon = QPolygonF()
         for point in self.points:
             polygon.append(point)
@@ -222,63 +291,6 @@ class PolygonItem(ShapeItem):
                 painter.drawEllipse(point, corner_radius, corner_radius)
 
 
-class RectangleItem(ShapeItem):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setAcceptHoverEvents(True)
-        self.rect = QRectF()
-
-    @staticmethod
-    def get_shape_type() -> ShapeType:
-        return ShapeType.Rectangle
-
-    def update_shape(self):
-        x1 = min(self.points[0].x(), self.points[1].x())
-        y1 = min(self.points[0].y(), self.points[1].y())
-        x2 = max(self.points[0].x(), self.points[1].x())
-        y2 = max(self.points[0].y(), self.points[1].y())
-        self.rect = QRectF(x1, y1, x2 - x1, y2 - y1)
-
-    def get_shape_data(self):
-        # x_center, y_center, w, h
-        x_center = self.rect.center().x()
-        y_center = self.rect.center().y()
-        w = self.rect.width()
-        h = self.rect.height()
-        return [x_center, y_center, w, h]
-
-    def boundingRect(self) -> QRectF:
-        return self.rect.adjusted(-self.corner_radius, -self.corner_radius,
-                                  self.corner_radius, self.corner_radius)
-
-    def shape(self) -> QPainterPath:
-        path = QPainterPath()
-        path.addRect(self.rect.adjusted(-self.corner_radius, -self.corner_radius,
-                                        self.corner_radius, self.corner_radius))
-        return path
-
-    def paint(self, painter, option, widget=None):
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(QPen(self.color, 1, Qt.PenStyle.SolidLine))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        brush_color = QColor(self.color)
-        corner_radius = self.corner_radius
-        if self.isSelected():
-            painter.setPen(QPen(self.color, 1, Qt.PenStyle.DashLine))
-        if self.is_hover or self.isSelected():
-            brush_color.setAlpha(100)
-            painter.setBrush(brush_color)
-            corner_radius = self.corner_radius + 2
-        painter.drawRect(self.rect)
-        painter.setBrush(self.color)
-        for index, point in enumerate(self.points):
-            if index == self.hover_index:
-                painter.drawEllipse(point, self.corner_radius * 2, self.corner_radius * 2)
-            else:
-                painter.drawEllipse(point, corner_radius, corner_radius)
-
-
 class RotatedRectangleItem(ShapeItem):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -327,7 +339,7 @@ class RotatedRectangleItem(ShapeItem):
         # 判断点的位置
         return cross_product > 0
 
-    def update_shape(self):
+    def update_shape_sub(self):
         if len(self.points) == 2:
             p1 = self.points[0]
             p2 = self.points[1]
@@ -412,7 +424,7 @@ class CircleItem(ShapeItem):
     def get_shape_type() -> ShapeType:
         return ShapeType.Circle
 
-    def update_shape(self):
+    def update_shape_sub(self):
         pass
 
     def get_shape_data(self):
@@ -476,7 +488,7 @@ class PointItem(ShapeItem):
     def get_shape_type() -> ShapeType:
         return ShapeType.Point
 
-    def update_shape(self):
+    def update_shape_sub(self):
         pass
 
     def get_shape_data(self):
@@ -525,7 +537,7 @@ class LineItem(ShapeItem):
     def get_shape_type() -> ShapeType:
         return ShapeType.Line
 
-    def update_shape(self):
+    def update_shape_sub(self):
         self.line = QLineF(self.points[0], self.points[1])
 
     def get_shape_data(self):
