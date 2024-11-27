@@ -56,30 +56,22 @@ class ModelDatasetWidget(CollapsibleWidgetItem):
         self._init_data()
 
     def _init_data(self):
-        if self._is_select_dataset_connect_signal_and_slots:
-            self.cmb_select_dataset.currentIndexChanged.disconnect(self._on_select_dataset_index_changed)
-            self._is_select_dataset_connect_signal_and_slots = False
         self.cmb_select_dataset.setIcon(self._task_info.model_type.icon.icon(color=themeColor()))
-        if self._task_info.task_status.value >= TrainTaskStatus.DS_SELECTED.value:
-            self.cmb_select_dataset.addItem(self._task_info.dataset_id,
-                                            self._task_info.model_type.icon.icon(themeColor()))
-            self.cmb_select_dataset.setCurrentIndex(0)
-            self.cmb_select_dataset.setEnabled(False)
-            self._load_current_dataset_info()
-            return
         with db_session() as session:
             self.cmb_select_dataset.clear()
             datasets: list[Dataset] = session.query(Dataset).filter(
                 and_(Dataset.model_type == self._task_info.model_type.value,
                      Dataset.dataset_status == DatasetStatus.CHECKED.value)).all()
-
             for index, dataset in enumerate(datasets):
                 self.cmb_select_dataset.addItem(dataset.dataset_id,
                                                 self._task_info.model_type.icon.icon(color=themeColor()),
                                                 userData=dataset)
-                self.cmb_select_dataset.setCurrentIndex(-1)
-            self.cmb_select_dataset.currentIndexChanged.connect(self._on_select_dataset_index_changed)
-            self._is_select_dataset_connect_signal_and_slots = True
+            self.cmb_select_dataset.setCurrentIndex(-1)
+        if self._task_info.task_status.value >= TrainTaskStatus.DS_SELECTED.value:
+            self.cmb_select_dataset.setCurrentText(self._task_info.dataset_id)
+            self._load_current_dataset_info()
+        # 将链接信号和槽写在最后可以避免在添加item的时候触发currentIndexChanged信号
+        self.cmb_select_dataset.currentIndexChanged.connect(self._on_select_dataset_index_changed)
 
     def _connect_signals_and_slots(self):
         self.btn_next_step.clicked.connect(self._on_next_step_clicked)

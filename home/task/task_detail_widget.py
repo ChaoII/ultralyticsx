@@ -65,7 +65,7 @@ class TaskDetailWidget(ContentWidgetBase):
     def _on_dataset_selected_clicked(self, task_info):
         self.tool_box.set_current_item(self.model_parameter_widget)
         self.model_parameter_widget.setEnabled(True)
-        self.model_train_widget.set_task_info(task_info)
+        self.model_parameter_widget.set_task_info(task_info)
 
     @Slot(TrainTaskInfo)
     def _on_parameter_config_finished(self, task_info: TrainTaskInfo):
