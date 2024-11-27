@@ -10,7 +10,7 @@ from qfluentwidgets import BodyLabel, ComboBox, CompactSpinBox, SwitchButton, \
 from common.component.collapsible_widget import CollapsibleWidgetItem
 from common.component.custom_icon import CustomFluentIcon
 from common.component.progress_message_box import ProgressMessageBox
-from common.core.window_manager import WindowManager
+from common.core.window_manager import window_manager
 from ..task_thread.model_val_thread import ModelValThread
 from ...types import TrainTaskInfo
 
@@ -197,6 +197,8 @@ class ModelValWidget(CollapsibleWidgetItem):
             for col, result in enumerate(results):
                 if col == 0:
                     item = QTableWidgetItem(result)
+                elif col in [1, 2]:
+                    item = QTableWidgetItem(f"{result:d}")
                 else:
                     item = QTableWidgetItem(f"{result:.4f}")
                 self.tb_val_result.setItem(row, col, item)
@@ -279,7 +281,7 @@ class ModelValWidget(CollapsibleWidgetItem):
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
             duration=2000,
-            parent=WindowManager().find_window("main_widget")
+            parent=window_manager.find_window("main_widget")
         )
 
     def val(self):
@@ -301,5 +303,5 @@ class ModelValWidget(CollapsibleWidgetItem):
         )
         self._export_parameter = parameter
         self.val()
-        self._message_box = ProgressMessageBox(parent=WindowManager().find_window("main_widget"))
+        self._message_box = ProgressMessageBox(parent=window_manager.find_window("main_widget"))
         self._message_box.exec()

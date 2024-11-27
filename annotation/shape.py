@@ -96,13 +96,16 @@ class ShapeItem(QObject, QGraphicsItem):
         self.update_shape()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton \
-                and drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
+        super().mousePressEvent(event)
+        if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw:
+            return
+        if event.button() == Qt.MouseButton.LeftButton:
             if self.operation_type == ShapeItem.OperationType.Move:
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
                 self.press_point = event.pos()
                 self.press_points = self.points.copy()
-        super().mousePressEvent(event)
+        if event.button() == Qt.MouseButton.RightButton:
+            pass
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if drawing_status_manager.get_drawing_status() == DrawingStatus.Draw:
