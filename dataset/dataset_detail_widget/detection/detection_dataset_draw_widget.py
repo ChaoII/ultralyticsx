@@ -30,4 +30,6 @@ class DetectionDatasetDrawWidget(DatasetDrawWidgetBase):
         else:
             data_dict = self._dataset_df[self._dataset_df["type"] == self.dataset_type.value]
             image_paths = data_dict.loc[:, ["image_path", "label_path"]]
+        image_paths.sort_values(by=["image_path"], inplace=True)
+        image_paths.reset_index(drop=True, inplace=True)
         return image_paths

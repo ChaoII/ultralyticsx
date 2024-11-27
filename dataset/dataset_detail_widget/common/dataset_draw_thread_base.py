@@ -18,7 +18,7 @@ class DatasetDrawThreadBase(QThread):
         self.labels = []
         self.image_paths: pd.DataFrame = pd.DataFrame()
 
-    def set_dataset_path(self, dataset_paths: list[Path]):
+    def set_dataset_path(self, dataset_paths: pd.DataFrame):
         self.image_paths = dataset_paths
 
     def set_dataset_label(self, labels):
