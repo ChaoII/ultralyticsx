@@ -38,3 +38,9 @@ class_id,x1,y1,x2,y2,x3,y3,x4,y4
 ```
 class_id,x_center,y_center,width,height,x1,y1,v1,x2,y2,v2,...x17,y17,v17
 ```
+
+
+##### 路线图
+- 增加标注框的复制粘贴功能
+- 增加标注框的对其工呢呢个
+- 增加半自动标注功能

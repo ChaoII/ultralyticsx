@@ -10,9 +10,11 @@ import yaml
 def coco_dataset_split(dataset_dir: Path | str, split_rates: list):
     if isinstance(dataset_dir, str):
         dataset_dir = Path(dataset_dir)
-
+    # ./scr/images/xxx.jpg
     images_paths = list((dataset_dir / "src" / "images").iterdir())
-    labels_paths = list((dataset_dir / "src" / "labels").iterdir())
+    # labels_paths = list((dataset_dir / "src" / "labels").iterdir())
+    # ./src/labels/xxx.txt
+    labels_paths = [x.parent.parent / "labels" / (x.stem + ".txt") for x in images_paths]
 
     dataset_num = len(images_paths)
     train_num = round(dataset_num * split_rates[0] / 100)
