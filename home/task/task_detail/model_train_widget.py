@@ -172,7 +172,7 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             if train_loss_path.exists() and train_metric_path.exists():
                 train_loss = pickle.load(open(train_loss_path, "rb"))
                 train_metric = pickle.load(open(train_metric_path, "rb"))
-                self.psb_train.set_value(len(list(train_metric.values())[1]) - 1)
+                self.psb_train.set_value(len(list(train_metric.values())[1]))
                 self.load_graph(train_loss, train_metric)
 
         if task_info.task_status == TrainTaskStatus.TRAINING:
@@ -192,7 +192,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
         else:
             self._current_thread = None
 
-        # 如果
         if task_info.task_status.value > TrainTaskStatus.TRAINING.value:
             self.btn_start_train.setEnabled(True)
             self.btn_stop_train.setEnabled(False)
