@@ -5,6 +5,14 @@ from qfluentwidgets import getIconColor, Theme, FluentIconBase
 
 class CustomFluentIcon(FluentIconBase, Enum):
     """ Custom icons """
+    ALIGN_LEFT = "align_left"
+    ALIGN_RIGHT = "align_right"
+    ALIGN_TOP = "align_top"
+    ALIGN_BOTTOM = "align_bottom"
+    ALIGN_HORIZONTAL_CENTER = "align_h_center"
+    ALIGN_VERTICAL_CENTER = "align_v_center"
+    ALIGN_HORIZONTAL_DISTRIBUTION = "align_h_distribution"
+    ALIGN_VERTICAL_DISTRIBUTION = "align_v_distribution"
     ANNOTATION = "annotation"
     CIRCLE = "circle"
     CLASSIFY = "classify"

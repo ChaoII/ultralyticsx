@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 
 from PySide6.QtCore import Signal
@@ -8,6 +9,17 @@ from qfluentwidgets import CommandBar, FluentIcon, Action
 from annotation.canvas_widget import DrawingStatus
 from annotation.shape import ShapeType
 from common.component.custom_icon import CustomFluentIcon
+
+
+class AlignmentType(Enum):
+    AlignLeft = 0
+    AlignRight = 1
+    AlignTop = 2
+    AlignBottom = 3
+    AlignHorizontalCenter = 4
+    AlignVerticalCenter = 5
+    AlignHorizontalDistribution = 6
+    AlignVerticalDistribution = 7
 
 
 class AnnotationCommandBar(CommandBar):
@@ -24,6 +36,8 @@ class AnnotationCommandBar(CommandBar):
     scale_down_clicked = Signal()
     scale_up_clicked = Signal()
     recover_clicked = Signal()
+
+    align_type_clicked = Signal(AlignmentType)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -100,6 +114,32 @@ class AnnotationCommandBar(CommandBar):
         # 恢复
         self.action_recover = Action(CustomFluentIcon.RECOVER, self.tr("recover"))
         self.action_recover.triggered.connect(lambda: self.recover_clicked.emit())
+
+        self.action_align_left = Action(CustomFluentIcon.ALIGN_LEFT, self.tr("Align left"))
+        self.action_align_left.triggered.connect(lambda: self.align_type_clicked.emit(AlignmentType.AlignLeft))
+        self.action_align_right = Action(CustomFluentIcon.ALIGN_RIGHT, self.tr("Align right"))
+        self.action_align_right.triggered.connect(lambda: self.align_type_clicked.emit(AlignmentType.AlignRight))
+        self.action_align_top = Action(CustomFluentIcon.ALIGN_TOP, self.tr("Align top"))
+        self.action_align_top.triggered.connect(lambda: self.align_type_clicked.emit(AlignmentType.AlignTop))
+        self.action_align_bottom = Action(CustomFluentIcon.ALIGN_BOTTOM, self.tr("Align bottom"))
+        self.action_align_bottom.triggered.connect(lambda: self.align_type_clicked.emit(AlignmentType.AlignBottom))
+        self.action_align_horizontal_center = Action(CustomFluentIcon.ALIGN_HORIZONTAL_CENTER,
+                                                     self.tr("Align horizontal center"))
+        self.action_align_horizontal_center.triggered.connect(
+            lambda: self.align_type_clicked.emit(AlignmentType.AlignHorizontalCenter))
+        self.action_align_vertical_center = Action(CustomFluentIcon.ALIGN_VERTICAL_CENTER,
+                                                   self.tr("Align vertical center"))
+        self.action_align_vertical_center.triggered.connect(
+            lambda: self.align_type_clicked.emit(AlignmentType.AlignVerticalCenter))
+        self.action_align_horizontal_distribution = Action(CustomFluentIcon.ALIGN_HORIZONTAL_DISTRIBUTION,
+                                                           self.tr("horizontal distribution"))
+        self.action_align_horizontal_distribution.triggered.connect(
+            lambda: self.align_type_clicked.emit(AlignmentType.AlignHorizontalDistribution))
+        self.action_align_vertical_distribution = Action(CustomFluentIcon.ALIGN_VERTICAL_DISTRIBUTION,
+                                                         self.tr("vertical distribution"))
+        self.action_align_vertical_distribution.triggered.connect(
+            lambda: self.drawing_status_selected.emit(AlignmentType.AlignVerticalDistribution))
+
         self.addActions([
             self.action_annotation_directory,
             self.action_save_image,
@@ -129,6 +169,19 @@ class AnnotationCommandBar(CommandBar):
             self.action_recover
         ])
 
+        self.addSeparator()
+        self.addActions(
+            [
+                self.action_align_left,
+                self.action_align_right,
+                self.action_align_top,
+                self.action_align_bottom,
+                self.action_align_horizontal_center,
+                self.action_align_vertical_center,
+                self.action_align_horizontal_distribution,
+                self.action_align_vertical_distribution
+            ]
+        )
         self._cur_file_path: Path | None = None
         self._cur_directory_path: Path | None = None
 
@@ -172,19 +225,6 @@ class AnnotationCommandBar(CommandBar):
         if toggled:
             self.shape_selected.emit(ShapeType.Line)
 
-    # def on_open_file(self):
-    #     if self._cur_file_path:
-    #         if self._cur_file_path.is_file():
-    #             _dir = self._cur_file_path.parent.resolve().as_posix()
-    #         else:
-    #             _dir = Path(".").as_posix()
-    #     else:
-    #         _dir = Path(".").as_posix()
-    #     filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir,
-    #                                               "All Files (*);;Image Files (*.jpg *.jpeg *.png *.bmp)")
-    #     self._cur_file_path = Path(filename)
-    #     self.image_path_changed.emit(self._cur_file_path)
-
     def on_select_directory(self):
         if self._cur_directory_path:
             _dir = Path(self._cur_directory_path).resolve().as_posix()
@@ -202,3 +242,13 @@ class AnnotationCommandBar(CommandBar):
         self.action_circle.setEnabled(enabled)
         self.action_point.setEnabled(enabled)
         self.action_line.setEnabled(enabled)
+
+    def set_alignment_enabled(self, enabled: bool):
+        self.action_align_left.setEnabled(enabled)
+        self.action_align_right.setEnabled(enabled)
+        self.action_align_top.setEnabled(enabled)
+        self.action_align_bottom.setEnabled(enabled)
+        self.action_align_horizontal_center.setEnabled(enabled)
+        self.action_align_vertical_center.setEnabled(enabled)
+        self.action_align_horizontal_distribution.setEnabled(enabled)
+        self.action_align_vertical_distribution.setEnabled(enabled)

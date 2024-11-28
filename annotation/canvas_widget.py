@@ -11,6 +11,7 @@ from qfluentwidgets import isDarkTheme, SmoothScrollDelegate, RoundMenu, Action,
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
     ImageItem, RotatedRectangleItem
 from common.component.model_type_widget import ModelType
+from .annotation_command_bar import AlignmentType
 from .core import drawing_status_manager, DrawingStatus
 
 # dark_theme/light theme
@@ -81,6 +82,10 @@ class InteractiveCanvas(QGraphicsView):
             if isinstance(item, ShapeItem):
                 item_ids.append(item.get_id())
         self.shape_item_selected_changed.emit(item_ids)
+
+    def align_item(self, align_type: AlignmentType):
+        # todo 实现对选中的item对齐
+        pass
 
     def get_shape_item(self, item_id: str):
         return self.shape_item_map.get(item_id, None)
