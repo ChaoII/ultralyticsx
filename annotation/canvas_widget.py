@@ -6,7 +6,7 @@ from PySide6.QtCore import QUuid
 from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent, \
     QResizeEvent
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
-from qfluentwidgets import isDarkTheme, SmoothScrollDelegate
+from qfluentwidgets import isDarkTheme, SmoothScrollDelegate, RoundMenu, Action, FluentIcon
 
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
     ImageItem, RotatedRectangleItem
@@ -37,6 +37,8 @@ class InteractiveCanvas(QGraphicsView):
         super().__init__()
         # 创建绘图场景
         self.scene = QGraphicsScene(self)
+        # 如果不加这一行进行批量删除item那么会直接崩溃
+        self.scene.setItemIndexMethod(QGraphicsScene.ItemIndexMethod.NoIndex)
         self.scene.selectionChanged.connect(self.on_item_select_changed)
         self.scene.setSceneRect(0, 0, 800, 600)
         self.setScene(self.scene)
@@ -55,6 +57,7 @@ class InteractiveCanvas(QGraphicsView):
         self.current_shape_type = ShapeType.RotatedRectangle
         # 绘制状态
         self.background_pix = QPixmap()
+        self.menu = None
         self.is_drawing = False
         self.move_start_pos = None
         self.draw_start_pos = None
@@ -67,6 +70,7 @@ class InteractiveCanvas(QGraphicsView):
         # 临时图形
         self.temp_item: ShapeItem | None = None
         self.shape_item_map = dict()
+        self.clipboard: ShapeItem | None = None
 
         # 默认为鼠标拖动框选模式，当鼠标点击到item后，模式变为移动模式，这样会避免框选会触发item的移动事件
         self.is_move_mode = False
@@ -89,9 +93,9 @@ class InteractiveCanvas(QGraphicsView):
 
     def delete_shape_item(self, item_id):
         shape_item = self.shape_item_map.get(item_id, None)
-        if shape_item:
+        if shape_item and shape_item in self.scene.items():
+            self.shape_item_map.pop(item_id, None)
             self.scene.removeItem(shape_item)
-            self.shape_item_map.pop(item_id)
 
     def update_shape_item_color(self, annotation, color: QColor):
         for _, shape_item in self.shape_item_map.items():
@@ -190,7 +194,7 @@ class InteractiveCanvas(QGraphicsView):
 
     def on_shape_item_geometry_changed(self):
         item = self.sender()
-        if isinstance(item, ShapeItem) and item == self.scene.selectedItems()[0]:
+        if isinstance(item, ShapeItem) and len(self.scene.selectedItems()) and item == self.scene.selectedItems()[0]:
             self.shape_item_geometry_changed.emit([item.get_id()])
 
     def set_drawing_status(self, status: DrawingStatus):
@@ -221,14 +225,9 @@ class InteractiveCanvas(QGraphicsView):
         if drawing_status_manager.get_drawing_status() == DrawingStatus.Select:
             if event.key() == Qt.Key.Key_Shift:
                 self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-
             if event.key() == Qt.Key.Key_Delete:
                 for item in self.scene.selectedItems():
-                    if isinstance(item, ShapeItem):
-                        self.delete_shape_item_clicked.emit(item.get_id())
-                        self.scene.removeItem(item)
-                        if item.get_id() in self.shape_item_map:
-                            self.shape_item_map.pop(item.get_id())
+                    self.delete_item(item)
             if event.key() == Qt.Key.Key_Up:
                 for item in self.scene.selectedItems():
                     if isinstance(item, ShapeItem):
@@ -291,7 +290,65 @@ class InteractiveCanvas(QGraphicsView):
                     self.scene.addItem(self.temp_item)
                 self.set_is_drawing(True)
                 self.update_temp_item()
+        if event.button() == Qt.MouseButton.RightButton:
+            self.show_context_menu(event)
         super().mousePressEvent(event)
+
+    def show_context_menu(self, event):
+        mouse_press_pos = self.mapToScene(event.pos())
+        item = self.scene.itemAt(mouse_press_pos, self.transform())
+        menu = RoundMenu(self.scene.views()[0])
+        copy_action = Action(FluentIcon.COPY, self.tr("copy"), self)
+        paste_action = Action(FluentIcon.PASTE, self.tr("past"), self)
+        delete_action = Action(FluentIcon.DELETE, self.tr("delete"), self)
+        menu.addAction(copy_action)
+        menu.addAction(paste_action)
+        menu.addAction(delete_action)
+        copy_action.triggered.connect(lambda: self.copy_shape(item))
+        paste_action.triggered.connect(lambda: self.paste_shape(mouse_press_pos))
+        delete_action.triggered.connect(lambda: self.delete_item(item))
+        if isinstance(item, ShapeItem):
+            copy_action.setEnabled(True)
+            delete_action.setEnabled(True)
+            paste_action.setEnabled(False)
+        else:
+            copy_action.setEnabled(False)
+            delete_action.setEnabled(False)
+            paste_action.setEnabled(True)
+        menu.exec(event.screenPos().toPoint())
+
+    def copy_shape(self, item):
+        if isinstance(item, ShapeItem):
+            self.clipboard = item
+
+    def paste_shape(self, mouse_press_pos):
+        if self.clipboard:
+            label = self.clipboard.get_annotation()
+            color = self.clipboard.get_color()
+            shape_data = self.clipboard.get_shape_data()
+            shape_type = self.clipboard.get_shape_type()
+            if shape_type == ShapeType.Rectangle:
+                new_item = RectangleItem()
+                x = mouse_press_pos.x()
+                y = mouse_press_pos.y()
+                w = shape_data[2]
+                h = shape_data[3]
+                p1 = QPointF(x, y)
+                p2 = QPointF(x + w, y + h)
+                new_item.update_points([p1, p2])
+            else:
+                raise NotImplementedError
+            new_item.set_annotation(label)
+            new_item.set_color(color)
+            new_item.set_is_drawing_history(True)
+            new_item.shape_item_geometry_changed.connect(self.on_shape_item_geometry_changed)
+            self.scene.addItem(new_item)
+            self.send_draw_finished_signal(new_item)
+
+    def delete_item(self, item):
+        if isinstance(item, ShapeItem):
+            item_id = item.get_id()
+            self.delete_shape_item_clicked.emit(item_id)
 
     def mouseMoveEvent(self, event):
         if self.is_drawing:
@@ -359,9 +416,10 @@ class InteractiveCanvas(QGraphicsView):
             else:
                 if not self.is_move_mode:
                     for item in self.scene.selectedItems():
-                        if isinstance(item, ShapeItem):
-                            print(item.get_id())
-                            print(item.get_operation_type())
+                        pass
+                        # if isinstance(item, ShapeItem):
+                        #     print(item.get_id())
+                        #     print(item.get_operation_type())
         super().mouseReleaseEvent(event)
 
     def update_temp_item(self):

@@ -110,8 +110,7 @@ class AnnotationListWidget(SimpleCardWidget):
     def on_annotation_item_clicked(self, item: QListWidgetItem):
         annotation_item_widget = self.list_widget.itemWidget(item)
         if isinstance(annotation_item_widget, AnnotationListItemWidget):
-            # self.annotation_item_selected_changed.emit(annotation_item_widget.item_id)
-            pass
+            self.annotation_item_selected_changed.emit(annotation_item_widget.item_id)
 
     def delete_annotation_item(self, item_id: str):
         item = self.annotation_item_map.get(item_id, None)

@@ -75,6 +75,9 @@ class ShapeItem(QObject, QGraphicsItem):
     def set_color(self, color: QColor):
         self.color = color
 
+    def get_color(self) -> QColor:
+        return self.color
+
     def update_shape(self):
         self.update_shape_sub()
         self.prepareGeometryChange()
