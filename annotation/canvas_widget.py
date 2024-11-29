@@ -2,7 +2,6 @@ import math
 from pathlib import Path
 
 from PySide6.QtCore import QLineF, Signal, QPointF
-from PySide6.QtCore import QUuid
 from PySide6.QtGui import QPolygonF, Qt, QPen, QPainter, QColor, QPixmap, QTransform, QWheelEvent, QKeyEvent, \
     QResizeEvent
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
@@ -11,6 +10,7 @@ from qfluentwidgets import isDarkTheme, SmoothScrollDelegate, RoundMenu, Action,
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
     ImageItem, RotatedRectangleItem
 from common.component.model_type_widget import ModelType
+from common.utils.utils import snowflake_generator
 from .types import AlignmentType
 from .core import drawing_status_manager, DrawingStatus
 
@@ -188,7 +188,7 @@ class InteractiveCanvas(QGraphicsView):
         self.scene.blockSignals(False)
 
     def send_draw_finished_signal(self, shape_item: ShapeItem):
-        item_id = QUuid.createUuid().toString().replace("-", "").replace("{", "").replace("}", "")
+        item_id = next(snowflake_generator)
         shape_item.set_id(item_id)
         shape_item.prepareGeometryChange()
         self.shape_item_map.update({item_id: shape_item})

@@ -11,8 +11,13 @@ from PIL import Image
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QWidget
 from loguru import logger
+from snowflake import SnowflakeGenerator
 
-NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+snowflake_generator = SnowflakeGenerator(instance=0)
+
+
+def NOW():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
 
 class Colors:
@@ -124,27 +129,27 @@ def open_directory(directory: Path):
 
 def log_info(message: str, color: str = "green", apply_rich_text=False) -> str:
     if apply_rich_text:
-        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'INFO':<8} | {message}</span>"
+        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW()} | {'INFO':<8} | {message}</span>"
     else:
-        format_str = f"{NOW} | {'INFO':<8} | {message}"
+        format_str = f"{NOW()} | {'INFO':<8} | {message}"
     logger.info(message)
     return format_str
 
 
 def log_warning(message: str, color: str = "yellow", apply_rich_text=False) -> str:
     if apply_rich_text:
-        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'WARNING':<8} | {message}</span>"
+        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW()} | {'WARNING':<8} | {message}</span>"
     else:
-        format_str = f"{NOW} | {'WARNING':<8} | {message}"
+        format_str = f"{NOW()} | {'WARNING':<8} | {message}"
     logger.warning(message)
     return format_str
 
 
 def log_error(message: str, color: str = "red", apply_rich_text=False) -> str:
     if apply_rich_text:
-        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW} | {'ERROR':<8} | {message}</span>"
+        format_str = f"<span style = 'color:{color};white-space: pre' >{NOW()} | {'ERROR':<8} | {message}</span>"
     else:
-        format_str = f"{NOW} | {'ERROR':<8} | {message}"
+        format_str = f"{NOW()} | {'ERROR':<8} | {message}"
     logger.error(message)
     return format_str
 
@@ -291,7 +296,3 @@ def is_image(filename):
     except (IOError, SyntaxError):
         # 如果发生IO错误或语法错误，说明文件不是图片
         return False
-
-
-
-

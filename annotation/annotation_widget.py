@@ -291,7 +291,7 @@ class AnnotationWidget(ContentWidgetBase):
             item_id = item_ids[0]
             item = self.canvas.get_shape_item(item_id)
             if isinstance(item, ShapeItem):
-                self.item_property_widget.set_id(item_id)
+                self.item_property_widget.set_id(str(item_id))
                 self.item_property_widget.set_annotation(item.get_annotation())
                 self.item_property_widget.update_property(item.get_shape_data())
 

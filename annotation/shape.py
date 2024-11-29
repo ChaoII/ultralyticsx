@@ -165,6 +165,7 @@ class ShapeItem(QObject, QGraphicsItem):
             self.is_hover = False
             self.hover_index = -1
             self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.operation_type = RectangleItem.OperationType.Move
             self.update()
         super().hoverLeaveEvent(event)
 
