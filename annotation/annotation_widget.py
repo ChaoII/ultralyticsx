@@ -83,7 +83,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.btn_label_property.setFixedSize(30, 30)
         self.btn_label_property.setParent(self.canvas)
         self.label_property_widget = LabelPropertyWidget()
-        self.cc = RectItemPropertyWidget()
+        self.item_property_widget = RectItemPropertyWidget()
 
         # self.vly_right.addStretch(1)
         self.hly = QHBoxLayout()
@@ -91,7 +91,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.hly.setSpacing(0)
         self.hly.addWidget(self.label_property_widget)
         self.hly.addWidget(self.canvas)
-        self.hly.addWidget(self.cc)
+        self.hly.addWidget(self.item_property_widget)
         self.vly.addWidget(self.cb_label)
         self.vly.addLayout(self.hly)
         self.connect_signals_and_slots()
@@ -142,7 +142,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.label_property_widget.image_list_widget.save_annotation_clicked.connect(
             lambda: self.save_current_annotation())
 
-        self.cc.shape_changed.connect(self.on_shape_changed)
+        self.item_property_widget.shape_changed.connect(self.on_shape_changed)
 
     def on_shape_changed(self, x, y, w, h):
         items = self.canvas.scene.selectedItems()
@@ -155,13 +155,17 @@ class AnnotationWidget(ContentWidgetBase):
     def on_shape_item_selected_changed(self, item_ids: list[str]):
         self.label_property_widget.annotation_widget.set_selected_item(item_ids)
         self.update_item_property(item_ids)
+        if len(item_ids) >= 2:
+            self.cb_label.set_alignment_enabled(True)
+        else:
+            self.cb_label.set_alignment_enabled(False)
 
     def on_shape_item_geometry_changed(self, shape_data: list):
         self.update_item_property(shape_data)
 
     def on_btn_item_clicked(self):
-        self.cc.on_btn_collapse_clicked()
-        if self.cc.is_collapse:
+        self.item_property_widget.on_btn_collapse_clicked()
+        if self.item_property_widget.is_collapse:
             self.btn_item_property.set_icon(CustomFluentIcon.EXPAND_RIGHT)
         else:
             self.btn_item_property.set_icon(CustomFluentIcon.COLLAPSE_RIGHT)
@@ -287,9 +291,9 @@ class AnnotationWidget(ContentWidgetBase):
             item_id = item_ids[0]
             item = self.canvas.get_shape_item(item_id)
             if isinstance(item, ShapeItem):
-                self.cc.set_id(item_id)
-                self.cc.set_annotation(item.get_annotation())
-                self.cc.update_property(item.get_shape_data())
+                self.item_property_widget.set_id(item_id)
+                self.item_property_widget.set_annotation(item.get_annotation())
+                self.item_property_widget.update_property(item.get_shape_data())
 
     def on_annotation_item_selected_changed(self, item_ids: list[str]):
         self.canvas.set_shape_item_selected(item_ids)

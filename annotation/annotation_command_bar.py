@@ -8,18 +8,8 @@ from qfluentwidgets import CommandBar, FluentIcon, Action
 
 from annotation.canvas_widget import DrawingStatus
 from annotation.shape import ShapeType
+from annotation.types import AlignmentType
 from common.component.custom_icon import CustomFluentIcon
-
-
-class AlignmentType(Enum):
-    AlignLeft = 0
-    AlignRight = 1
-    AlignTop = 2
-    AlignBottom = 3
-    AlignHorizontalCenter = 4
-    AlignVerticalCenter = 5
-    AlignHorizontalDistribution = 6
-    AlignVerticalDistribution = 7
 
 
 class AnnotationCommandBar(CommandBar):
@@ -138,7 +128,7 @@ class AnnotationCommandBar(CommandBar):
         self.action_align_vertical_distribution = Action(CustomFluentIcon.ALIGN_VERTICAL_DISTRIBUTION,
                                                          self.tr("vertical distribution"))
         self.action_align_vertical_distribution.triggered.connect(
-            lambda: self.drawing_status_selected.emit(AlignmentType.AlignVerticalDistribution))
+            lambda: self.align_type_clicked.emit(AlignmentType.AlignVerticalDistribution))
 
         self.addActions([
             self.action_annotation_directory,
@@ -184,6 +174,7 @@ class AnnotationCommandBar(CommandBar):
         )
         self._cur_file_path: Path | None = None
         self._cur_directory_path: Path | None = None
+        self.set_alignment_enabled(False)
 
     def on_pre_image_clicked(self):
         self.pre_image_clicked.emit()

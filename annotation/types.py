@@ -4,6 +4,17 @@ from common.component.model_type_widget import ModelType
 from common.utils.utils import CustomColor
 
 
+class AlignmentType(Enum):
+    AlignLeft = 0
+    AlignRight = 1
+    AlignTop = 2
+    AlignBottom = 3
+    AlignHorizontalCenter = 4
+    AlignVerticalCenter = 5
+    AlignHorizontalDistribution = 6
+    AlignVerticalDistribution = 7
+
+
 class AnnotationStatus(Enum):
     Initialing = 0
     Annotating = 1

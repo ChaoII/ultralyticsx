@@ -11,7 +11,7 @@ from qfluentwidgets import isDarkTheme, SmoothScrollDelegate, RoundMenu, Action,
 from annotation.shape import RectangleItem, ShapeType, LineItem, CircleItem, PointItem, PolygonItem, ShapeItem, \
     ImageItem, RotatedRectangleItem
 from common.component.model_type_widget import ModelType
-from .annotation_command_bar import AlignmentType
+from .types import AlignmentType
 from .core import drawing_status_manager, DrawingStatus
 
 # dark_theme/light theme
@@ -84,8 +84,78 @@ class InteractiveCanvas(QGraphicsView):
         self.shape_item_selected_changed.emit(item_ids)
 
     def align_item(self, align_type: AlignmentType):
-        # todo 实现对选中的item对齐
-        pass
+        items = self.scene.selectedItems()
+        if align_type not in [AlignmentType.AlignHorizontalDistribution, AlignmentType.AlignVerticalDistribution]:
+            x_left_base = items[0].boundingRect().x()
+            x_right_base = items[0].boundingRect().right()
+            y_top_base = items[0].boundingRect().y()
+            y_bottom_base = items[0].boundingRect().bottom()
+            x_center_base = items[0].boundingRect().center().x()
+            y_center_base = items[0].boundingRect().center().y()
+            for index, item in enumerate(items):
+                if index == 0:
+                    continue
+                if isinstance(item, ShapeItem):
+                    if align_type == AlignmentType.AlignLeft:
+                        x_diff = item.boundingRect().x() - x_left_base
+                        item.move_by(QPointF(-x_diff, 0))
+                    elif align_type == AlignmentType.AlignRight:
+                        x_diff = item.boundingRect().right() - x_right_base
+                        item.move_by(QPointF(-x_diff, 0))
+                    elif align_type == AlignmentType.AlignTop:
+                        y_diff = item.boundingRect().y() - y_top_base
+                        item.move_by(QPointF(0, -y_diff))
+                    elif align_type == AlignmentType.AlignBottom:
+                        y_diff = item.boundingRect().bottom() - y_bottom_base
+                        item.move_by(QPointF(0, -y_diff))
+                    elif align_type == AlignmentType.AlignHorizontalCenter:
+                        x_diff = item.boundingRect().center().x() - x_center_base
+                        item.move_by(QPointF(-x_diff, 0))
+                    elif align_type == AlignmentType.AlignVerticalCenter:
+                        y_diff = item.boundingRect().center().y() - y_center_base
+                        item.move_by(QPointF(0, -y_diff))
+        else:
+            if align_type == AlignmentType.AlignHorizontalDistribution:
+                sorted_items = sorted(items, key=lambda item_: item_.boundingRect().x())
+                start_x = sorted_items[0].boundingRect().x()
+                end_x = sorted_items[-1].boundingRect().right()
+
+                # 计算总宽度和间距
+                total_width = end_x - start_x
+                num_items = len(sorted_items)
+                # 计算每个项目的宽度
+                item_widths = [item.boundingRect().width() for item in sorted_items]
+                total_item_width = sum(item_widths)
+                # 计算实际可用的间距
+                available_space = total_width - total_item_width
+                actual_spacing = available_space / (num_items - 1)
+                # 移动每个项目
+                current_x = start_x
+                for item in sorted_items:
+                    if isinstance(item, ShapeItem):
+                        x_diff = item.boundingRect().x() - current_x
+                        item.move_by(QPointF(-x_diff, 0))
+                        current_x += item.boundingRect().width() + actual_spacing
+            elif align_type == AlignmentType.AlignVerticalDistribution:
+                sorted_items = sorted(items, key=lambda item_: item_.boundingRect().y())
+                start_y = sorted_items[0].boundingRect().y()
+                end_y = sorted_items[-1].boundingRect().bottom()
+                # 计算总高度和间距
+                total_height = end_y - start_y
+                num_items = len(sorted_items)
+                item_heights = [item.boundingRect().height() for item in sorted_items]
+                total_item_height = sum(item_heights)
+                available_space = total_height - total_item_height
+                actual_spacing = available_space / (num_items - 1)
+                # 移动每个项目
+                current_y = start_y
+                for item in sorted_items:
+                    if isinstance(item, ShapeItem):
+                        y_diff = item.boundingRect().y() - current_y
+                        item.move_by(QPointF(0, -y_diff))
+                        current_y += item.boundingRect().height() + actual_spacing
+            else:
+                raise ValueError("Invalid alignment type")
 
     def get_shape_item(self, item_id: str):
         return self.shape_item_map.get(item_id, None)
