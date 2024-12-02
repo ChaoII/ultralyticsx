@@ -1,6 +1,5 @@
 import enum
 import math
-from typing import Any
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QLineF, QSizeF, Signal, QObject
 from PySide6.QtGui import QPolygonF, QPainterPath, QPainter, QColor, QPen, QTransform, QPainterPathStroker, QPixmap
@@ -25,7 +24,6 @@ class ShapeItem(QObject, QGraphicsItem):
     class OperationType(enum.Enum):
         Move = 0
         Edit = 1
-        Rotate = 2
 
     def __init__(self, parent=None):
         QObject.__init__(self)
