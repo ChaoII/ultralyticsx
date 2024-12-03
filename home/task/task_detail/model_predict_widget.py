@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import yaml
-from PySide6.QtGui import Qt, QFont, QImage, QResizeEvent
+from PySide6.QtGui import Qt, QFont, QResizeEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QAbstractItemView, QTableWidgetItem, \
     QSizePolicy, QFormLayout
 from qfluentwidgets import BodyLabel, ComboBox, PrimaryPushButton, InfoBar, InfoBarPosition, ToolTipFilter, \
@@ -157,7 +157,6 @@ class ModelPredictWidget(CollapsibleWidgetItem):
     def create_predict_thread(self):
         self._model_predict_thread = ModelPredictorThread(
             self._task_info.task_dir / "weights" / self.cmb_model_name.currentText())
-        self._model_predict_thread.set_task_info(self._task_info)
         self._model_predict_thread.model_predict_end.connect(self._on_predict_end)
         self._model_predict_thread.model_predict_failed.connect(self._on_predict_failed)
 

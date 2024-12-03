@@ -1,4 +1,3 @@
-from enum import Enum
 from pathlib import Path
 
 from PySide6.QtCore import Signal
@@ -28,6 +27,8 @@ class AnnotationCommandBar(CommandBar):
     recover_clicked = Signal()
 
     align_type_clicked = Signal(AlignmentType)
+
+    semi_automatic_annotation_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -130,6 +131,10 @@ class AnnotationCommandBar(CommandBar):
         self.action_align_vertical_distribution.triggered.connect(
             lambda: self.align_type_clicked.emit(AlignmentType.AlignVerticalDistribution))
 
+        self.action_semi_automatic_annotation = Action(CustomFluentIcon.ANNOTATION,
+                                                       self.tr("Semi automatic annotation"))
+        self.action_semi_automatic_annotation.triggered.connect(lambda: self.semi_automatic_annotation_clicked.emit())
+
         self.addActions([
             self.action_annotation_directory,
             self.action_save_image,
@@ -172,6 +177,8 @@ class AnnotationCommandBar(CommandBar):
                 self.action_align_vertical_distribution
             ]
         )
+        self.addSeparator()
+        self.addAction(self.action_semi_automatic_annotation)
         self._cur_file_path: Path | None = None
         self._cur_directory_path: Path | None = None
         self.set_alignment_enabled(False)

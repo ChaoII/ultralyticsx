@@ -12,6 +12,7 @@ from annotation.canvas_widget import InteractiveCanvas, DrawingStatus
 from annotation.image_list_widget import ImageListWidget
 from annotation.item_property_widget import RectItemPropertyWidget
 from annotation.labels_settings_widget import LabelSettingsWidget
+from annotation.semi_annotation_widget import SemiAutomaticAnnotationEnsureMessageBox, ModelPredict
 from annotation.shape import ShapeType, ShapeItem
 from common.component.custom_icon import CustomFluentIcon
 from common.component.fill_tool_button import FillToolButton
@@ -21,6 +22,7 @@ from common.core.window_manager import window_manager
 from common.database.annotation_task_helper import db_update_annotation_dir_path
 from common.database.db_helper import db_session
 from common.utils.utils import is_image, generate_random_color
+from home.task.task_thread.model_predict_thread import ModelPredictorThread
 from models.models import AnnotationTask
 
 
@@ -97,7 +99,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.connect_signals_and_slots()
         self.image_dir_path: Path | None = None
         self.annotation_dir_path: Path | None = None
-        self.labels_color = dict()
+        self.labels_color: dict[str, QColor] = dict()
         self.annotation_task_id = ""
         self.model_type = ModelType.DETECT
         self.last_selected_label = ""
@@ -117,6 +119,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.cb_label.scale_up_clicked.connect(lambda: self.canvas.scale_up())
         self.cb_label.recover_clicked.connect(lambda: self.canvas.reset_scale())
         self.cb_label.align_type_clicked.connect(lambda x: self.canvas.align_item(x))
+        self.cb_label.semi_automatic_annotation_clicked.connect(self.on_semi_automatic_annotation_clicked)
 
         self.canvas.is_drawing_changed.connect(self.on_is_drawing_changed)
         self.canvas.draw_finished.connect(self.on_draw_finished)
@@ -250,6 +253,55 @@ class AnnotationWidget(ContentWidgetBase):
         f = annotation_path.open("r", encoding="utf-8")
         annotation_num = len(f.readlines())
         return shape_num == annotation_num
+
+    def on_semi_automatic_annotation_clicked(self):
+        cus_message_box = SemiAutomaticAnnotationEnsureMessageBox(parent=self)
+        if cus_message_box.exec():
+            model_path = Path(cus_message_box.get_model_path())
+            if not model_path.exists() or not model_path.is_file() or model_path.suffix != ".pt":
+                InfoBar.error(
+                    title="",
+                    content=self.tr("Please select a correct model path"),
+                    duration=2000,
+                    position=InfoBarPosition.TOP_RIGHT,
+                    parent=window_manager.find_window("main_widget")
+                )
+                return
+            predictor = ModelPredict(self)
+            image_path = Path(self.label_property_widget.image_list_widget.get_current_image_labeled()[0])
+            result = predictor.predict(model_path, image_path)
+            annotation_path = self.annotation_dir_path / (image_path.stem + ".txt")
+            annotations = []
+            if self.model_type == ModelType.DETECT:
+                boxes = result.boxes.data.cpu().tolist()
+                for box in boxes:
+                    x1, y1, x2, y2, conf, class_id = box
+                    labels = list(self.labels_color.keys())
+                    if class_id >= len(labels):
+                        InfoBar.error(
+                            title='',
+                            content=self.tr("Labels error, please set enough label firstly"),
+                            orient=Qt.Orientation.Vertical,
+                            isClosable=True,
+                            position=InfoBarPosition.TOP_RIGHT,
+                            duration=-1,
+                            parent=window_manager.find_window("main_widget")
+                        )
+                        return
+                    pix = self.canvas.get_background_pix()
+                    w, h = pix.width(), pix.height()
+                    x_center = (x1 + x2) / 2
+                    y_center = (y1 + y2) / 2
+                    width = x2 - x1
+                    height = y2 - y1
+                    annotation = f"{class_id} {x_center / w:.4f} {y_center / h:.4f} {width / w:.4f} {height / h:.4f}\n"
+                    annotations.append(annotation)
+            else:
+                raise NotImplementedError("semi-automatic annotation only support detection task")
+            with open(annotation_path, "w", encoding="utf8") as f:
+                f.writelines(annotations)
+            self.label_property_widget.image_list_widget.set_current_image_labeled(True)
+            self.set_history_image_and_annotations(image_path)
 
     def on_draw_finished(self, shape_item: ShapeItem):
         label = ""

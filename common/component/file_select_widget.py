@@ -13,7 +13,7 @@ class FileSelectWidget(LineEdit):
     """ Scroll button """
     path_selected = Signal(str)
 
-    def __init__(self, is_dir=True):
+    def __init__(self, is_dir=True, file_filter=None):
         super().__init__()
         self.setMouseTracking(True)
         self._icon = CustomFluentIcon.FILL_DIRECTORY
@@ -23,6 +23,7 @@ class FileSelectWidget(LineEdit):
         self._text_rect = None
         self._is_hovered = False
         self._is_dir = is_dir
+        self._file_filter = file_filter
         self._cur_path = ""
         self.setReadOnly(True)
 
@@ -108,9 +109,8 @@ class FileSelectWidget(LineEdit):
             else:
                 self._cur_path = ""
         else:
-            filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir)
+            filename, _ = QFileDialog.getOpenFileName(self, self.tr("Select a file"), _dir, self._file_filter)
             self._cur_path = filename
-
         self._is_hovered = False
         # if not current_text:
         #     return
