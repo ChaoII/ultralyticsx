@@ -71,11 +71,11 @@ class Window(FluentWindow):
 
         # 创建托盘菜单
         tray_menu = SystemTrayMenu(parent=self)
-        action_show = Action(CustomFluentIcon.SHOW, "显示主窗口")
+        action_show = Action(CustomFluentIcon.SHOW, self.tr("show main window"))
         tray_menu.addAction(action_show)
         action_show.triggered.connect(self.showNormal)
 
-        action_exit = Action(CustomFluentIcon.EXIT, "退出")
+        action_exit = Action(CustomFluentIcon.EXIT, self.tr("exit"))
         action_exit.triggered.connect(self._on_tray_exit_clicked)
         tray_menu.addAction(action_exit)
 
@@ -144,8 +144,8 @@ class Window(FluentWindow):
     def _hide_to_tray(self):
         self.hide()
         self.tray_icon.showMessage(
-            "UltralyticsX 已隐藏",
-            "点击托盘图标以显示。",
+            self.tr("UltralyticsX hided"),
+            self.tr("click tray to show main window"),
             QSystemTrayIcon.MessageIcon.Information,
             1000
         )
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     locale = cfg.get(cfg.language).value
     fluentTranslator = FluentTranslator(locale)
     settingTranslator = QTranslator()
-    settingTranslator.load(locale, "settings", ".", "resource/i18n")
+    settingTranslator.load(locale, "ultralytics_ui", ".", "resource/i18n")
     app.installTranslator(fluentTranslator)
     app.installTranslator(settingTranslator)
     # create main window

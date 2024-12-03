@@ -4,15 +4,12 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtWidgets import QLabel, QPushButton
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFormLayout
-from qfluentwidgets import BodyLabel, FluentStyleSheet, PrimaryPushButton, \
-    LineEdit, TextEdit, InfoBar, InfoBarPosition, MessageBoxBase, SubtitleLabel
+from PySide6.QtWidgets import QHBoxLayout, QFormLayout
+from qfluentwidgets import BodyLabel, LineEdit, TextEdit, InfoBar, InfoBarPosition, MessageBoxBase, SubtitleLabel
 from sqlalchemy.orm import Query
 
-from common.database.db_helper import db_session
-from common.component.file_select_widget import FileSelectWidget
 from common.component.model_type_widget import ModelTypeGroupWidget, ModelType
+from common.database.db_helper import db_session
 from home.types import ProjectInfo
 from models.models import Project
 from settings import cfg
@@ -41,22 +38,18 @@ class NewProjectDialog(MessageBoxBase):
         self.le_name.setMaxLength(16)
         self.lbl_description = BodyLabel(text=self.tr("Project description:"))
         self.ted_description = TextEdit()
-        self.lbl_type = BodyLabel(text=self.tr("model type:"))
+        self.lbl_type = BodyLabel(text=self.tr("Model type:"))
         self.model_type = ModelTypeGroupWidget()
-        self.lbl_workspace_dir = BodyLabel(text=self.tr("workspace directory:"))
-        self.workdir_select = FileSelectWidget()
         self.fly_content = QFormLayout()
         self.fly_content.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.fly_content.addRow(self.lbl_name, self.le_name)
         self.fly_content.addRow(self.lbl_description, self.ted_description)
         self.fly_content.addRow(self.lbl_type, self.model_type)
-        self.fly_content.addRow(self.lbl_workspace_dir, self.workdir_select)
 
         self.viewLayout.addLayout(self.hly_title)
         self.viewLayout.addLayout(self.fly_content)
 
         self.project_info = ProjectInfo()
-        self.workdir_select.setText(cfg.get(cfg.workspace_folder))
         self.project_root_dir = Path(cfg.get(cfg.workspace_folder)) / "project"
         os.makedirs(self.project_root_dir, exist_ok=True)
         self._connect_signals_and_slots()
@@ -64,7 +57,6 @@ class NewProjectDialog(MessageBoxBase):
     def _connect_signals_and_slots(self):
         self.yesButton.clicked.connect(self._on_create_button_clicked)
         self.model_type.model_type_selected.connect(self._on_project_type_selected)
-        self.workdir_select.path_selected.connect(self._on_workdir_selected)
         self.ted_description.textChanged.connect(self._on_description_text_changed)
 
     @Slot(str)
@@ -83,10 +75,6 @@ class NewProjectDialog(MessageBoxBase):
             # 截断文本到最大长度
             self.ted_description.setPlainText(self.ted_description.toPlainText()[:100])
 
-    @Slot(str)
-    def _on_workdir_selected(self, workspace_idr):
-        self.project_info.workspace_dir = workspace_idr
-
     @Slot(ModelType)
     def _on_project_type_selected(self, project_type: ModelType):
         self.project_info.model_type = project_type
@@ -97,7 +85,7 @@ class NewProjectDialog(MessageBoxBase):
             if len(projects.all()) > 0:
                 InfoBar.error(
                     title='',
-                    content=self.tr("Project name is existing"),
+                    content=self.tr("Project name already exists"),
                     orient=Qt.Orientation.Vertical,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,

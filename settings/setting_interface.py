@@ -90,7 +90,7 @@ class SettingInterface(QWidget):
         self.minimize_to_tray_card = SwitchSettingCard(
             FIco.MINIMIZE,
             self.tr('Minimize to tray after closing'),
-            self.tr('PyQt-Fluent-Widgets will continue to run in the background'),
+            self.tr('Ultraly UI will continue to run in the background'),
             configItem=cfg.minimize_to_tray,
             parent=self.main_panel_group
         )

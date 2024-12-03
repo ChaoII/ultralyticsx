@@ -5,3 +5,4 @@ datasets
 *.pt
 *.exe
 .idea
+sources.list
