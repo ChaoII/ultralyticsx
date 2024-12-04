@@ -167,6 +167,17 @@ class ImageListWidget(SimpleCardWidget):
             return widget.get_image_labeled_info()
         return "", False
 
+    def get_all_image_labeled_count(self):
+        count = self.list_widget.count()
+        labeled_count = 0
+        for i in range(count):
+            item = self.list_widget.item(i)
+            widget = self.list_widget.itemWidget(item)
+            if isinstance(widget, ImageListItemWidget):
+                if widget.get_image_labeled_info()[1]:
+                    labeled_count += 1
+        return labeled_count, count
+
     def eventFilter(self, obj, e):
         if e.type() == QEvent.Type.MouseButtonPress:
             if obj in self.item_widgets:

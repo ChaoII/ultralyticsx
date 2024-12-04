@@ -2,10 +2,9 @@ import enum
 import os
 import shutil
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from random import randint
-
 import numpy as np
 from PIL import Image
 from PySide6.QtGui import QColor
@@ -104,6 +103,16 @@ class CustomColor(enum.Enum):
 
     def dark_color(self):
         return self.value[1]
+
+
+def format_time_delta(delta: timedelta) -> str:
+    days = delta.days
+    seconds = delta.seconds
+    # 将秒数转换为小时、分钟和秒
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    total_hours = days * 24 + seconds / 3600
+    return f"{total_hours:.2f}h"
 
 
 def format_datatime(data_time: datetime, fmt="%Y-%m-%d %H:%M:%S") -> str:

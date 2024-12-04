@@ -74,7 +74,7 @@ class AnnotationTask(Base):
     end_time = Column(DateTime)
     elapsed = Column(String)
     task_status = Column(Integer, default=0)
-    cur_num = Column(Integer, default=0)
+    labeled_num = Column(Integer, default=0)
     total = Column(Integer, default=0)
     image_dir = Column(String)
     annotation_dir = Column(String)

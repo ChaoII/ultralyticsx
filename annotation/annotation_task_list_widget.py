@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import Signal, Slot
@@ -13,7 +14,7 @@ from common.component.delete_ensure_widget import CustomFlyoutView
 from common.component.fill_tool_button import FillToolButton
 from common.component.tag_widget import TextTagWidget
 from common.component.custom_icon import CustomFluentIcon
-# from common.core import event_manager
+from common.core.event_manager import signal_bridge
 from common.core.content_widget_base import ContentWidgetBase
 from common.core.window_manager import window_manager
 from common.database.db_helper import db_session
@@ -129,7 +130,7 @@ class AnnotationTaskListWidget(ContentWidgetBase):
 
     def _connect_signals_and_slots(self):
         self.btn_create_task.clicked.connect(self._on_create_annotation_task_clicked)
-        # event_manager.signal_bridge.train_status_changed.connect(self._on_train_status_changed)
+        signal_bridge.annotation_status_changed.connect(self._on_train_status_changed)
 
     def update_widget(self):
         self.tb_task.clearContents()
@@ -138,7 +139,6 @@ class AnnotationTaskListWidget(ContentWidgetBase):
             self.tb_task.setRowCount(len(tasks))
             for row_index, task in enumerate(tasks):
                 self._task_id_to_row_index[task.task_id] = row_index
-
                 item0 = QTableWidgetItem(task.task_id)
                 item1 = QTableWidgetItem(task.task_name)
                 item2 = TextTagWidget(AnnotationStatus(task.task_status).name,
@@ -165,8 +165,7 @@ class AnnotationTaskListWidget(ContentWidgetBase):
                 self.tb_task.setItem(row_index, COLUMN_END_TIME, item5)
                 self.tb_task.setItem(row_index, COLUMN_ELAPSED, item6)
                 self.tb_task.setCellWidget(row_index, COLUMN_OPERATION, item7)
-
-                item3.set_value(task.cur_num)
+                item3.set_value(task.labeled_num)
                 item3.set_max_value(task.total)
                 if task.task_status == AnnotationStatus.Initialing.value:
                     item3.set_pause(True)
@@ -237,6 +236,7 @@ class AnnotationTaskListWidget(ContentWidgetBase):
             task_name=annotation_task_info.annotation_task_name,
             task_description=annotation_task_info.annotation_task_description,
             model_type=annotation_task_info.model_type.value,
+            start_time=datetime.now(),
             task_status=AnnotationStatus.Initialing.value,
             image_dir=annotation_task_info.image_dir,
             annotation_dir=annotation_task_info.annotation_dir,

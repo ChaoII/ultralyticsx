@@ -11,7 +11,7 @@ from loguru import logger
 from qfluentwidgets import FluentIcon, CaptionLabel, TableWidget, PrimaryPushButton, \
     PopupTeachingTip, TeachingTipTailPosition
 
-from common.core import event_manager
+from common.core.event_manager import signal_bridge
 from common.component.custom_icon import CustomFluentIcon
 from common.component.custom_process_bar import CustomProcessBar
 from common.database.db_helper import db_session
@@ -133,7 +133,7 @@ class TaskListWidget(ContentWidgetBase):
 
     def _connect_signals_and_slots(self):
         self.btn_create_task.clicked.connect(self._on_create_task)
-        event_manager.signal_bridge.train_status_changed.connect(self._on_train_status_changed)
+        signal_bridge.train_status_changed.connect(self._on_train_status_changed)
 
     def set_data(self, project_id: str):
         self._current_project_id = project_id

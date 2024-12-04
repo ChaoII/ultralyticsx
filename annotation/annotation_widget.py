@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Property, QPointF
@@ -14,6 +15,7 @@ from annotation.item_property_widget import RectItemPropertyWidget
 from annotation.labels_settings_widget import LabelSettingsWidget
 from annotation.semi_annotation_widget import SemiAutomaticAnnotationEnsureMessageBox, ModelPredict
 from annotation.shape import ShapeType, ShapeItem
+from annotation.types import AnnotationStatus
 from common.component.custom_icon import CustomFluentIcon
 from common.component.fill_tool_button import FillToolButton
 from common.component.model_type_widget import ModelType
@@ -21,7 +23,7 @@ from common.core.content_widget_base import ContentWidgetBase
 from common.core.window_manager import window_manager
 from common.database.annotation_task_helper import db_update_annotation_dir_path
 from common.database.db_helper import db_session
-from common.utils.utils import is_image, generate_random_color
+from common.utils.utils import is_image, generate_random_color, format_datatime, format_time_delta
 from home.task.task_thread.model_predict_thread import ModelPredictorThread
 from models.models import AnnotationTask
 
@@ -250,8 +252,8 @@ class AnnotationWidget(ContentWidgetBase):
         annotation_path = self.annotation_dir_path / (image_path.stem + ".txt")
         if not annotation_path.exists():
             return False
-        f = annotation_path.open("r", encoding="utf-8")
-        annotation_num = len(f.readlines())
+        with open(annotation_path, "r", encoding="utf-8") as f:
+            annotation_num = len(f.readlines())
         return shape_num == annotation_num
 
     def on_semi_automatic_annotation_clicked(self):
@@ -351,15 +353,15 @@ class AnnotationWidget(ContentWidgetBase):
         self.canvas.set_shape_item_selected(item_ids)
         self.update_item_property(item_ids)
 
-    def on_annotation_item_edit_clicked(self, uid: str):
+    def on_annotation_item_edit_clicked(self, item_id: str):
         cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color,
                                                      last_label="", parent=self)
         if cus_message_box.exec():
             label = cus_message_box.get_label()
             color = self.labels_color[label]
-            self.label_property_widget.annotation_widget.set_item_annotation(uid, label)
-            self.label_property_widget.annotation_widget.set_item_color(uid, color)
-            shape_item = self.canvas.get_shape_item(uid)
+            self.label_property_widget.annotation_widget.set_item_annotation(item_id, label)
+            self.label_property_widget.annotation_widget.set_item_color(item_id, color)
+            shape_item = self.canvas.get_shape_item(item_id)
             if shape_item:
                 shape_item.set_color(color)
                 shape_item.set_annotation(label)
@@ -541,12 +543,24 @@ class AnnotationWidget(ContentWidgetBase):
         with open(annotation_path, "w", encoding="utf8") as f:
             f.writelines(annotations)
         self.label_property_widget.image_list_widget.set_current_image_labeled(True)
-        InfoBar.success(
-            title='',
-            content=self.tr("Annotations save successfully!"),
-            orient=Qt.Orientation.Vertical,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=2000,
-            parent=window_manager.find_window("main_widget")
-        )
+        labeled_count, total_count = self.label_property_widget.image_list_widget.get_all_image_labeled_count()
+        with db_session() as session:
+            task: AnnotationTask = session.query(AnnotationTask).filter_by(task_id=self.annotation_task_id).first()
+            task.labeled_num = labeled_count
+            task.total = total_count
+            if labeled_count == total_count:
+                task.task_status = AnnotationStatus.AnnoFinished.value
+                task.end_time = datetime.now()
+                delta = task.end_time - task.start_time
+                task.elapsed = format_time_delta(delta)
+            else:
+                task.task_status = AnnotationStatus.Annotating.value
+            InfoBar.success(
+                title='',
+                content=self.tr("Annotations save successfully!"),
+                orient=Qt.Orientation.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=window_manager.find_window("main_widget")
+            )
