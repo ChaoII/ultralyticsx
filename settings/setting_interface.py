@@ -12,33 +12,24 @@ class SettingInterface(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.resize(1000, 800)
         self.setObjectName("setting_interface")
         self.scroll_area = CustomScrollWidget()
         self.vly_config_card = QVBoxLayout()
 
         # model
         self.model_config_group = SettingCardGroup(
-            self.tr("model settings"), self.scroll_area)
+            self.tr("Model settings"), self.scroll_area)
 
-        self.workspace_folder_card = PushSettingCard(
-            text=self.tr('choose folder'),
+        self.workspace_directory_card = PushSettingCard(
+            text=self.tr('Choose directory'),
             icon=FIco.FOLDER,
-            title=self.tr("workspace folder"),
-            content=cfg.get(cfg.workspace_folder),
-            parent=self.model_config_group
-        )
-
-        self.enable_tensorboard_card = SwitchSettingCard(
-            FIco.MARKET,
-            self.tr("enable tensorboard"),
-            self.tr("use tensorboard to monitor training step"),
-            configItem=cfg.enable_tensorboard,
+            title=self.tr("Workspace directory"),
+            content=cfg.get(cfg.workspace_directory),
             parent=self.model_config_group
         )
 
         # personalization
-        self.personal_group = SettingCardGroup(self.tr('personalization'), self.scroll_area)
+        self.personal_group = SettingCardGroup(self.tr('Personalization'), self.scroll_area)
         self.enable_mica_card = SwitchSettingCard(
             FIco.TRANSPARENT,
             self.tr("Use Mica effect"),
@@ -51,10 +42,10 @@ class SettingInterface(QWidget):
             cfg.themeMode,
             FIco.BRUSH,
             self.tr('Application theme'),
-            self.tr("Change the appearance of your application"),
+            self.tr("Change the appearance of the application"),
             texts=[
                 self.tr('Light'), self.tr('Dark'),
-                self.tr('Use system setting')
+                self.tr('Follow system setting')
             ],
             parent=self.personal_group
         )
@@ -62,7 +53,7 @@ class SettingInterface(QWidget):
             cfg.themeColor,
             FIco.PALETTE,
             self.tr('Theme color'),
-            self.tr('Change the theme color of you application'),
+            self.tr('Change the theme color of the application'),
             self.personal_group
         )
         self.zoom_card = OptionsSettingCard(
@@ -72,7 +63,7 @@ class SettingInterface(QWidget):
             self.tr("Change the size of widgets and fonts"),
             texts=[
                 "100%", "125%", "150%", "175%", "200%",
-                self.tr("Use system setting")
+                self.tr("Follow system setting")
             ],
             parent=self.personal_group
         )
@@ -80,8 +71,8 @@ class SettingInterface(QWidget):
             cfg.language,
             FIco.LANGUAGE,
             self.tr('Language'),
-            self.tr('Set your preferred language for UI'),
-            texts=['简体中文', '繁體中文', 'English', self.tr('Use system setting')],
+            self.tr('Change the preferred language of the application'),
+            texts=['简体中文', '繁體中文', 'English', self.tr('Follow system setting')],
             parent=self.personal_group
         )
 
@@ -95,8 +86,7 @@ class SettingInterface(QWidget):
             parent=self.main_panel_group
         )
 
-        self.model_config_group.addSettingCard(self.workspace_folder_card)
-        self.model_config_group.addSettingCard(self.enable_tensorboard_card)
+        self.model_config_group.addSettingCard(self.workspace_directory_card)
         self.personal_group.addSettingCard(self.enable_mica_card)
         self.personal_group.addSettingCard(self.theme_card)
         self.personal_group.addSettingCard(self.theme_color_card)
@@ -124,14 +114,14 @@ class SettingInterface(QWidget):
             parent=self.window()
         )
 
-    def _on_workspace_folder_card_clicked(self):
+    def _on_workspace_directory_card_clicked(self):
         """ workspace directory card clicked slot """
         directory = QFileDialog.getExistingDirectory(
             self, self.tr("Workspace directory"), "./")
-        if not directory or cfg.get(cfg.workspace_folder) == directory:
+        if not directory or cfg.get(cfg.workspace_directory) == directory:
             return
-        cfg.set(cfg.workspace_folder, directory)
-        self.workspace_folder_card.setContent(directory)
+        cfg.set(cfg.workspace_directory, directory)
+        self.workspace_directory_card.setContent(directory)
 
     def _connect_signal_to_slot(self):
         """ connect signal to slot """
@@ -139,5 +129,5 @@ class SettingInterface(QWidget):
         cfg.themeChanged.connect(lambda theme: setTheme(theme))
 
         # model
-        self.workspace_folder_card.clicked.connect(self._on_workspace_folder_card_clicked)
+        self.workspace_directory_card.clicked.connect(self._on_workspace_directory_card_clicked)
         self.theme_color_card.colorChanged.connect(setThemeColor)

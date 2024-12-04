@@ -33,10 +33,8 @@ class Config(QConfig):
     """ Config of application """
 
     # model
-    workspace_folder = ConfigItem(
+    workspace_directory = ConfigItem(
         "model", "workspace_dir", "./", FolderValidator())
-    enable_tensorboard = ConfigItem(
-        "model", "enable_tensorboard", False, BoolValidator())
 
     # main window
     enable_mica_effect = ConfigItem(
