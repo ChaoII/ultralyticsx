@@ -43,6 +43,7 @@ class CustomFluentIcon(FluentIconBase, Enum):
     RECOVER = "recover"
     RELAX = "relax"
     SEGMENT = "segment"
+    SemiAutomatic = "semi-automatic"
     SHOW = "show"
     UNFOLD = "unfold"
 

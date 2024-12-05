@@ -172,9 +172,8 @@ class TaskListWidget(ContentWidgetBase):
                 self.tb_task.setItem(row_index, COLUMN_END_TIME, item5)
                 self.tb_task.setItem(row_index, COLUMN_ELAPSED, item6)
                 self.tb_task.setCellWidget(row_index, COLUMN_OPERATION, item7)
-
-                item3.set_value(task.epoch)
                 item3.set_max_value(task.epochs)
+                item3.set_value(task.epoch)
                 if task.task_status == TrainTaskStatus.TRN_PAUSE.value:
                     item3.set_pause(True)
                 elif task.task_status == TrainTaskStatus.TRN_FAILED.value:

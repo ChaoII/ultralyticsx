@@ -23,8 +23,7 @@ from common.core.content_widget_base import ContentWidgetBase
 from common.core.window_manager import window_manager
 from common.database.annotation_task_helper import db_update_annotation_dir_path
 from common.database.db_helper import db_session
-from common.utils.utils import is_image, generate_random_color, format_datatime, format_time_delta
-from home.task.task_thread.model_predict_thread import ModelPredictorThread
+from common.utils.utils import is_image, generate_random_color, format_time_delta
 from models.models import AnnotationTask
 
 

@@ -131,7 +131,7 @@ class AnnotationCommandBar(CommandBar):
         self.action_align_vertical_distribution.triggered.connect(
             lambda: self.align_type_clicked.emit(AlignmentType.AlignVerticalDistribution))
 
-        self.action_semi_automatic_annotation = Action(CustomFluentIcon.ANNOTATION,
+        self.action_semi_automatic_annotation = Action(CustomFluentIcon.SemiAutomatic,
                                                        self.tr("Semi automatic annotation"))
         self.action_semi_automatic_annotation.triggered.connect(lambda: self.semi_automatic_annotation_clicked.emit())
 

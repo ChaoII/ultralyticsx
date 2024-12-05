@@ -130,7 +130,6 @@ class AnnotationTaskListWidget(ContentWidgetBase):
 
     def _connect_signals_and_slots(self):
         self.btn_create_task.clicked.connect(self._on_create_annotation_task_clicked)
-        signal_bridge.annotation_status_changed.connect(self._on_train_status_changed)
 
     def update_widget(self):
         self.tb_task.clearContents()
@@ -165,44 +164,14 @@ class AnnotationTaskListWidget(ContentWidgetBase):
                 self.tb_task.setItem(row_index, COLUMN_END_TIME, item5)
                 self.tb_task.setItem(row_index, COLUMN_ELAPSED, item6)
                 self.tb_task.setCellWidget(row_index, COLUMN_OPERATION, item7)
-                item3.set_value(task.labeled_num)
                 item3.set_max_value(task.total)
+                item3.set_value(task.labeled_num)
                 if task.task_status == AnnotationStatus.Initialing.value:
                     item3.set_pause(True)
                 elif task.task_status == AnnotationStatus.Annotating.value:
                     item3.set_error(True)
                 elif task.task_status == AnnotationStatus.AnnoFinished.value:
                     item3.resume()
-
-    @Slot(str, str, AnnotationStatus)
-    def _on_train_status_changed(self, task_id: str, epoch: int, epochs: int, start_time: str, end_time: str,
-                                 elapsed: str, task_status: AnnotationStatus):
-        row_index = self._task_id_to_row_index.get(task_id)
-        if row_index is None:
-            logger.warning(f"task_id: {task_id} not found in table")
-            return
-        item_task_status = self.tb_task.cellWidget(row_index, COLUMN_TASK_STATUS)
-        item_start_time = self.tb_task.item(row_index, COLUMN_START_TIME)
-        item_end_time = self.tb_task.item(row_index, COLUMN_END_TIME)
-        item_elapsed = self.tb_task.item(row_index, COLUMN_ELAPSED)
-        item_bar = self.tb_task.cellWidget(row_index, COLUMN_PROGRESS_BAR)
-
-        if isinstance(item_bar, CustomProcessBar) and isinstance(item_task_status, TextTagWidget):
-            if task_status == AnnotationStatus.Annotating:
-                item_bar.set_max_value(epochs)
-                item_bar.set_value(epoch)
-                item_task_status.set_text(AnnotationStatus.Annotating.name)
-                item_task_status.set_color(*AnnotationStatus.Annotating.color)
-                item_start_time.setText(start_time)
-                item_end_time.setText("")
-                item_elapsed.setText("")
-            elif task_status == AnnotationStatus.AnnoFinished:
-                item_task_status.set_text(AnnotationStatus.AnnoFinished.name)
-                item_task_status.set_color(*AnnotationStatus.AnnoFinished.color)
-                item_bar.resume()
-                item_end_time.setText(end_time)
-                item_elapsed.setText(elapsed)
-            self.update()
 
     @Slot(str)
     def _on_delete_task(self, task_id):

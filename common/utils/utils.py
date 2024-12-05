@@ -109,9 +109,8 @@ def format_time_delta(delta: timedelta) -> str:
     days = delta.days
     seconds = delta.seconds
     # 将秒数转换为小时、分钟和秒
-    hours, remainder = divmod(seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    total_hours = days * 24 + seconds / 3600
+    hours = seconds / 3600
+    total_hours = days * 24 + hours
     return f"{total_hours:.2f}h"
 
 
