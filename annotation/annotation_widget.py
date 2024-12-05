@@ -126,8 +126,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.canvas.draw_finished.connect(self.on_draw_finished)
         self.canvas.shape_item_selected_changed.connect(self.on_shape_item_selected_changed)
         self.canvas.shape_item_geometry_changed.connect(self.on_shape_item_geometry_changed)
-        self.canvas.delete_shape_item_clicked.connect(
-            lambda x: self.label_property_widget.annotation_widget.delete_annotation_item(x))
+        self.canvas.delete_shape_item_clicked.connect(self.on_canvas_item_deleted)
         self.canvas.width_changed.connect(self.on_canvas_width_changed)
 
         self.label_property_widget.label_widget.add_label_clicked.connect(self.on_add_label)
@@ -135,7 +134,7 @@ class AnnotationWidget(ContentWidgetBase):
         self.label_property_widget.label_widget.label_item_color_changed.connect(self.on_label_item_color_changed)
 
         self.label_property_widget.annotation_widget.delete_annotation_clicked.connect(
-            lambda x: self.canvas.delete_shape_item(x))
+            self.on_annotation_list_item_deleted)
         self.label_property_widget.annotation_widget.edit_annotation_clicked.connect(
             self.on_annotation_item_edit_clicked)
         self.label_property_widget.annotation_widget.annotation_item_selected_changed.connect(
@@ -163,8 +162,17 @@ class AnnotationWidget(ContentWidgetBase):
         else:
             self.cb_label.set_alignment_enabled(False)
 
+    def on_annotation_list_item_deleted(self, item_id: str):
+        self.canvas.delete_shape_item(item_id)
+        self.check_and_change_labeled_status()
+
+    def on_canvas_item_deleted(self, item_id):
+        self.label_property_widget.annotation_widget.delete_annotation_item(item_id)
+        self.check_and_change_labeled_status()
+
     def on_shape_item_geometry_changed(self, shape_data: list):
         self.update_item_property(shape_data)
+        self.label_property_widget.image_list_widget.set_current_image_labeled(False)
 
     def on_btn_item_clicked(self):
         self.item_property_widget.on_btn_collapse_clicked()
@@ -244,15 +252,19 @@ class AnnotationWidget(ContentWidgetBase):
         else:
             self.update_shape_status()
 
-    def is_saved_annotation(self) -> bool:
+    def check_and_change_labeled_status(self):
+        is_saved_annotation = False
         shape_num = len(self.canvas.get_shape_items()) - 1
         image_path = Path(self.label_property_widget.image_list_widget.get_current_image_labeled()[0])
         annotation_path = self.annotation_dir_path / (image_path.stem + ".txt")
-        if not annotation_path.exists():
-            return False
-        with open(annotation_path, "r", encoding="utf-8") as f:
-            annotation_num = len(f.readlines())
-        return shape_num == annotation_num
+        if annotation_path.exists():
+            with open(annotation_path, "r", encoding="utf-8") as f:
+                annotation_num = len(f.readlines())
+            is_saved_annotation = shape_num == annotation_num
+        if not is_saved_annotation:
+            self.label_property_widget.image_list_widget.set_current_image_labeled(False)
+        else:
+            self.label_property_widget.image_list_widget.set_current_image_labeled(True)
 
     def on_semi_automatic_annotation_clicked(self):
         cus_message_box = SemiAutomaticAnnotationEnsureMessageBox(parent=self)
@@ -333,10 +345,7 @@ class AnnotationWidget(ContentWidgetBase):
             shape_item.set_annotation(label)
             self.label_property_widget.annotation_widget.add_annotation(shape_item.get_id(), label, color)
         self.canvas.scene.clearSelection()
-        if not self.is_saved_annotation():
-            self.label_property_widget.image_list_widget.set_current_image_labeled(False)
-        else:
-            self.label_property_widget.image_list_widget.set_current_image_labeled(True)
+        self.check_and_change_labeled_status()
 
     def update_item_property(self, item_ids: list[str]):
         if len(item_ids) > 0:
@@ -410,7 +419,7 @@ class AnnotationWidget(ContentWidgetBase):
     def on_delete_image_clicked(self):
         w = Dialog(self.tr("Warning"),
                    self.tr("Completely delete local data? Clicking [Yes] will delete the local data, "
-                           "and clicking [No] will ignore the image"), self)
+                           "and clicking [No] will ignore the image temporarily"), self)
         w.yesButton.setText(self.tr("Yes"))
         w.cancelButton.setText(self.tr("No"))
         if w.exec():
@@ -422,20 +431,20 @@ class AnnotationWidget(ContentWidgetBase):
             self.label_property_widget.image_list_widget.delete_current_image_item()
 
     def on_pre_image_clicked(self):
-        _, labeled = self.label_property_widget.image_list_widget.get_current_image_labeled()
+        image_path, labeled = self.label_property_widget.image_list_widget.get_current_image_labeled()
         if not labeled:
             w = Dialog(self.tr("Warning"),
                        self.tr("Current annotation is not saved. Do you want to save it?"), self)
             w.yesButton.setText(self.tr("Save"))
             if w.exec():
                 self.save_current_annotation()
-                self.label_property_widget.image_list_widget.set_current_image_labeled(True)
             else:
+                self.set_history_image_and_annotations(Path(image_path))
                 return
         self.label_property_widget.image_list_widget.pre_item()
 
     def on_next_image_clicked(self):
-        _, labeled = self.label_property_widget.image_list_widget.get_current_image_labeled()
+        image_path, labeled = self.label_property_widget.image_list_widget.get_current_image_labeled()
         if not labeled:
             w = Dialog(self.tr("Warning"),
                        self.tr("Current annotation is not saved. Do you want to save it?"), self)
@@ -443,6 +452,7 @@ class AnnotationWidget(ContentWidgetBase):
             if w.exec():
                 self.save_current_annotation()
             else:
+                self.set_history_image_and_annotations(Path(image_path))
                 return
         self.label_property_widget.image_list_widget.next_item()
 

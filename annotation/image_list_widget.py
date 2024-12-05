@@ -191,4 +191,8 @@ class ImageListWidget(SimpleCardWidget):
                                    self.tr("Current annotation is not saved. Do you want to save it?"), self)
                         if w.exec():
                             self.save_annotation_clicked.emit()
+                        else:
+                            # 不保存就重新加载一下当前图片和已经保存过的标签
+                            self.image_item_changed.emit(widget.get_image_path())
+                            return True
         return super().eventFilter(obj, e)

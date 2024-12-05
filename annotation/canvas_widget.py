@@ -192,6 +192,7 @@ class InteractiveCanvas(QGraphicsView):
         shape_item.set_id(item_id)
         shape_item.prepareGeometryChange()
         self.shape_item_map.update({item_id: shape_item})
+        shape_item.shape_item_geometry_changed.connect(self.on_shape_item_geometry_changed)
         self.draw_finished.emit(shape_item)
 
     def update_background_color(self):
@@ -263,7 +264,6 @@ class InteractiveCanvas(QGraphicsView):
             shape_item.set_annotation(label)
             shape_item.set_color(color)
             shape_item.set_is_drawing_history(True)
-            shape_item.shape_item_geometry_changed.connect(self.on_shape_item_geometry_changed)
             self.scene.addItem(shape_item)
             self.send_draw_finished_signal(shape_item)
 
@@ -416,7 +416,6 @@ class InteractiveCanvas(QGraphicsView):
             new_item.set_annotation(label)
             new_item.set_color(color)
             new_item.set_is_drawing_history(True)
-            new_item.shape_item_geometry_changed.connect(self.on_shape_item_geometry_changed)
             self.scene.addItem(new_item)
             self.send_draw_finished_signal(new_item)
 
