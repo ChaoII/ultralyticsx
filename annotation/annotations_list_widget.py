@@ -61,7 +61,6 @@ class AnnotationListWidget(SimpleCardWidget):
         self.vly_content.addLayout(self.hly_lbl)
         self.vly_content.addWidget(self.list_widget)
         self.annotation_item_map = dict()
-        self.list_widget.itemClicked.connect(self.on_annotation_item_clicked)
         self.list_widget.itemSelectionChanged.connect(self.on_annotation_item_selected_changed)
 
     def on_annotation_item_selected_changed(self):
@@ -107,11 +106,6 @@ class AnnotationListWidget(SimpleCardWidget):
         if isinstance(annotation_item_widget, AnnotationListItemWidget):
             annotation_item_widget.set_text(annotation)
 
-    def on_annotation_item_clicked(self, item: QListWidgetItem):
-        annotation_item_widget = self.list_widget.itemWidget(item)
-        if isinstance(annotation_item_widget, AnnotationListItemWidget):
-            self.annotation_item_selected_changed.emit(annotation_item_widget.item_id)
-
     def delete_annotation_item(self, item_id: str):
         item = self.annotation_item_map.get(item_id, None)
         if item is None:
@@ -146,7 +140,8 @@ class AnnotationListWidget(SimpleCardWidget):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if drawing_status_manager.get_drawing_status() != DrawingStatus.Draw:
             if event.key() == Qt.Key.Key_Delete:
-                item = self.list_widget.currentItem()
-                widget = self.list_widget.itemWidget(item)
-                if isinstance(widget, AnnotationListItemWidget):
-                    self.delete_annotation_item(widget.item_id)
+                items = self.list_widget.selectedItems()
+                for item in items:
+                    widget = self.list_widget.itemWidget(item)
+                    if isinstance(widget, AnnotationListItemWidget):
+                        self.delete_annotation_item(widget.item_id)

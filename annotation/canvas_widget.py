@@ -188,7 +188,7 @@ class InteractiveCanvas(QGraphicsView):
         self.scene.blockSignals(False)
 
     def send_draw_finished_signal(self, shape_item: ShapeItem):
-        item_id = next(snowflake_generator)
+        item_id = str(next(snowflake_generator))
         shape_item.set_id(item_id)
         shape_item.prepareGeometryChange()
         self.shape_item_map.update({item_id: shape_item})

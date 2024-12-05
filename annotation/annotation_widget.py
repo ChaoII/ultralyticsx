@@ -143,8 +143,7 @@ class AnnotationWidget(ContentWidgetBase):
 
         self.label_property_widget.image_list_widget.image_item_changed.connect(self.on_image_item_changed)
         self.label_property_widget.image_list_widget.item_ending_status_changed.connect(self.on_move_ending_status)
-        self.label_property_widget.image_list_widget.save_annotation_clicked.connect(
-            lambda: self.save_current_annotation())
+        self.label_property_widget.image_list_widget.save_annotation_clicked.connect(self.save_current_annotation)
 
         self.item_property_widget.shape_changed.connect(self.on_shape_changed)
 
