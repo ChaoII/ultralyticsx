@@ -418,7 +418,7 @@ class AnnotationWidget(ContentWidgetBase):
 
     def on_delete_image_clicked(self):
         w = Dialog(self.tr("Warning"),
-                   self.tr("Completely delete local data? Clicking [Yes] will delete the local data, "
+                   self.tr("Are you sure to delete local data? Clicking [Yes] will delete the local data, "
                            "and clicking [No] will ignore the image temporarily"), self)
         w.yesButton.setText(self.tr("Yes"))
         w.cancelButton.setText(self.tr("No"))

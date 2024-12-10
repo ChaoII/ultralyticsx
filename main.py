@@ -39,7 +39,7 @@ class Window(FluentWindow):
 
         self.resize(1280, 800)
         self.setWindowIcon(QIcon('./resource/images/ux.png'))
-        self.setWindowTitle('UltralyticsX')
+        self.setWindowTitle('Ultraly UI')
         self.setObjectName("main_widget")
         # splash_screen = SplashScreen(self.windowIcon(), self)
         # splash_screen.setIconSize(QSize(102, 102))
@@ -57,8 +57,8 @@ class Window(FluentWindow):
         self.init_navigation()
 
         # set the minimum window width that allows the navigation panel to be expanded
-        # self.navigationInterface.setMinimumExpandWidth(900)
-        # self.navigationInterface.expand(useAni=False)
+        self.navigationInterface.setExpandWidth(200)
+        self.navigationInterface.expand(useAni=False)
         self.init_system_tray()  # 初始化系统托盘
         self._connect_signals_and_slots()
 
@@ -71,39 +71,30 @@ class Window(FluentWindow):
 
         # 创建托盘菜单
         tray_menu = SystemTrayMenu(parent=self)
-        action_show = Action(CustomFluentIcon.SHOW, self.tr("show main window"))
+        action_show = Action(CustomFluentIcon.SHOW, self.tr("Show main window"))
         tray_menu.addAction(action_show)
         action_show.triggered.connect(self.showNormal)
 
-        action_exit = Action(CustomFluentIcon.EXIT, self.tr("exit"))
+        action_exit = Action(CustomFluentIcon.EXIT, self.tr("Exit"))
         action_exit.triggered.connect(self._on_tray_exit_clicked)
         tray_menu.addAction(action_exit)
 
         # 设置托盘菜单
         self.tray_icon.setContextMenu(tray_menu)
         # 托盘提示信息
-        self.tray_icon.setToolTip("UltralyticsX")
+        self.tray_icon.setToolTip("Ultraly UI")
         # 显示托盘图标
         self.tray_icon.show()
-
-    def show_center(self):
-        desktop = QApplication.primaryScreen().availableGeometry()
-        cw = self.frameGeometry().width()  # 获取窗口当前宽度
-        ch = self.frameGeometry().height()  # 获取窗口当前高度
-        x = (desktop.width() - cw) // 2  # 使用整除以避免浮点数
-        y = (desktop.height() - ch) // 2
-        self.move(x, y)
-        self.show()
 
     def init_navigation(self):
         self.addSubInterface(self.home_interface, FIcon.HOME, self.tr('Home'))
         self.navigationInterface.addSeparator()
-        self.addSubInterface(self.dataset_interface, CustomFluentIcon.DATASET1, self.tr('dataset'))
-        self.addSubInterface(self.annotation_interface, CustomFluentIcon.ANNOTATION, self.tr('annotation'))
-        self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('model train'))
-        self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('model valid'))
-        self.addSubInterface(self.export_interface, FIcon.UP, self.tr('model export'))
-        self.addSubInterface(self.test_interface, FIcon.TILES, self.tr('model test'))
+        self.addSubInterface(self.dataset_interface, CustomFluentIcon.DATASET1, self.tr('Dataset'))
+        self.addSubInterface(self.annotation_interface, CustomFluentIcon.ANNOTATION, self.tr('Data annotation'))
+        self.addSubInterface(self.train_interface, FIcon.IOT, self.tr('Model train'))
+        self.addSubInterface(self.val_interface, FIcon.BOOK_SHELF, self.tr('Model valid'))
+        self.addSubInterface(self.export_interface, FIcon.UP, self.tr('Model export'))
+        self.addSubInterface(self.test_interface, FIcon.TILES, self.tr('Model test'))
 
         self.navigationInterface.addSeparator()
 
@@ -115,7 +106,7 @@ class Window(FluentWindow):
             position=NavigationItemPosition.BOTTOM,
         )
 
-        self.addSubInterface(self.settingInterface, FIcon.SETTING, 'Settings', NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settingInterface, FIcon.SETTING, self.tr('Settings'), NavigationItemPosition.BOTTOM)
 
         # add badge to navigation item
         item = self.navigationInterface.widget(self.export_interface.objectName())
@@ -144,8 +135,8 @@ class Window(FluentWindow):
     def _hide_to_tray(self):
         self.hide()
         self.tray_icon.showMessage(
-            self.tr("UltralyticsX hided"),
-            self.tr("click tray to show main window"),
+            self.tr("Ultraly UI hided into tray"),
+            self.tr("Click tray to show main window"),
             QSystemTrayIcon.MessageIcon.Information,
             1000
         )
@@ -171,7 +162,7 @@ class Window(FluentWindow):
                 self._hide_to_tray()
 
     @Slot(int)
-    def _on_widget_changed(self, index: int):
+    def _on_widget_changed(self, _):
         item = self.stackedWidget.currentWidget()
         if isinstance(item, InterfaceBase):
             item.update_widget()
@@ -194,6 +185,7 @@ if __name__ == '__main__':
     app.installTranslator(settingTranslator)
     # create main window
     w = Window()
+    # 设置云母特效
     w.setMicaEffectEnabled(cfg.get(cfg.enable_mica_effect))
     show_center(w)
     app.exec()

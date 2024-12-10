@@ -6,11 +6,11 @@
         "minimize_to_tray": true,
         "remember_quit_status": true
     },
+    "QFluentWidgets": {
+        "ThemeColor": "#ff71aa2f",
+        "ThemeMode": "Dark"
+    },
     "model": {
         "workspace_dir": "C:/Users/84945/Desktop/ultralytics_workspace"
-    },
-    "QFluentWidgets": {
-        "ThemeColor": "#ff009faa",
-        "ThemeMode": "Dark"
     }
 }
