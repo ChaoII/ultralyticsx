@@ -10,8 +10,8 @@ from ultralytics.utils.checks import check_requirements
 from ultralytics.utils.downloads import GITHUB_ASSETS_STEMS
 
 
-def inference():
-    """Runs real-time object detection on video input using Ultralytics YOLOv8 in a Streamlit application."""
+def inference(model=None):
+    """Performs real-time object detection on video input using YOLO in a Streamlit web application."""
     check_requirements("streamlit>=1.29.0")  # scope imports for faster ultralytics package load speeds
     import streamlit as st
 
@@ -23,13 +23,13 @@ def inference():
     # Main title of streamlit application
     main_title_cfg = """<div><h1 style="color:#FF64DA; text-align:center; font-size:40px; 
                              font-family: 'Archivo', sans-serif; margin-top:-50px;margin-bottom:20px;">
-                    Ultralytics YOLOv8 Streamlit Application
+                    Ultralytics YOLO Streamlit Application
                     </h1></div>"""
 
     # Subtitle of streamlit application
     sub_title_cfg = """<div><h4 style="color:#042AFF; text-align:center; 
                     font-family: 'Archivo', sans-serif; margin-top:-15px; margin-bottom:50px;">
-                    Experience real-time object detection on your webcam with the power of Ultralytics YOLOv8! 🚀</h4>
+                    Experience real-time object detection on your webcam with the power of Ultralytics YOLO! 🚀</h4>
                     </div>"""
 
     # Set html page configuration
@@ -67,7 +67,10 @@ def inference():
         vid_file_name = 0
 
     # Add dropdown menu for model selection
-    available_models = (x.replace("yolo", "YOLO") for x in GITHUB_ASSETS_STEMS if x.startswith("yolov8"))
+    available_models = [x.replace("yolo", "YOLO") for x in GITHUB_ASSETS_STEMS if x.startswith("yolo11")]
+    if model:
+        available_models.insert(0, model.split(".pt")[0])  # insert model without suffix as *.pt is added later
+
     selected_model = st.sidebar.selectbox("Model", available_models)
     with st.spinner("Model is downloading..."):
         model = YOLO(f"{selected_model.lower()}.pt")  # Load the YOLO model
@@ -105,7 +108,7 @@ def inference():
                 st.warning("Failed to read frame from webcam. Please make sure the webcam is connected properly.")
                 break
 
-            prev_time = time.time()
+            prev_time = time.time()  # Store initial time for FPS calculation
 
             # Store model predictions
             if enable_trk == "Yes":
@@ -117,7 +120,6 @@ def inference():
             # Calculate model FPS
             curr_time = time.time()
             fps = 1 / (curr_time - prev_time)
-            prev_time = curr_time
 
             # display frame
             org_frame.image(frame, channels="BGR")

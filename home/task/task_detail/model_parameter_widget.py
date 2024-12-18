@@ -499,10 +499,6 @@ class ModelParameterWidget(CollapsibleWidgetItem):
         self.spb_kobj.setValue(1.0)
         self.spb_kobj.setFixedWidth(300)
 
-        self.spb_label_smoothing = CompactDoubleSpinBox()
-        self.spb_label_smoothing.setValue(0.0)
-        self.spb_label_smoothing.setFixedWidth(300)
-
         self.spb_nbs = CompactSpinBox()
         self.spb_nbs.setValue(64)
         self.spb_nbs.setFixedWidth(300)
@@ -530,8 +526,6 @@ class ModelParameterWidget(CollapsibleWidgetItem):
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("dfl: "), self), self.spb_dfl)
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("pose: "), self), self.spb_pose)
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("kobj: "), self), self.spb_kobj)
-        self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("label_smoothing: "), self),
-                                         self.spb_label_smoothing)
         self.fly_hyperparameters2.addRow(FixWidthBodyLabel(self.tr("nbs: "), self), self.spb_nbs)
 
         self.hly_hyperparameters = QHBoxLayout()
@@ -760,7 +754,6 @@ class ModelParameterWidget(CollapsibleWidgetItem):
             dfl=self.spb_dfl.value(),
             pose=self.spb_pose.value(),
             kobj=self.spb_kobj.value(),
-            label_smoothing=self.spb_label_smoothing.value(),
             nbs=self.spb_nbs.value(),
 
             hsv_h=self.spb_hsv_h.value(),
@@ -870,7 +863,6 @@ class ModelParameterWidget(CollapsibleWidgetItem):
             self.spb_dfl.setValue(parameter["dfl"])
             self.spb_pose.setValue(parameter["pose"])
             self.spb_kobj.setValue(parameter["kobj"])
-            self.spb_label_smoothing.setValue(parameter["label_smoothing"])
             self.spb_nbs.setValue(parameter["nbs"])
 
             self.spb_hsv_h.setValue(parameter["hsv_h"])

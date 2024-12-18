@@ -1,56 +1,11 @@
 from enum import Enum
-from functools import singledispatch, update_wrapper
 
 from PySide6.QtCore import Qt, Signal, QModelIndex, Property, QSize, QRectF
-from PySide6.QtGui import QPainter, QColor
-from PySide6.QtWidgets import (QStyleOptionViewItem, QStyle, QListWidget, QListWidgetItem, QStyledItemDelegate)
+from PySide6.QtGui import QPainter, QColor, QIntValidator
+from PySide6.QtWidgets import (QStyleOptionViewItem, QStyle, QListWidget, QListWidgetItem, QStyledItemDelegate,
+                               QSizePolicy)
 from qfluentwidgets import FluentIcon, drawIcon, isDarkTheme, FluentStyleSheet, ToolButton, ToolTipFilter, \
-    ToolTipPosition, SmoothScrollBar, themeColor
-
-
-class singledispatchmethod:
-    """Single-dispatch generic method descriptor.
-
-    Supports wrapping existing descriptors and handles non-descriptor
-    callables as instance methods.
-    """
-
-    def __init__(self, func):
-        if not callable(func) and not hasattr(func, "__get__"):
-            raise TypeError(f"{func!r} is not callable or a descriptor")
-
-        self.dispatcher = singledispatch(func)
-        self.func = func
-
-    def register(self, cls, method=None):
-        """generic_method.register(cls, func) -> func
-
-        Registers a new implementation for the given *cls* on a *generic_method*.
-        """
-        return self.dispatcher.register(cls, func=method)
-
-    def __get__(self, obj, cls=None):
-        def _method(*args, **kwargs):
-            if args:
-                method = self.dispatcher.dispatch(args[0].__class__)
-            else:
-                method = self.func
-                for v in kwargs.values():
-                    if v.__class__ in self.dispatcher.registry:
-                        method = self.dispatcher.dispatch(v.__class__)
-                        if method is not self.func:
-                            break
-
-            return method.__get__(obj, cls)(*args, **kwargs)
-
-        _method.__isabstractmethod__ = self.__isabstractmethod__
-        _method.register = self.register
-        update_wrapper(_method, self.func)
-        return _method
-
-    @property
-    def __isabstractmethod__(self):
-        return getattr(self.func, '__isabstractmethod__', False)
+    ToolTipPosition, SmoothScrollBar, themeColor, LineEdit, ComboBox, BodyLabel
 
 
 class PipsScrollButtonDisplayMode(Enum):
@@ -144,7 +99,6 @@ class PipsPager(QListWidget):
 
     currentIndexChanged = Signal(int)
 
-    @singledispatchmethod
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._postInit()
@@ -152,6 +106,7 @@ class PipsPager(QListWidget):
     def _postInit(self):
         self._visibleNumber = 5
         self.isHover = False
+        self.visible_items = []
 
         self.delegate = PipsDelegate(self)
         self.scrollBar = SmoothScrollBar(Qt.Orientation.Horizontal, self)
@@ -172,10 +127,22 @@ class PipsPager(QListWidget):
         FluentStyleSheet.PIPS_PAGER.apply(self)
 
         self.setFlow(QListWidget.Flow.LeftToRight)
-        self.setViewportMargins(30, 0, 30, 0)
+
         self.preButton = ScrollButton(FluentIcon.CARE_LEFT_SOLID, self)
         self.nextButton = ScrollButton(FluentIcon.CARE_RIGHT_SOLID, self)
-
+        self.cmb_per_page_num = ComboBox(self)
+        self.cmb_per_page_num.addItems(
+            [f"5/{self.tr('page')}", f"10/{self.tr('page')}", f"15/{self.tr('page')}", f"20/{self.tr('page')}"])
+        self.cmb_per_page_num.setFixedHeight(30)
+        self.lbl_jump_to = BodyLabel(self.tr("Jump to"), self)
+        self.lbl_jump_to.setFixedHeight(30)
+        self.lbl_jump_to.setFixedWidth(60)
+        self.lbl_jump_to.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.le_page_num = LineEdit(self)
+        self.le_page_num.setFixedHeight(30)
+        self.le_page_num.setFixedWidth(60)
+        self.setViewportMargins(30, 0, 30 + self.cmb_per_page_num.width() + self.lbl_jump_to.width() +
+                                self.le_page_num.width(), 0)
         self.setFixedHeight(30)
 
         self.preButton.installEventFilter(ToolTipFilter(self.preButton, 1000, ToolTipPosition.LEFT))
@@ -186,11 +153,19 @@ class PipsPager(QListWidget):
         self.preButton.setToolTip(self.tr('Previous Page'))
         self.nextButton.setToolTip(self.tr('Next Page'))
 
+        self._updateVisibleItems()
         # connect signal to slot
         self.preButton.clicked.connect(self.scrollPrevious)
         self.nextButton.clicked.connect(self.scrollNext)
         self.itemPressed.connect(self._setPressedItem)
         self.itemEntered.connect(self._setHoveredItem)
+
+    def _updateVisibleItems(self):
+        start_index = max(0, self.currentIndex() - self.visibleNumber // 2)
+        end_index = min(self.count(), start_index + self.visibleNumber)
+
+        self.visible_items = [self.item(i) for i in range(start_index, end_index)]
+        print(f"Visible items: {[item.text() for item in self.visible_items]}")
 
     def _setPressedItem(self, item: QListWidgetItem):
         self.delegate.setPressedRow(self.row(item))
@@ -203,12 +178,13 @@ class PipsPager(QListWidget):
         """ set the number of page """
         self.clear()
         self.addItems([''] * n)
-
+        self.le_page_num.setValidator(QIntValidator(1, n, self))
         for i in range(n):
             item = self.item(i)
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item.setText(str(i + 1))
             item.setData(Qt.ItemDataRole.UserRole, i + 1)
             item.setSizeHint(QSize(30, 30))
-
         self.setCurrentIndex(0)
         self.adjustSize()
 
@@ -244,6 +220,7 @@ class PipsPager(QListWidget):
         item.setSelected(False)
 
         self.currentIndexChanged.emit(index)
+        # self._updateVisibleItems()
 
     def adjustSize(self) -> None:
         m = self.viewportMargins()
@@ -254,9 +231,12 @@ class PipsPager(QListWidget):
         """ set current index """
         if not 0 <= index < self.count():
             return
-
         item = self.item(index)
         self.scrollToItem(item)
+        for item in self.visible_items:
+            print(item.text())
+        print("*" * 20)
+
         super().setCurrentItem(item)
         self._updateScrollButtonVisibility()
 
@@ -316,8 +296,14 @@ class PipsPager(QListWidget):
     def resizeEvent(self, e):
         w, h = self.width(), self.height()
         bw, bh = self.preButton.width(), self.preButton.height()
+        cmb_w, cmb_h = self.cmb_per_page_num.width(), self.cmb_per_page_num.height()
+        lbl_w, lbl_h = self.lbl_jump_to.width(), self.lbl_jump_to.height()
+        le_w, le_h = self.le_page_num.width(), self.le_page_num.height()
         self.preButton.move(0, int(h / 2 - bh / 2))
-        self.nextButton.move(w - bw, int(h / 2 - bh / 2))
+        self.nextButton.move(w - le_w - lbl_w - cmb_w - bw - 4, int(h / 2 - bh / 2))
+        self.cmb_per_page_num.move(w - le_w - lbl_w - cmb_w - 2, int(h / 2 - cmb_h / 2))
+        self.lbl_jump_to.move(w - le_w - lbl_w, int(h / 2 - lbl_h / 2))
+        self.le_page_num.move(w - le_w, int(h / 2 - le_h / 2))
 
     visibleNumber = Property(int, getVisibleNumber, setVisibleNumber)
     pageNumber = Property(int, getPageNumber, setPageNumber)
