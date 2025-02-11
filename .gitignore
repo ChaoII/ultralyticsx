@@ -7,4 +7,6 @@ datasets
 sources.list
 slim.onnx
 yolov8n.pt
+db.sqlite3
+settings/config.json
 
