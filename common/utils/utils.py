@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 from loguru import logger
 from .snowflake import SnowflakeGenerator
 
+
 snowflake_generator = SnowflakeGenerator(instance=0)
 
 

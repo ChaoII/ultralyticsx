@@ -19,7 +19,6 @@ class SettingInterface(QWidget):
         # model
         self.model_config_group = SettingCardGroup(
             self.tr("Model settings"), self.scroll_area)
-
         self.workspace_dir_card = PushSettingCard(
             text=self.tr('Choose directory'),
             icon=FIco.FOLDER,
@@ -86,7 +85,9 @@ class SettingInterface(QWidget):
             parent=self.main_panel_group
         )
 
+
         self.model_config_group.addSettingCard(self.workspace_dir_card)
+
         self.personal_group.addSettingCard(self.enable_mica_card)
         self.personal_group.addSettingCard(self.theme_card)
         self.personal_group.addSettingCard(self.theme_color_card)
@@ -121,7 +122,9 @@ class SettingInterface(QWidget):
         if not directory or cfg.get(cfg.workspace_directory) == directory:
             return
         cfg.set(cfg.workspace_directory, directory)
+
         self.workspace_dir_card.setContent(directory)
+
 
     def _connect_signal_to_slot(self):
         """ connect signal to slot """

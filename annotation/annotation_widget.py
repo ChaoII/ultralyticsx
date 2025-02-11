@@ -321,6 +321,7 @@ class AnnotationWidget(ContentWidgetBase):
             cus_message_box = AnnotationEnsureMessageBox(labels_color=self.labels_color,
                                                         last_label=self.last_selected_label, parent=self)
             # 模态框点击确认
+
             if cus_message_box.exec():
                 self.last_selected_label = label = cus_message_box.get_label()
                 if not label:
@@ -339,7 +340,6 @@ class AnnotationWidget(ContentWidgetBase):
             else:
                 self.canvas.scene.removeItem(shape_item)
                 return
-
         else:
             label = shape_item.get_annotation()
         if label:
@@ -479,7 +479,8 @@ class AnnotationWidget(ContentWidgetBase):
         if not image_path.exists():
             InfoBar.error(
                 title='',
-                content=self.tr("Image path is not existed！"),
+                content=self.tr("Image path is not existed"),
+
                 orient=Qt.Orientation.Vertical,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,

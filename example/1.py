@@ -1,3 +1,4 @@
+
 import onnx
 import onnxruntime as ort
 print(ort.__version__)
@@ -12,3 +13,4 @@ ort_sess = ort.InferenceSession(r'C:\Users\AC\CLionProjects\wrzs_hys\build\ttt.o
 #     print('The model is invalid: %s' % e)
 #
 # print(onnx.helper.printable_graph(model.graph))
+

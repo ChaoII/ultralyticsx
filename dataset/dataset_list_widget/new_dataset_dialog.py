@@ -71,7 +71,6 @@ class NewDatasetDialog(FramelessDialog):
         self.vBoxLayout.addLayout(self.hly_btn)
         self.vBoxLayout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)
         self.dataset_info = DatasetInfo()
-
         self.dataset_root_dir = Path(cfg.get(cfg.workspace_dir)) / "dataset"
         os.makedirs(self.dataset_root_dir, exist_ok=True)
         self._initWidget()
