@@ -1,0 +1,8 @@
+runs
+.idea
+__pycache__
+datasets
+*.pt
+*.exe
+sources.list
+slim.onnx
