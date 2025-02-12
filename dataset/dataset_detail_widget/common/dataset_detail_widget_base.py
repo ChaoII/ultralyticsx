@@ -5,8 +5,10 @@ import pandas as pd
 import yaml
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout
+from qfluentwidgets import InfoBar, InfoBarPosition
 
 from common.database.db_helper import db_session
+from common.utils.raise_info_bar import raise_error
 from models.models import Dataset
 from .dataset_draw_widget_base import DatasetDrawWidgetBase
 from .label_table_Widget import SplitLabelInfo, DatasetLabelsInfoWidget
@@ -40,7 +42,7 @@ class DatasetDetailWidgetBase(QWidget):
     def set_draw_widget(self):
         raise NotImplementedError
 
-    def set_dataset_info(self, dataset_info: DatasetInfo):
+    def set_dataset_info(self, dataset_info: DatasetInfo) -> bool:
         self._dataset_info = dataset_info
         with db_session() as session:
             dataset = session.query(Dataset).filter_by(dataset_id=dataset_info.dataset_id).first()
@@ -50,7 +52,7 @@ class DatasetDetailWidgetBase(QWidget):
             dataset_df = load_split_dataset(Path(self._dataset_info.dataset_dir))
             self._load_dataset(dataset_df)
         else:
-            self.split_dataset(self._split_rates)
+            return self.split_dataset(self._split_rates)
 
     def get_dataset_split(self):
         return self._total_dataset, self._split_rates
@@ -115,7 +117,11 @@ class DatasetDetailWidgetBase(QWidget):
         self._split_rates = split_rates
         dataset_df = split_dataset(Path(self._dataset_info.dataset_dir), self._split_rates,
                                    self._dataset_info.model_type)
+        if not dataset_df:
+            raise_error(self.tr("Dataset import error!"))
+            return False
         with db_session() as session:
             dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()
             dataset.dataset_total = dataset_df.shape[0]
         self._load_dataset(dataset_df)
+        return True

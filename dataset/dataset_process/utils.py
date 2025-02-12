@@ -7,7 +7,7 @@ import pandas as pd
 import yaml
 
 
-def coco_dataset_split(dataset_dir: Path | str, split_rates: list):
+def coco_dataset_split(dataset_dir: Path | str, split_rates: list) -> (pd.DataFrame | None, str | None):
     if isinstance(dataset_dir, str):
         dataset_dir = Path(dataset_dir)
     # ./scr/images/xxx.jpg
@@ -20,6 +20,9 @@ def coco_dataset_split(dataset_dir: Path | str, split_rates: list):
     train_num = round(dataset_num * split_rates[0] / 100)
     val_num = round(dataset_num * split_rates[1] / 100)
     test_num = dataset_num - train_num - val_num
+    if train_num == 0 or val_num == 0:
+        return None, None
+
     dataset_index = list(range(dataset_num))
     random.shuffle(dataset_index)
 

@@ -335,13 +335,13 @@ class ModelTrainThread(QThread):
 
     def run(self):
         if self.trainer:
-            try:
+            # try:
                 self.trainer.train()
-            except Exception as e:
-                self.model_train_failed.emit(str(e))
-                signal_bridge.train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
-                                                        TrainTaskStatus.TRN_FAILED.value)
-                db_update_task_failed(self._task_info.task_id)
+            # except Exception as e:
+            #     self.model_train_failed.emit(str(e))
+            #     signal_bridge.train_status_changed.emit(self._task_info.task_id, None, None, None, None, None,
+            #                                             TrainTaskStatus.TRN_FAILED.value)
+            #     db_update_task_failed(self._task_info.task_id)
 
     @Slot()
     def stop_train(self):

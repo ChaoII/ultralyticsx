@@ -352,7 +352,6 @@ class ModelTrainWidget(CollapsibleWidgetItem):
             self.ted_train_log.append(log_error(error_info))
             self._enable_btn_to_train_status()
             self._task_info.task_status = TrainTaskStatus.TRN_FAILED
-
             InfoBar.error(
                 title='',
                 content=self.tr("Model train failed"),

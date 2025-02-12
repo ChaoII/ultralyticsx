@@ -50,7 +50,7 @@ class NewProjectDialog(MessageBoxBase):
         self.viewLayout.addLayout(self.fly_content)
 
         self.project_info = ProjectInfo()
-        self.project_root_dir = Path(cfg.get(cfg.workspace_folder)) / "project"
+        self.project_root_dir = Path(cfg.get(cfg.workspace_dir)) / "project"
         os.makedirs(self.project_root_dir, exist_ok=True)
         self._connect_signals_and_slots()
 

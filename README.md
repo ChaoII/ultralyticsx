@@ -40,6 +40,11 @@ class_id,x_center,y_center,width,height,x1,y1,v1,x2,y2,v2,...x17,y17,v17
 ```
 
 
+##### 打包
+```bash
+python -m nuitka --standalone --remove-output --enable-plugin=pyside6 main.py
+```
+
 ##### 路线图
 - [x] 增加标注框的复制粘贴功能
 - [x] 增加标注框的对齐功能

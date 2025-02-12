@@ -21,6 +21,8 @@ from dataset import DatasetWidget
 from home import HomeWidget
 from settings import SettingInterface, cfg
 
+from resources import resources
+
 
 class Widget(QFrame):
     def __init__(self, text: str, parent=None):
@@ -38,7 +40,7 @@ class Window(FluentWindow):
         super().__init__()
 
         self.resize(1280, 800)
-        self.setWindowIcon(QIcon('./resource/images/ux.png'))
+        self.setWindowIcon(QIcon(':/images/ux.png'))
         self.setWindowTitle('Ultraly UI')
         self.setObjectName("main_widget")
         # splash_screen = SplashScreen(self.windowIcon(), self)
@@ -180,7 +182,7 @@ if __name__ == '__main__':
     locale = cfg.get(cfg.language).value
     fluentTranslator = FluentTranslator(locale)
     settingTranslator = QTranslator()
-    settingTranslator.load(locale, "ultralytics_ui", ".", "resource/i18n")
+    settingTranslator.load(locale, "ultralytics_ui", ".", ":/i18n")
     app.installTranslator(fluentTranslator)
     app.installTranslator(settingTranslator)
     # create main window

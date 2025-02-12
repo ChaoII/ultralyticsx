@@ -5,7 +5,8 @@ from dataset.dataset_process.utils import save_coco_detect_and_segment_yaml, coc
 
 def detection_dataset_split(dataset_dir: Path | str, split_rates: list):
     all_df, dst_dir = coco_dataset_split(dataset_dir, split_rates)
-    save_coco_detect_and_segment_yaml(dataset_dir, dst_dir)
+    if dst_dir is not None:
+        save_coco_detect_and_segment_yaml(dataset_dir, dst_dir)
     return all_df
 
 

@@ -4,7 +4,7 @@ import shutil
 from PySide6.QtCore import Slot, Signal, Qt, QEasingCurve
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QFormLayout)
 from qfluentwidgets import BodyLabel, PrimaryPushButton, FluentIcon, \
-    FlowLayout, ComboBox
+    FlowLayout, ComboBox, InfoBar, InfoBarPosition
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import Query
 
@@ -155,7 +155,18 @@ class ProjectListWidget(ContentWidgetBase):
         with db_session(auto_commit_exit=True) as session:
             record: Project = session.query(Project).filter_by(project_id=project_id).first()
             session.delete(record)
-        shutil.rmtree(record.project_dir)
+        try:
+            shutil.rmtree(record.project_dir)
+        except OSError as e:
+            InfoBar.warning(
+                title='',
+                content=self.tr("Delete project directory failed! will skip"),
+                orient=Qt.Orientation.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=-1,
+                parent=window_manager.find_window("main_widget")
+            )
         self.update_widget()
 
     @Slot(ProjectInfo)

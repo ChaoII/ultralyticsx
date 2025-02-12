@@ -211,7 +211,7 @@
         <location filename="../../annotation/annotation_widget.py" line="426"/>
         <location filename="../../annotation/annotation_widget.py" line="442"/>
         <location filename="../../annotation/annotation_widget.py" line="455"/>
-        <location filename="../../annotation/annotation_widget.py" line="528"/>
+        <location filename="../../annotation/annotation_widget.py" line="529"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
@@ -231,7 +231,7 @@
         <translation>标签错误，请首先设置足够的标签</translation>
     </message>
     <message>
-        <location filename="../../annotation/annotation_widget.py" line="329"/>
+        <location filename="../../annotation/annotation_widget.py" line="330"/>
         <source>Please select or input a label</source>
         <translation>请选择或输入一个标签</translation>
     </message>
@@ -242,13 +242,13 @@
     </message>
     <message>
         <location filename="../../annotation/annotation_widget.py" line="429"/>
-        <location filename="../../annotation/annotation_widget.py" line="530"/>
+        <location filename="../../annotation/annotation_widget.py" line="531"/>
         <source>Yes</source>
         <translation>是</translation>
     </message>
     <message>
         <location filename="../../annotation/annotation_widget.py" line="430"/>
-        <location filename="../../annotation/annotation_widget.py" line="531"/>
+        <location filename="../../annotation/annotation_widget.py" line="532"/>
         <source>No</source>
         <translation>否</translation>
     </message>
@@ -266,16 +266,16 @@
     </message>
     <message>
         <location filename="../../annotation/annotation_widget.py" line="482"/>
-        <source>Image path is not existed！</source>
-        <translation>图像路径不存在！</translation>
+        <source>Image path is not existed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../annotation/annotation_widget.py" line="529"/>
+        <location filename="../../annotation/annotation_widget.py" line="530"/>
         <source>Annotation directory is not existed, Create it?</source>
         <translation>标注目录不存在，是否创建？</translation>
     </message>
     <message>
-        <location filename="../../annotation/annotation_widget.py" line="574"/>
+        <location filename="../../annotation/annotation_widget.py" line="575"/>
         <source>Annotations save successfully!</source>
         <translation>标注保存成功！</translation>
     </message>
@@ -342,6 +342,14 @@
         <location filename="../../common/component/close_message_box.py" line="21"/>
         <source>Minimize to tray</source>
         <translation>最小化至托盘</translation>
+    </message>
+</context>
+<context>
+    <name>DatasetDetailWidgetBase</name>
+    <message>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_detail_widget_base.py" line="121"/>
+        <source>Dataset import error!</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -712,8 +720,8 @@
     </message>
     <message>
         <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="87"/>
-        <source>Dataset format error, please check your dataset</source>
-        <translation>数据集格式错误，请检测你的数据集</translation>
+        <source>Dataset format error, please check your dataset!</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="99"/>
@@ -1309,7 +1317,7 @@
         <translation>恢复</translation>
     </message>
     <message>
-        <location filename="../../home/task/task_detail/model_train_widget.py" line="358"/>
+        <location filename="../../home/task/task_detail/model_train_widget.py" line="357"/>
         <source>Model train failed</source>
         <translation>模型训练失败</translation>
     </message>
@@ -1496,12 +1504,12 @@
         <translation>数据集类型：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/new_dataset_dialog.py" line="89"/>
+        <location filename="../../dataset/dataset_list_widget/new_dataset_dialog.py" line="88"/>
         <source>Over maximum length 100, current length is: </source>
         <translation>超出最大长度100，当前长度为：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/new_dataset_dialog.py" line="123"/>
+        <location filename="../../dataset/dataset_list_widget/new_dataset_dialog.py" line="122"/>
         <source>Dataset name is existing</source>
         <translation>数据集名称已存在</translation>
     </message>
@@ -1674,6 +1682,11 @@
         <source>name descending</source>
         <translation>名称递减</translation>
     </message>
+    <message>
+        <location filename="../../home/project/project_list_widget.py" line="163"/>
+        <source>Delete project directory failed! will skip</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RichTextLogWidget</name>
@@ -1699,47 +1712,47 @@
 <context>
     <name>SettingInterface</name>
     <message>
-        <location filename="../../settings/setting_interface.py" line="35"/>
+        <location filename="../../settings/setting_interface.py" line="34"/>
         <source>Use Mica effect</source>
         <translation>使用云母特效</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="36"/>
+        <location filename="../../settings/setting_interface.py" line="35"/>
         <source>Windows and surfaces appear translucent</source>
         <translation>窗体和表面显示为半透明</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="44"/>
+        <location filename="../../settings/setting_interface.py" line="43"/>
         <source>Application theme</source>
         <translation>应用主题</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="47"/>
+        <location filename="../../settings/setting_interface.py" line="46"/>
         <source>Light</source>
         <translation>浅色</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="47"/>
+        <location filename="../../settings/setting_interface.py" line="46"/>
         <source>Dark</source>
         <translation>深色</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="55"/>
+        <location filename="../../settings/setting_interface.py" line="54"/>
         <source>Theme color</source>
         <translation>主题色</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="62"/>
+        <location filename="../../settings/setting_interface.py" line="61"/>
         <source>Interface zoom</source>
         <translation>界面缩放</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="63"/>
+        <location filename="../../settings/setting_interface.py" line="62"/>
         <source>Change the size of widgets and fonts</source>
         <translation>更改字体大小</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="73"/>
+        <location filename="../../settings/setting_interface.py" line="72"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
@@ -1749,60 +1762,60 @@
         <translation>模型设置</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="24"/>
+        <location filename="../../settings/setting_interface.py" line="23"/>
         <source>Choose directory</source>
         <translation>选择目录</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="32"/>
+        <location filename="../../settings/setting_interface.py" line="31"/>
         <source>Personalization</source>
         <translation>个性化</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="45"/>
+        <location filename="../../settings/setting_interface.py" line="44"/>
         <source>Change the appearance of the application</source>
         <translation>更改应用外观</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="49"/>
-        <location filename="../../settings/setting_interface.py" line="67"/>
-        <location filename="../../settings/setting_interface.py" line="75"/>
+        <location filename="../../settings/setting_interface.py" line="48"/>
+        <location filename="../../settings/setting_interface.py" line="66"/>
+        <location filename="../../settings/setting_interface.py" line="74"/>
         <source>Follow system setting</source>
         <translation>跟随系统</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="56"/>
+        <location filename="../../settings/setting_interface.py" line="55"/>
         <source>Change the theme color of the application</source>
         <translation>更改应用主题色</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="74"/>
+        <location filename="../../settings/setting_interface.py" line="73"/>
         <source>Change the preferred language of the application</source>
         <translation>更改应用语言</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="80"/>
+        <location filename="../../settings/setting_interface.py" line="79"/>
         <source>Main Panel</source>
         <translation>主面板</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="83"/>
+        <location filename="../../settings/setting_interface.py" line="82"/>
         <source>Minimize to tray after closing</source>
         <translation>关闭最小化到托盘</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="84"/>
+        <location filename="../../settings/setting_interface.py" line="83"/>
         <source>Ultraly UI will continue to run in the background</source>
         <translation>Ultraly UI 将在后台继续运行</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="113"/>
+        <location filename="../../settings/setting_interface.py" line="114"/>
         <source>Configuration takes effect after restart</source>
         <translation>重启后配置生效</translation>
     </message>
     <message>
-        <location filename="../../settings/setting_interface.py" line="26"/>
-        <location filename="../../settings/setting_interface.py" line="120"/>
+        <location filename="../../settings/setting_interface.py" line="25"/>
+        <location filename="../../settings/setting_interface.py" line="121"/>
         <source>Workspace directory</source>
         <translation>工作目录</translation>
     </message>
@@ -1894,62 +1907,62 @@
 <context>
     <name>Window</name>
     <message>
-        <location filename="../../main.py" line="74"/>
+        <location filename="../../main.py" line="76"/>
         <source>Show main window</source>
         <translation>显示主窗体</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="78"/>
+        <location filename="../../main.py" line="80"/>
         <source>Exit</source>
         <translation>退出</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="90"/>
+        <location filename="../../main.py" line="92"/>
         <source>Home</source>
         <translation>主页</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="92"/>
+        <location filename="../../main.py" line="94"/>
         <source>Dataset</source>
         <translation>数据集</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="93"/>
+        <location filename="../../main.py" line="95"/>
         <source>Data annotation</source>
         <translation>数据标注</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="94"/>
+        <location filename="../../main.py" line="96"/>
         <source>Model train</source>
         <translation>模型训练</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="95"/>
+        <location filename="../../main.py" line="97"/>
         <source>Model valid</source>
         <translation>模型验证</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="96"/>
+        <location filename="../../main.py" line="98"/>
         <source>Model export</source>
         <translation>模型导出</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="97"/>
+        <location filename="../../main.py" line="99"/>
         <source>Model test</source>
         <translation>模型测试</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="109"/>
+        <location filename="../../main.py" line="111"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="138"/>
+        <location filename="../../main.py" line="140"/>
         <source>Ultraly UI hided into tray</source>
         <translation>隐藏Ultraly UI至托盘</translation>
     </message>
     <message>
-        <location filename="../../main.py" line="139"/>
+        <location filename="../../main.py" line="141"/>
         <source>Click tray to show main window</source>
         <translation>点击托盘显示主窗口</translation>
     </message>

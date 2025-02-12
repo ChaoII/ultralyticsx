@@ -13,7 +13,8 @@ def collect_py_files(directory):
             # 如果是目录且不在排除列表中，则递归调用
             if item.name not in exclude_dirs:
                 collect_py_files(item)
-        elif item.is_file() and item.suffix == '.py':
+        # 不能包含资源文件
+        elif item.is_file() and item.suffix == '.py' and item.stem != "resources":
             # 如果是 .py 文件，则添加到列表中
             py_files.append(str(item))
 
@@ -25,5 +26,5 @@ with open('sources.list', 'w') as f:
     for py_file in py_files:
         f.write(py_file + '\n')
 
-subprocess.run(['lupdate', '@sources.list', '-no-obsolete', '-ts', 'resource/i18n/ultralytics_ui.zh_CN.ts'])
-# lrelease resource/i18n/ultralytics_ui.zh_CN.ts
+subprocess.run(['pyside6-lupdate', '@sources.list', '-no-obsolete', '-ts', 'resources/i18n/ultralytics_ui.zh_CN.ts'])
+# pyside6-lupdate resource/i18n/ultralytics_ui.zh_CN.ts

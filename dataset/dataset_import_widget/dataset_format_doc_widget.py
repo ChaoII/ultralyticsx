@@ -24,7 +24,7 @@ class ClassifyDocWidget(QWidget):
             "2.不支持.zip、tar.gz等压缩包形式的数据\n"
             "3.导入图片格式支持png，jpg，jpeg，bmp格式\n"
             "4.文件夹名为需要分类的类名，输入限定为英文字符，不可包含空格、中文或特殊字符")
-        self.lbl_image.setImage("resource/images/classify_help.png")
+        self.lbl_image.setImage(":/images/classify_help.png")
         self.lbl_image.scaledToWidth(440)
 
 
@@ -47,7 +47,7 @@ class DetectionDocWidget(QWidget):
             "4.images文件夹内为所有图片w文件，labels为所有标签文件，标签文件和图片文件名一一对应\n"
             "5.images文件夹图片格式支持png，jpg，jpeg，bmp格式，labels内标签文件每行为一个对象，"
             "分别为【label_id x_center y_center w h】用空格分隔，其中x_center y_center w h为归一化之后的数据")
-        self.lbl_image.setImage("resource/images/detect_help.png")
+        self.lbl_image.setImage(":/images/detect_help.png")
         self.lbl_image.scaledToWidth(440)
 
 
@@ -70,7 +70,7 @@ class SegmentationDocWidget(QWidget):
             "4.images文件夹内为所有图片w文件，labels为所有标签文件，标签文件和图片文件名一一对应\n"
             "5.images文件夹图片格式支持png，jpg，jpeg，bmp格式，labels内标签文件每行为一个对象，"
             "分别为【label_id x1 y1 x2 y2...xn yn】用空格分隔，其中xi yi为归一化之后每个点的坐标数据")
-        self.lbl_image.setImage("resource/images/detect_help.png")
+        self.lbl_image.setImage(":/images/detect_help.png")
         self.lbl_image.scaledToWidth(440)
 
 
@@ -120,8 +120,8 @@ class PoseDocWidget(QWidget):
             "5.images文件夹图片格式支持png，jpg，jpeg，bmp格式，labels内标签文件每行为一个对象，"
             "分别为【label_id x_center y_center w h x1 y1 v1 x2 y2 v2 x3 y3 v3...x17 y17 v17】用空格分隔，其中xi yi为归一化之后每个点的坐标数据,"
             "vi为0：未标注， 1：标注，但被遮挡， 2：标注，未遮挡。一共17个点")
-        self.lbl_image.setImage("resource/images/detect_help.png")
-        self.lbl_image1.setImage("resource/images/pose_help.png")
+        self.lbl_image.setImage(":/images/detect_help.png")
+        self.lbl_image1.setImage(":/images/pose_help.png")
         self.lbl_image.scaledToWidth(440)
         self.lbl_image1.scaledToWidth(300)
 
