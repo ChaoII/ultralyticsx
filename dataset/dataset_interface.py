@@ -41,15 +41,17 @@ class DatasetWidget(InterfaceBase):
         self.breadcrumbBar.addItem(self.import_dataset_widget.objectName(), dataset_info.dataset_name)
 
     def _on_imported_finished(self, dataset_info: DatasetInfo):
+        if not self.dataset_detail_widget.set_dataset_info(dataset_info):
+            return
         self.breadcrumbBar.popItem()
         self.stackedWidget.setCurrentWidget(self.dataset_detail_widget)
-        self.dataset_detail_widget.set_dataset_info(dataset_info)
         self.breadcrumbBar.addItem(self.dataset_detail_widget.objectName(), dataset_info.dataset_name)
 
     @Slot(DatasetInfo)
     def _on_view_dataset_clicked(self, dataset_info: DatasetInfo):
+        if not self.dataset_detail_widget.set_dataset_info(dataset_info):
+            return
         self.stackedWidget.setCurrentWidget(self.dataset_detail_widget)
-        self.dataset_detail_widget.set_dataset_info(dataset_info)
         self.breadcrumbBar.addItem(self.dataset_detail_widget.objectName(), dataset_info.dataset_name)
 
     # @Slot()
@@ -65,3 +67,5 @@ class DatasetWidget(InterfaceBase):
         obj = self.findChild(QWidget, obj_name)
         if isinstance(obj, QWidget):
             self.stackedWidget.setCurrentWidget(obj)
+            if isinstance(obj, DatasetListWidget):
+                obj.update_widget()

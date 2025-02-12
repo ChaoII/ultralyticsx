@@ -93,7 +93,7 @@ class OBBDocWidget(QWidget):
             "4.images文件夹内为所有图片w文件，labels为所有标签文件，标签文件和图片文件名一一对应\n"
             "5.images文件夹图片格式支持png，jpg，jpeg，bmp格式，labels内标签文件每行为一个对象，"
             "分别为【label_id x1 y1 x2 y2 x3 y3 x4 y4】用空格分隔，其中xi yi为归一化之后每个点的坐标数据")
-        self.lbl_image.setImage("resource/images/detect_help.png")
+        self.lbl_image.setImage(":/images/detect_help.png")
         self.lbl_image.scaledToWidth(440)
 
 

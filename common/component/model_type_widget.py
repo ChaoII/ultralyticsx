@@ -116,12 +116,12 @@ class ModelTypeGroupWidget(QWidget):
         self._init_type_item()
 
     def _init_type_item(self):
-        type_classify = ModelTypeItemWidget(self.tr("classify"), "resource/images/classify.png", ModelType.CLASSIFY)
+        type_classify = ModelTypeItemWidget(self.tr("classify"), ":/images/classify.png", ModelType.CLASSIFY)
         type_classify.enable_selected()
-        type_detect = ModelTypeItemWidget(self.tr("detect"), "resource/images/detect.png", ModelType.DETECT)
-        type_segment = ModelTypeItemWidget(self.tr("segment"), "resource/images/segment.png", ModelType.SEGMENT)
-        type_obb = ModelTypeItemWidget(self.tr("obb"), "resource/images/obb.png", ModelType.OBB)
-        type_pose = ModelTypeItemWidget(self.tr("pose"), "resource/images/pose.png", ModelType.POSE)
+        type_detect = ModelTypeItemWidget(self.tr("detect"), ":/images/detect.png", ModelType.DETECT)
+        type_segment = ModelTypeItemWidget(self.tr("segment"), ":/images/segment.png", ModelType.SEGMENT)
+        type_obb = ModelTypeItemWidget(self.tr("obb"), ":/images/obb.png", ModelType.OBB)
+        type_pose = ModelTypeItemWidget(self.tr("pose"), ":/images/pose.png", ModelType.POSE)
         self.addItem(type_classify)
         self.addItem(type_detect)
         self.addItem(type_segment)

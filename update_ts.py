@@ -27,4 +27,4 @@ with open('sources.list', 'w') as f:
         f.write(py_file + '\n')
 
 subprocess.run(['pyside6-lupdate', '@sources.list', '-no-obsolete', '-ts', 'resources/i18n/ultralytics_ui.zh_CN.ts'])
-# pyside6-lupdate resource/i18n/ultralytics_ui.zh_CN.ts
+# pyside6-lrelease resources/i18n/ultralytics_ui.zh_CN.ts

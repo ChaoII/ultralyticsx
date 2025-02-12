@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from loguru import logger
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QHBoxLayout
 from qfluentwidgets import BodyLabel, SubtitleLabel, PrimaryPushButton, \
@@ -9,8 +9,9 @@ from common.component.custom_icon import CustomFluentIcon
 from common.component.file_select_widget import FileSelectWidget
 from common.core.event_manager import signal_bridge
 from common.component.tag_widget import TextTagWidget
+from common.utils.raise_info_bar import raise_error
 from common.utils.utils import copy_tree
-from ..dataset_process import check_dataset
+from ..dataset_process.dataset_check import DatasetCheck
 from dataset.dataset_import_widget.dataset_format_doc_widget import DatasetFormatDocWidget
 
 from dataset.dataset_list_widget.new_dataset_dialog import DatasetInfo
@@ -79,14 +80,14 @@ class ImportDatasetWidget(QWidget):
 
     def _import_data(self):
         if not self._selected_dataset_dir:
-            InfoBar.error(title='', content=self.tr("Please select a dataset directory!"),
-                          orient=Qt.Orientation.Vertical, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
-                          duration=2000, parent=self)
+            error_msg = self.tr("Please select a dataset directory!")
+            raise_error(error_msg)
+            logger.error(error_msg)
             return False
-        if not check_dataset(Path(self._selected_dataset_dir), self._dataset_info.model_type):
-            InfoBar.error(title='', content=self.tr("Dataset format error, please check your dataset!"),
-                          orient=Qt.Orientation.Vertical, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
-                          duration=2000, parent=self)
+        if not DatasetCheck(self._dataset_info.model_type).check(self._selected_dataset_dir):
+            error_msg = self.tr("Dataset format error, please check your dataset!")
+            raise_error(error_msg)
+            logger.error(error_msg)
             return False
         else:
             copy_tree(self._selected_dataset_dir, Path(self._dataset_info.dataset_dir) / "src")

@@ -8,7 +8,7 @@ from common.database.db_helper import db_session
 from common.component.tag_widget import TextTagWidget
 from models.models import Dataset
 from .dataset_split_widget import DatasetSplitWidget
-from ...dataset_process import split_dataset
+from ...dataset_process.dataset_split import DatasetSplit
 from ...types import DatasetInfo
 
 
@@ -47,8 +47,8 @@ class DatasetHeaderWidget(SimpleCardWidget):
     def _on_split_clicked(self, split_rates):
         self._split_rates = split_rates
         # 更新拆分比例
-        dataset_df = split_dataset(Path(self._dataset_info.dataset_dir), self._split_rates,
-                                   self._dataset_info.model_type)
+        dataset_df = (DatasetSplit(self._dataset_info.model_type)
+                      .split(self._dataset_info.dataset_dir, self._split_rates))
         with db_session() as session:
             dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()
             dataset.split_rate = "_".join([str(rate) for rate in split_rates])

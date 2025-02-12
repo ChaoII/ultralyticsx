@@ -5,6 +5,7 @@ from qfluentwidgets import BodyLabel, CompactSpinBox, FlyoutViewBase, themeColor
 from qfluentwidgets import HyperlinkLabel, PopupTeachingTip, TeachingTipTailPosition
 
 from common.component.custom_label_widget import CustomLabel
+from common.utils.raise_info_bar import raise_error
 
 
 class SplitDatasetContentWidget(QWidget):
@@ -140,15 +141,7 @@ class DatasetSplitFlyoutView(FlyoutViewBase):
 
     def _on_btn_clicked(self, status: bool):
         if status and (sum(self._split_rates) != 100 or self._split_rates[0] <= 0):
-            InfoBar.error(
-                title='',
-                content=self.tr(f"Split dataset error!"),
-                orient=Qt.Orientation.Vertical,
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=2000,
-                parent=self.parent().parent()
-            )
+            raise_error(self.tr(f"Split dataset error!"))
             return
         self.accept_status.emit(status, self._split_rates)
 

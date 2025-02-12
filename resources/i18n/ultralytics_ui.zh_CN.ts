@@ -267,7 +267,7 @@
     <message>
         <location filename="../../annotation/annotation_widget.py" line="482"/>
         <source>Image path is not existed</source>
-        <translation type="unfinished"></translation>
+        <translation>图片路径不存在</translation>
     </message>
     <message>
         <location filename="../../annotation/annotation_widget.py" line="530"/>
@@ -345,11 +345,19 @@
     </message>
 </context>
 <context>
+    <name>DatasetDetailWidget</name>
+    <message>
+        <location filename="../../dataset/dataset_detail_widget/dataset_detail_widget.py" line="56"/>
+        <source>Unsupported model type</source>
+        <translation>不支持的模型类型</translation>
+    </message>
+</context>
+<context>
     <name>DatasetDetailWidgetBase</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_detail_widget_base.py" line="121"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_detail_widget_base.py" line="125"/>
         <source>Dataset import error!</source>
-        <translation type="unfinished"></translation>
+        <translation>数据集导入错误！</translation>
     </message>
 </context>
 <context>
@@ -502,27 +510,27 @@
 <context>
     <name>DatasetSplitFlyoutView</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="104"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="105"/>
         <source>Dataset split</source>
         <translation>数据集划分</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="108"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="109"/>
         <source>Tip: The sum of three datasets must be 100%, the test set can be 0, and the validation set cannot be 0</source>
         <translation>提示：三部分数据集相加必须为100%，验证集和测试机可以为0</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="112"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="113"/>
         <source>Split</source>
         <translation>划分</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="113"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="114"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="145"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="144"/>
         <source>Split dataset error!</source>
         <translation>划分数据集错误！</translation>
     </message>
@@ -530,12 +538,12 @@
 <context>
     <name>DatasetSplitWidget</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="165"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="158"/>
         <source>Dataset have split, you can split again</source>
         <translation>数据集已经划分，可以再次划分</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="166"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="159"/>
         <source>Split again</source>
         <translation>再次划分</translation>
     </message>
@@ -668,63 +676,63 @@
 <context>
     <name>ImportDatasetWidget</name>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="26"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="27"/>
         <source>▌Dataset information</source>
         <translation>▌数据集信息</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="35"/>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="101"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="36"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="102"/>
         <source>Import</source>
         <translation>导入</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="42"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="43"/>
         <source>Dataset ID:</source>
         <translation>数据集ID：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="43"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="44"/>
         <source>Dataset name:</source>
         <translation>数据集名称：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="44"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="45"/>
         <source>Dataset dir:</source>
         <translation>数据集目录：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="45"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="46"/>
         <source>Model type:</source>
         <translation>模型类型：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="46"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="47"/>
         <source>Dataset description:</source>
         <translation>数据集描述：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="48"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="49"/>
         <source>Create time:</source>
         <translation>创建时间：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="49"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="50"/>
         <source>Dataset Directory</source>
         <translation>数据集目录</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="82"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="84"/>
         <source>Please select a dataset directory!</source>
         <translation>请选择数据集目录！</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="87"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="89"/>
         <source>Dataset format error, please check your dataset!</source>
-        <translation type="unfinished"></translation>
+        <translation>数据集格式错误，请检查数据集！</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="99"/>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="100"/>
         <source>Re import</source>
         <translation>重新导入</translation>
     </message>
@@ -1685,7 +1693,7 @@
     <message>
         <location filename="../../home/project/project_list_widget.py" line="163"/>
         <source>Delete project directory failed! will skip</source>
-        <translation type="unfinished"></translation>
+        <translation>删除项目目录失败，跳过</translation>
     </message>
 </context>
 <context>
@@ -1823,32 +1831,32 @@
 <context>
     <name>SplitDatasetContentWidget</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="16"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="17"/>
         <source>Type</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="18"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="19"/>
         <source>Training set</source>
         <translation>训练集</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="21"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="22"/>
         <source>Validation set</source>
         <translation>验证集</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="24"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="25"/>
         <source>Testing set</source>
         <translation>测试集</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="27"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="28"/>
         <source>Rate(%)</source>
         <translation>比率(%)</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="41"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="42"/>
         <source>Number</source>
         <translation>数量</translation>
     </message>

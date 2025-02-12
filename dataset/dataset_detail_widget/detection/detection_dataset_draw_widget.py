@@ -17,7 +17,7 @@ class DetectionDatasetDrawWidget(DatasetDrawWidgetBase):
         self.dataset_draw_thread = DetectionDatasetDrawThread()
 
     def init_dataset_labels(self, dataset_df: pd.DataFrame):
-        config_path = Path(dataset_df.loc[0, "image_path"]).parent.parent.parent / "coco_cpy.yaml"
+        config_path = Path(dataset_df.loc[0, "image_path"]).parent.parent.parent / "config.yaml"
         with open(config_path, "r", encoding="utf8") as f:
             config_info = yaml.safe_load(f)
         classes = config_info.get("names", dict())

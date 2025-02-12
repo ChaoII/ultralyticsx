@@ -5,14 +5,14 @@ import pandas as pd
 import yaml
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout
-from qfluentwidgets import InfoBar, InfoBarPosition
 
 from common.database.db_helper import db_session
 from common.utils.raise_info_bar import raise_error
 from models.models import Dataset
 from .dataset_draw_widget_base import DatasetDrawWidgetBase
 from .label_table_Widget import SplitLabelInfo, DatasetLabelsInfoWidget
-from ...dataset_process import split_dataset, load_split_dataset
+from ...dataset_process.utils import load_split_dataset
+from ...dataset_process.dataset_split import DatasetSplit
 from ...types import DatasetInfo, DatasetStatus, DatasetType
 
 
@@ -51,6 +51,7 @@ class DatasetDetailWidgetBase(QWidget):
         if dataset_info.dataset_status == DatasetStatus.CHECKED:
             dataset_df = load_split_dataset(Path(self._dataset_info.dataset_dir))
             self._load_dataset(dataset_df)
+            return True
         else:
             return self.split_dataset(self._split_rates)
 
@@ -58,15 +59,18 @@ class DatasetDetailWidgetBase(QWidget):
         return self._total_dataset, self._split_rates
 
     def load_split_info(self, dataset_df: pd.DataFrame) -> list[SplitLabelInfo]:
-        with open(Path(self._dataset_info.dataset_dir) / "split" / "coco_cpy.yaml", "r", encoding="utf8") as f:
+        with open(Path(self._dataset_info.dataset_dir) / "split" / "config.yaml", "r", encoding="utf8") as f:
             config_info = yaml.safe_load(f)
         classes = config_info.get("names", dict())
         all_num = dataset_df.shape[0]
         train_num = dataset_df.groupby("type").groups[DatasetType.TRAIN.value].size
         val_num = dataset_df.groupby("type").groups[DatasetType.VAL.value].size
-        test_num = dataset_df.groupby("type").groups[DatasetType.TEST.value].size
-        info = SplitLabelInfo(label="All images", all_num=all_num, train_num=train_num, val_num=val_num,
-                              test_num=test_num)
+        if DatasetType.TEST.value in dataset_df.groupby("type"):
+            test_num = dataset_df.groupby("type").groups[DatasetType.TEST.value].size
+        else:
+            test_num = 0
+        info = SplitLabelInfo(label="All images", all_num=all_num, train_num=train_num,
+                              val_num=val_num, test_num=test_num)
         dataset_split_num_info = [info]
         labels_map = dict()
 
@@ -113,12 +117,15 @@ class DatasetDetailWidgetBase(QWidget):
         self.load_dataset_finished.emit(self._total_dataset, self._split_rates)
 
     @Slot(list)
-    def split_dataset(self, split_rates):
+    def split_dataset(self, split_rates) -> bool:
         self._split_rates = split_rates
-        dataset_df = split_dataset(Path(self._dataset_info.dataset_dir), self._split_rates,
-                                   self._dataset_info.model_type)
-        if not dataset_df:
+        dataset_df = (DatasetSplit(self._dataset_info.model_type).
+                      split(self._dataset_info.dataset_dir, self._split_rates))
+        if dataset_df is None:
             raise_error(self.tr("Dataset import error!"))
+            with db_session() as session:
+                dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()
+                dataset.dataset_status = DatasetStatus.CHECK_FAILED.value
             return False
         with db_session() as session:
             dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()

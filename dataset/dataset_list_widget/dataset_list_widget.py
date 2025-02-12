@@ -322,3 +322,7 @@ class DatasetListWidget(QWidget):
             dataset_info.model_type = ModelType(dataset.model_type)
             dataset_info.create_time = format_datatime(dataset.create_time)
         return dataset_info
+
+
+    def update_widget(self):
+        self._load_dataset_data()

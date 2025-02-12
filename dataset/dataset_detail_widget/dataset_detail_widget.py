@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from loguru import logger
 
 from common.component.model_type_widget import ModelType
+from common.utils.raise_info_bar import raise_error
 from .classify.classify_dataset_detail_widget import ClassifyDatasetDetailWidget
 from .common.dataset_detail_widget_base import DatasetDetailWidgetBase
 from .common.datset_header_widget import DatasetHeaderWidget
@@ -21,6 +22,7 @@ class DatasetDetailWidget(QWidget):
         self.vly.addWidget(self.header)
         self._dataset_info: DatasetInfo | None = None
         self._is_split: bool = False
+        self._is_connected: bool = False
 
     def set_dataset_info(self, dataset_info: DatasetInfo) -> bool:
         # 将数据集信息设置到头部组件
@@ -29,12 +31,10 @@ class DatasetDetailWidget(QWidget):
         self._dataset_info = dataset_info
         # 如果当前有内容组件，删除并释放资源
         if self.content:
-            try:
-                # 断开信号与槽连接
+            if self._is_connected:
                 # self.content.load_dataset_finished.disconnect(self.header.set_dataset_header)
                 self.header.split_dataset_clicked.disconnect(self.content.split_dataset)
-            except TypeError:
-                pass  # 可能尚未建立连接
+                self._is_connected = False
             self.vly.removeWidget(self.content)
             self.content.deleteLater()
             self.content = None
@@ -52,8 +52,8 @@ class DatasetDetailWidget(QWidget):
             self.content = OBBDatasetDetailWidget()
         else:
             # 如果模型类型不是分类或检测，记录日志并返回
-            logger.warning(f"Unsupported model type: {self._dataset_info.model_type.name}")
-            raise ValueError("Unsupported model type")
+            logger.error(f"Unsupported model type: {self._dataset_info.model_type.name}")
+            raise raise_error(self.tr("Unsupported model type"))
 
         # 将新的内容组件添加到布局中
         self.vly.addWidget(self.content)
@@ -65,4 +65,5 @@ class DatasetDetailWidget(QWidget):
         if self.content and self.header:
             # self.content.load_dataset_finished.connect(self.header.set_dataset_header)
             self.header.split_dataset_clicked.connect(self.content.split_dataset)
+            self._is_connected = True
         return True
