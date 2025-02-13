@@ -122,7 +122,8 @@ class DatasetDetailWidgetBase(QWidget):
         dataset_df = (DatasetSplit(self._dataset_info.model_type).
                       split(self._dataset_info.dataset_dir, self._split_rates))
         if dataset_df is None:
-            raise_error(self.tr("Dataset import error!"))
+            error_msg = self.tr("Dataset import failed!Please check the dataset.")
+            raise_error(self.tr("Dataset import failed!"), error_msg)
             with db_session() as session:
                 dataset = session.query(Dataset).filter_by(dataset_id=self._dataset_info.dataset_id).first()
                 dataset.dataset_status = DatasetStatus.CHECK_FAILED.value

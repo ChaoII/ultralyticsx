@@ -1,7 +1,9 @@
+from loguru import logger
+
 from PySide6.QtCore import Signal, Qt, QSize, Slot
 from PySide6.QtWidgets import QWidget, QGridLayout, QHBoxLayout, QVBoxLayout
 from qfluentwidgets import BodyLabel, CompactSpinBox, FlyoutViewBase, themeColor, PrimaryPushButton, PushButton, \
-    InfoBarIcon, TransparentToolButton, StrongBodyLabel, InfoBarPosition, InfoBar
+    InfoBarIcon, TransparentToolButton, StrongBodyLabel
 from qfluentwidgets import HyperlinkLabel, PopupTeachingTip, TeachingTipTailPosition
 
 from common.component.custom_label_widget import CustomLabel
@@ -140,8 +142,12 @@ class DatasetSplitFlyoutView(FlyoutViewBase):
         self.split_dataset_content_widget.rate_changed.emit(self._on_rate_changed)
 
     def _on_btn_clicked(self, status: bool):
-        if status and (sum(self._split_rates) != 100 or self._split_rates[0] <= 0):
-            raise_error(self.tr(f"Split dataset error!"))
+        if status and (sum(self._split_rates) != 100 or self._split_rates[0] <= 0) or self._split_rates[1] <= 0:
+            error_msg = self.tr(f"Split dataset error! Please check your settings for 2 sides below:\n"
+                                f"1.The sum of three datasets must be 100%\n"
+                                f"2.The train and validation set cannot be 0")
+            logger.error(error_msg)
+            raise_error(self.tr("Split dataset error!"), error_msg)
             return
         self.accept_status.emit(status, self._split_rates)
 

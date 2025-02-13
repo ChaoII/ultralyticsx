@@ -52,8 +52,9 @@ class DatasetDetailWidget(QWidget):
             self.content = OBBDatasetDetailWidget()
         else:
             # 如果模型类型不是分类或检测，记录日志并返回
-            logger.error(f"Unsupported model type: {self._dataset_info.model_type.name}")
-            raise raise_error(self.tr("Unsupported model type"))
+            error_msg = self.tr("Unsupported model type: ") + self._dataset_info.model_type.name
+            logger.error(error_msg)
+            raise raise_error(self.tr("Error!"), error_msg)
 
         # 将新的内容组件添加到布局中
         self.vly.addWidget(self.content)

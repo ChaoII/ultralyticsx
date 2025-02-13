@@ -49,7 +49,7 @@ class TrainTask(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(String)
-    project_id = Column(String, ForeignKey('tb_projects.project_id'))
+    project_id = Column(String, ForeignKey('tb_projects.project_id',ondelete="RESTRICT"))
     dataset_id = Column(String, ForeignKey("tb_datasets.dataset_id"))
     start_time = Column(DateTime)
     end_time = Column(DateTime)

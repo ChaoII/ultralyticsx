@@ -80,13 +80,13 @@ class ImportDatasetWidget(QWidget):
 
     def _import_data(self):
         if not self._selected_dataset_dir:
-            error_msg = self.tr("Please select a dataset directory!")
-            raise_error(error_msg)
+            error_msg = self.tr("The directory does not exist! Please select a dataset directory!")
+            raise_error(self.tr("The directory does not exist!"), error_msg)
             logger.error(error_msg)
             return False
         if not DatasetCheck(self._dataset_info.model_type).check(self._selected_dataset_dir):
-            error_msg = self.tr("Dataset format error, please check your dataset!")
-            raise_error(error_msg)
+            error_msg = self.tr("Please check your dataset according to documentation at right!")
+            raise_error(self.tr("Dataset format error!"), error_msg)
             logger.error(error_msg)
             return False
         else:

@@ -695,13 +695,13 @@ class ModelParameterWidget(CollapsibleWidgetItem):
             if task.project.model_type == ModelType.CLASSIFY.value:
                 data = (Path(task.dataset.dataset_dir) / "split").resolve().as_posix()
             elif task.project.model_type == ModelType.DETECT.value:
-                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+                data = (Path(task.dataset.dataset_dir) / "split" / "config.yaml").resolve().as_posix()
             elif task.project.model_type == ModelType.SEGMENT.value:
-                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+                data = (Path(task.dataset.dataset_dir) / "split" / "config.yaml").resolve().as_posix()
             elif task.project.model_type == ModelType.POSE.value:
-                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+                data = (Path(task.dataset.dataset_dir) / "split" / "config.yaml").resolve().as_posix()
             elif task.project.model_type == ModelType.OBB.value:
-                data = (Path(task.dataset.dataset_dir) / "split" / "coco_cpy.yaml").resolve().as_posix()
+                data = (Path(task.dataset.dataset_dir) / "split" / "config.yaml").resolve().as_posix()
             else:
                 logger.error(f"Unsupported model type: {task.project.model_type}")
                 raise ValueError(f"Unsupported model type: {task.project.model_type}")

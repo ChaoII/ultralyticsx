@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+from loguru import logger
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt, QColor
@@ -18,10 +19,11 @@ from common.component.delete_ensure_widget import CustomFlyoutView
 from common.component.fill_tool_button import FillToolButton
 from common.component.model_type_widget import ModelType
 from common.component.tag_widget import TextTagWidget
+from common.utils.raise_info_bar import raise_warning
 from common.utils.utils import format_datatime, open_directory
 from dataset.dataset_list_widget.new_dataset_dialog import NewDatasetDialog, DatasetInfo
 from dataset.types import DatasetStatus
-from models.models import Dataset
+from models.models import Dataset, TrainTask
 from settings import cfg
 
 
@@ -292,6 +294,12 @@ class DatasetListWidget(QWidget):
     def _on_delete_dataset(self, dataset_id):
         with db_session(auto_commit_exit=True) as session:
             dataset: Dataset = session.query(Dataset).filter_by(dataset_id=dataset_id).first()
+            if len(dataset.tasks) > 0:
+                task_ids = [task.task_id for task in dataset.tasks]
+                warning_msg = self.tr("The dataset is referenced by train task, task is: ") + " ".join(task_ids)
+                raise_warning(self.tr("Dataset delete failed!"), warning_msg)
+                logger.warning(warning_msg)
+                return
             directory = dataset.dataset_dir
             session.delete(dataset)
         shutil.rmtree(directory, ignore_errors=True)
@@ -322,7 +330,6 @@ class DatasetListWidget(QWidget):
             dataset_info.model_type = ModelType(dataset.model_type)
             dataset_info.create_time = format_datatime(dataset.create_time)
         return dataset_info
-
 
     def update_widget(self):
         self._load_dataset_data()

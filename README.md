@@ -41,8 +41,14 @@ class_id,x_center,y_center,width,height,x1,y1,v1,x2,y2,v2,...x17,y17,v17
 
 
 ##### 打包
-```bash
-python -m nuitka --standalone --remove-output --enable-plugin=pyside6 main.py
+```bat
+python -m nuitka --standalone ^
+ --windows-console-mode=disable ^
+ --windows-icon-from-ico=resources/images/logo.ico ^
+ --include-data-dir=ultralytics/cfg=./ultralytics/cfg ^
+ --remove-output ^
+ --enable-plugin=pyside6 ^
+ main.py
 ```
 
 ##### 路线图

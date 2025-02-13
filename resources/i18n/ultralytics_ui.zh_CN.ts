@@ -347,17 +347,27 @@
 <context>
     <name>DatasetDetailWidget</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/dataset_detail_widget.py" line="56"/>
-        <source>Unsupported model type</source>
-        <translation>不支持的模型类型</translation>
+        <location filename="../../dataset/dataset_detail_widget/dataset_detail_widget.py" line="55"/>
+        <source>Unsupported model type: </source>
+        <translation>不支持的模型类型： </translation>
+    </message>
+    <message>
+        <location filename="../../dataset/dataset_detail_widget/dataset_detail_widget.py" line="57"/>
+        <source>Error!</source>
+        <translation>错误！</translation>
     </message>
 </context>
 <context>
     <name>DatasetDetailWidgetBase</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_detail_widget_base.py" line="125"/>
-        <source>Dataset import error!</source>
-        <translation>数据集导入错误！</translation>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_detail_widget_base.py" line="126"/>
+        <source>Dataset import failed!Please check the dataset.</source>
+        <translation>数据集导入失败！请检查数据集。</translation>
+    </message>
+    <message>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_detail_widget_base.py" line="126"/>
+        <source>Dataset import failed!</source>
+        <translation>数据集导入失败！</translation>
     </message>
 </context>
 <context>
@@ -442,95 +452,112 @@
 <context>
     <name>DatasetListWidget</name>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="136"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="138"/>
         <source>Create dataset</source>
         <translation>创建数据集</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="138"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="140"/>
         <source>type:</source>
         <translation>类型：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="141"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="143"/>
         <source>All type</source>
         <translation>所有类型</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="142"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="144"/>
         <source>Classify</source>
         <translation>分类</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="143"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="145"/>
         <source>Detection</source>
         <translation>检测</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="144"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="146"/>
         <source>Segmentation</source>
         <translation>分割</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="145"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="147"/>
         <source>OBB</source>
         <translation>旋转框检测</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="146"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="148"/>
         <source>Pose</source>
         <translation>关键点检测</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="148"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="150"/>
         <source>sort:</source>
         <translation>排序：</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="151"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="153"/>
         <source>time ascending</source>
         <translation>按时间递增</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="152"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="154"/>
         <source>time descending</source>
         <translation>按时间递减</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="153"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="155"/>
         <source>name ascending</source>
         <translation>按名称递增</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="154"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="156"/>
         <source>name descending</source>
         <translation>按名称递减</translation>
+    </message>
+    <message>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="299"/>
+        <source>The dataset is referenced by train task, task is: </source>
+        <translation>该数据集已经被训练任务引用，任务ID为： </translation>
+    </message>
+    <message>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="300"/>
+        <source>Dataset delete failed!</source>
+        <translation>数据集删除失败！</translation>
     </message>
 </context>
 <context>
     <name>DatasetSplitFlyoutView</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="105"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="107"/>
         <source>Dataset split</source>
         <translation>数据集划分</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="109"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="111"/>
         <source>Tip: The sum of three datasets must be 100%, the test set can be 0, and the validation set cannot be 0</source>
         <translation>提示：三部分数据集相加必须为100%，验证集和测试机可以为0</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="113"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="115"/>
         <source>Split</source>
         <translation>划分</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="114"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="116"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="144"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="149"/>
+        <source>Split dataset error! Please check your settings for 2 sides below:
+1.The sum of three datasets must be 100%
+2.The train and validation set cannot be 0</source>
+        <translation>数据集划分失败！请检查设置从以下两点：\n1.划分的三部分数据集之和必须为100%\n2.训练集和验证集不能为0</translation>
+    </message>
+    <message>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="150"/>
         <source>Split dataset error!</source>
         <translation>划分数据集错误！</translation>
     </message>
@@ -538,12 +565,12 @@
 <context>
     <name>DatasetSplitWidget</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="158"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="164"/>
         <source>Dataset have split, you can split again</source>
         <translation>数据集已经划分，可以再次划分</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="159"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="165"/>
         <source>Split again</source>
         <translation>再次划分</translation>
     </message>
@@ -551,32 +578,32 @@
 <context>
     <name>DatasetTableWidget</name>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="115"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="117"/>
         <source>Dataset ID</source>
         <translation>数据集ID</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="115"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="117"/>
         <source>Dataset name</source>
         <translation>数据集名称</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="115"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="117"/>
         <source>Model type</source>
         <translation>模型类型</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="116"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="118"/>
         <source>Create time</source>
         <translation>创建时间</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="116"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="118"/>
         <source>Dataset Status</source>
         <translation>数据集状态</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="117"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="119"/>
         <source>Operation</source>
         <translation>操作</translation>
     </message>
@@ -723,13 +750,23 @@
     </message>
     <message>
         <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="84"/>
-        <source>Please select a dataset directory!</source>
-        <translation>请选择数据集目录！</translation>
+        <source>The directory does not exist! Please select a dataset directory!</source>
+        <translation>目录不存在，请选择一个数据集目录！</translation>
+    </message>
+    <message>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="84"/>
+        <source>The directory does not exist!</source>
+        <translation>目录不存在！</translation>
     </message>
     <message>
         <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="89"/>
-        <source>Dataset format error, please check your dataset!</source>
-        <translation>数据集格式错误，请检查数据集！</translation>
+        <source>Dataset format error!</source>
+        <translation>数据集格式错误！</translation>
+    </message>
+    <message>
+        <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="89"/>
+        <source>Please check your dataset according to documentation at right!</source>
+        <translation>请根据右边的文档检查你的数据集！</translation>
     </message>
     <message>
         <location filename="../../dataset/dataset_import_widget/import_dataset_widget.py" line="100"/>
@@ -1569,7 +1606,7 @@
         <translation>确定删除当前任务吗？</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="88"/>
+        <location filename="../../dataset/dataset_list_widget/dataset_list_widget.py" line="90"/>
         <source>Are you sure to delete this dataset?</source>
         <translation>确定删除当前数据集吗？</translation>
     </message>
@@ -1720,71 +1757,87 @@
 <context>
     <name>SettingInterface</name>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="34"/>
         <location filename="../../settings/setting_interface.py" line="34"/>
         <source>Use Mica effect</source>
         <translation>使用云母特效</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="35"/>
         <location filename="../../settings/setting_interface.py" line="35"/>
         <source>Windows and surfaces appear translucent</source>
         <translation>窗体和表面显示为半透明</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="43"/>
         <location filename="../../settings/setting_interface.py" line="43"/>
         <source>Application theme</source>
         <translation>应用主题</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="46"/>
         <location filename="../../settings/setting_interface.py" line="46"/>
         <source>Light</source>
         <translation>浅色</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="46"/>
         <location filename="../../settings/setting_interface.py" line="46"/>
         <source>Dark</source>
         <translation>深色</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="54"/>
         <location filename="../../settings/setting_interface.py" line="54"/>
         <source>Theme color</source>
         <translation>主题色</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="61"/>
         <location filename="../../settings/setting_interface.py" line="61"/>
         <source>Interface zoom</source>
         <translation>界面缩放</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="62"/>
         <location filename="../../settings/setting_interface.py" line="62"/>
         <source>Change the size of widgets and fonts</source>
         <translation>更改字体大小</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="72"/>
         <location filename="../../settings/setting_interface.py" line="72"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="21"/>
         <location filename="../../settings/setting_interface.py" line="21"/>
         <source>Model settings</source>
         <translation>模型设置</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="23"/>
         <location filename="../../settings/setting_interface.py" line="23"/>
         <source>Choose directory</source>
         <translation>选择目录</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="31"/>
         <location filename="../../settings/setting_interface.py" line="31"/>
         <source>Personalization</source>
         <translation>个性化</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="44"/>
         <location filename="../../settings/setting_interface.py" line="44"/>
         <source>Change the appearance of the application</source>
         <translation>更改应用外观</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="48"/>
+        <location filename="../../main.dist/settings/setting_interface.py" line="66"/>
+        <location filename="../../main.dist/settings/setting_interface.py" line="74"/>
         <location filename="../../settings/setting_interface.py" line="48"/>
         <location filename="../../settings/setting_interface.py" line="66"/>
         <location filename="../../settings/setting_interface.py" line="74"/>
@@ -1792,36 +1845,44 @@
         <translation>跟随系统</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="55"/>
         <location filename="../../settings/setting_interface.py" line="55"/>
         <source>Change the theme color of the application</source>
         <translation>更改应用主题色</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="73"/>
         <location filename="../../settings/setting_interface.py" line="73"/>
         <source>Change the preferred language of the application</source>
         <translation>更改应用语言</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="79"/>
         <location filename="../../settings/setting_interface.py" line="79"/>
         <source>Main Panel</source>
         <translation>主面板</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="82"/>
         <location filename="../../settings/setting_interface.py" line="82"/>
         <source>Minimize to tray after closing</source>
         <translation>关闭最小化到托盘</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="83"/>
         <location filename="../../settings/setting_interface.py" line="83"/>
         <source>Ultraly UI will continue to run in the background</source>
         <translation>Ultraly UI 将在后台继续运行</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="114"/>
         <location filename="../../settings/setting_interface.py" line="114"/>
         <source>Configuration takes effect after restart</source>
         <translation>重启后配置生效</translation>
     </message>
     <message>
+        <location filename="../../main.dist/settings/setting_interface.py" line="25"/>
+        <location filename="../../main.dist/settings/setting_interface.py" line="121"/>
         <location filename="../../settings/setting_interface.py" line="25"/>
         <location filename="../../settings/setting_interface.py" line="121"/>
         <source>Workspace directory</source>
@@ -1831,32 +1892,32 @@
 <context>
     <name>SplitDatasetContentWidget</name>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="17"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="19"/>
         <source>Type</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="19"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="21"/>
         <source>Training set</source>
         <translation>训练集</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="22"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="24"/>
         <source>Validation set</source>
         <translation>验证集</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="25"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="27"/>
         <source>Testing set</source>
         <translation>测试集</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="28"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="30"/>
         <source>Rate(%)</source>
         <translation>比率(%)</translation>
     </message>
     <message>
-        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="42"/>
+        <location filename="../../dataset/dataset_detail_widget/common/dataset_split_widget.py" line="44"/>
         <source>Number</source>
         <translation>数量</translation>
     </message>
